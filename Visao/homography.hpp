@@ -8,25 +8,22 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/nonfree/nonfree.hpp"
+#include "opencv2/opencv.hpp"
 
-typedef struct upperDownPoints
+using namespace cv;
+using namespace std;
+
+
+Mat findPointsOfCamp(Mat img_object,Mat img_scene)
 {
-  cv::Point up;
-  cv::Point down;
-}UpperDownPoints;
 
-
-UpperDownPoints findPointsOfCamp(std::string side,std::string imageName,Mat img_scene)
-{
-  UpperDownPoints returnPoints;
-
-  cv::Mat img_object = cv::imread( imageName, CV_LOAD_IMAGE_GRAYSCALE );
+  //cv::Mat img_object = cv::imread( imageName, CV_LOAD_IMAGE_GRAYSCALE );
   cv::cvtColor(img_scene, img_scene, CV_BGR2GRAY);
-  imshow("TSKAKOSA",img_scene);
+  //imshow("TSKAKOSA",img_scene);
   /*cv::Mat*/ //img_scene = cv::imread("images/camp.png", CV_LOAD_IMAGE_GRAYSCALE );
 
   if( !img_object.data || !img_scene.data )
-  { std::cout<< " --(!) Error reading images " << std::endl; return returnPoints; }
+  { std::cout<< " --(!) Error reading images " << std::endl;}
 
   //-- Step 1: Detect the keypoints using SURF Detector
   int minHessian = 400;
@@ -101,30 +98,12 @@ UpperDownPoints findPointsOfCamp(std::string side,std::string imageName,Mat img_
   cv::line( img_matches, scene_corners[0] + cv::Point2f( img_object.cols, 0), scene_corners[1] + cv::Point2f( img_object.cols, 0), cv::Scalar(0, 255, 0), 4 );
   cv::line( img_matches, scene_corners[1] + cv::Point2f( img_object.cols, 0), scene_corners[2] + cv::Point2f( img_object.cols, 0), cv::Scalar( 0, 255, 0), 4 );
   cv::line( img_matches, scene_corners[2] + cv::Point2f( img_object.cols, 0), scene_corners[3] + cv::Point2f( img_object.cols, 0), cv::Scalar( 0, 255, 0), 4 );
-  //cv::line( img_matches, scene_corners[3] + cv::Point2f( img_object.cols, 0), scene_corners[0] + cv::Point2f( img_object.cols, 0), cv::Scalar( 0, 255, 0), 4 );
-
-
-  if(side == "right")
-  {
-    returnPoints.up = scene_corners[1] ;//+ cv::Point2f( img_object.cols, 0);
-    returnPoints.down = scene_corners[2] ;//+ cv::Point2f( img_object.cols, 0);
-    //printf("Right: %d %d %d %d\n",returnPoints.up.x,returnPoints.up.y,returnPoints.down.x,returnPoints.down.y);
-  }
-  else if(side == "left")
-  {
-    returnPoints.down = scene_corners[3] ;//+ cv::Point2f( img_object.cols, 0);
-    returnPoints.up = scene_corners[0] ;//+ cv::Point2f( img_object.cols, 0);
-  //  printf("Left: %d %d %d %d\n",returnPoints.up.x,returnPoints.up.y,returnPoints.down.x,returnPoints.down.y);
-  }
+  cv::line( img_matches, scene_corners[3] + cv::Point2f( img_object.cols, 0), scene_corners[0] + cv::Point2f( img_object.cols, 0), cv::Scalar( 0, 255, 0), 4 );
 
     //-- Show detected matches
-  //cv::imshow( "Good Matches & Object detection" + side, img_matches );
+  cv::imshow( "Good Matches & Object detection", img_matches );
+  cv::waitKey(0);
 
-  //cv::waitKey(0);
-
-
-
-  return returnPoints;
   }
 
 
