@@ -1,0 +1,19 @@
+#ifndef OBJECT_DETECTOR_H_INCLUDED
+#define OBJECT_DETECTOR_H_INCLUDED
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/nonfree/features2d.hpp>
+
+class ObjectDetector
+{
+	private:
+		//cv::SiftFeatureDetector detector;
+		//std::vector<KeyPoint> keypoints;
+
+	public:
+		void Train();
+		cv::Mat Detect(cv::Mat frame);
+};
+
+#endif
