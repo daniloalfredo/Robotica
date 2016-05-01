@@ -49,9 +49,7 @@ int main(int argc, char** argv)
 				{
 					idle = false;
 					
-					//Process frame
-					for(int i = 0; i < 100000000; i++);
-					//printf("Frame processed.\n");
+					//Process frame and show detected object in another window 
 					imshow("Detection", objectDetector.Detect(frame));
 					
 					idle = true;
