@@ -1,0 +1,37 @@
+Prazo: 12/04
+Equipes de 4 integrantes - nem mais, nem menos.
+
+Descrição da Atividade:
+
+A atividade consiste em modelar e programar o robô de direção diferencial virtual do V-REP, fornecido no arquivo  “Atividade1.ttt".
+
+Parte 1 - 3pts - (Modelagem Virtual) - Ajuste das dimensões do robô:
+
+Ajuste as dimensões do robô virtual para que elas casem com as dimensões do robô real utilizado na da disciplina:
+    - Chassi retangular: 18cm x 10cm
+    - Rodas fixas: raio: 3,25cm; medida l = 7,5cm 
+    - Roda castor: raio: 1,5cm; medida l = 8,5cm
+
+Parte2 - 6pts - (Cinemática) - Programar dois modos de locomoção:  
+
+1. Abrir o arquivo “Atividade1.ttt" no simulador V-REP.
+
+2. No quadro "Scene hierarqui" localizar o item "DifferentialDriveRobot"
+
+3. Clicar no folheto ao lado para abrir o script da programação do robô em Lua.
+
+4. Editar o script para implementar o controle do robô.
+   O script em linguagem Lua deve permitir a escolha entre dois modos de locomoção:
+   Modo A: O robô se move apenas para frente.
+   Modo B: O robô pode se mover para frente ou para trás, escolhendo a trajetória que for mais curta.
+
+5. Executar a simulação testando com o robô iniciando em vários pontos do tabuleiro.
+
+6. O exercício estará correto se o robô se dirigir para a posição (x, y, theta) definida na variável "goal".
+
+Desafio - 2pts - 1pt extra  (Controle do robô no V-REP via C++/Python em vez de Lua).
+ - Implementar o código de controle em C++ ou Python utilizando a API de programação remota do V-REP: http://www.coppeliarobotics.com/helpFiles/en/remoteApiOverview.htm
+   C++: http://www.coppeliarobotics.com/helpFiles/en/remoteApiFunctions.htm
+   Python: http://www.coppeliarobotics.com/helpFiles/en/remoteApiFunctionsPython.htm
+
+ - Vantagem: o código poderá ser portado para o robô real com maior facilidade.

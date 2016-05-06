@@ -1,12 +1,23 @@
 #include "object_detector.h"
 
-void ObjectDetector::Train()
+ObjectDetector::ObjectDetector()
 {
-
+	
 }
 
-cv::Mat ObjectDetector::Detect(cv::Mat frame)
+void ObjectDetector::Train()
+{   
+	printf("Training...\n");
+	
+	//Compute descriptors for each image in database...
+}
+
+Mat ObjectDetector::Detect(Mat frame)
 {
-	cv::Mat detection(500, 500, CV_8UC3, cv::Scalar(rand()%256,rand()%256,rand()%256));
-	return detection;
+	/* compute descriptors of the frame and compare
+	with the descriptors of the images in database
+	and return image of the object that best matches
+	frame*/
+
+	return frame;
 }

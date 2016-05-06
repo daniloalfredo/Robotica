@@ -12,5 +12,7 @@ g++ $PROGRAM.o $LIBRARY.o -o $PROGRAM.bin -fopenmp `pkg-config --cflags --libs o
 if [ -f $PROGRAM.bin ]
 then
 	./$PROGRAM.bin
+	rm $PROGRAM.o
+	rm $LIBRARY.o
 	rm $PROGRAM.bin
 fi
