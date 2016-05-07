@@ -14,10 +14,10 @@ int main (){
     
     //create a nearest neighbor matcher
     Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
-    //create Sift feature point extracter
-    Ptr<FeatureDetector> detector(new SiftFeatureDetector());
-    //create Sift descriptor extractor
-    Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor);    
+    //create Surf feature point extracter
+    Ptr<FeatureDetector> detector(new SurfFeatureDetector());
+    //create Surf descriptor extractor
+    Ptr<DescriptorExtractor> extractor(new SurfDescriptorExtractor);    
     //create BoF (or BoW) descriptor extractor
     BOWImgDescriptorExtractor bowDE(extractor,matcher);
     //Set the dictionary with the vocabulary we created in the first step
@@ -32,12 +32,12 @@ int main (){
     FileStorage fs1("descriptor.yml", FileStorage::WRITE);    
     
     //the image file with the location. change it according to your image file location
-    sprintf(filename,"Imagens/obj1_02.jpg");        
+    sprintf(filename,"obj1_01.jpg");        
     //read the image
     Mat img=imread(filename,CV_LOAD_IMAGE_GRAYSCALE);        
-    //To store the keypoints that will be extracted by SIFT
+    //To store the keypoints that will be extracted by Surf
     vector<KeyPoint> keypoints;        
-    //Detect SIFT keypoints (or feature points)
+    //Detect Surf keypoints (or feature points)
     detector->detect(img,keypoints);
     //To store the BoW (or BoF) representation of the image
     Mat bowDescriptor;        

@@ -15,14 +15,14 @@ using namespace std;
 	//to store the current input image
 	Mat input;    
 
-	//To store the keypoints that will be extracted by SIFT
+	//To store the keypoints that will be extracted by Surf
 	vector<KeyPoint> keypoints;
-	//To store the SIFT descriptor of current image
+	//To store the Surf descriptor of current image
 	Mat descriptor;
 	//To store all the descriptors that are extracted from all the images.
 	Mat featuresUnclustered;
-	//The SIFT feature extractor and descriptor
-	SiftDescriptorExtractor detector;  
+	//The Surf feature extractor and descriptor
+ 	 SurfFeatureDetector detector;
 	//List of image filenames
 	FILE* img = fopen("imagelist.txt", "r"); 
 
@@ -31,8 +31,8 @@ using namespace std;
 		strcpy(filename, "Imagens/");
 		strcat(filename, name);
 		input = imread(filename, CV_LOAD_IMAGE_GRAYSCALE); //Load as grayscale                
-	    namedWindow("Display Image", WINDOW_AUTOSIZE );
-    	imshow("Display Image", input);
+	   // namedWindow("Display Image", WINDOW_AUTOSIZE );
+    //	imshow("Display Image", input);
 
     	waitKey(0);
 	    //detect feature points

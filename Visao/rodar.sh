@@ -1,1 +1,1 @@
- g++ $1.cpp -o $1 `pkg-config --cflags --libs opencv` && ./$1
+ g++ $1.cpp -o $1 `pkg-config --cflags --libs opencv`
