@@ -41,14 +41,18 @@ void ObjectDetector::LoadObjects()
 		fscanf(file_database, "%d", &num_images);
 		
 		//Pega o nome do objeto
+		do{
 		fscanf(file_database, " %[^\n]", aux);
+		}while(strcmp(aux, "\n") == 0);
 		string name(aux);
 		
 		//Pega o nome com path de cada imagem
 		vector<string> image_filenames;
 		for(int j = 0; j < num_images; j++)
 		{
+			do{
 			fscanf(file_database, " %[^\n]", aux);
+			}while(strcmp(aux, "\n") == 0);
 			string filename(aux);
 			image_filenames.push_back(filename);
 			
@@ -167,15 +171,8 @@ string ObjectDetector::Detect(Mat frame)
 	int prediction = svm.predict(frame_histogram);
 	
 	//Verifica a confiança da classificação
-	double confidence;
-	
-	try {
-		confidence = 1.0 / (1.0 + exp(-(svm.predict(frame_histogram, true))));
-		printf("Detection Confidence: %lf%%\n", confidence*100);
-	}catch(cv::Exception){
-		printf("Exception Ocurred\n");
-		confidence = 0.0;
-	}
+	double confidence = 1.0 / (1.0 + exp(-(svm.predict(frame_histogram, true))));
+	printf("Detection Confidence: %lf%%\n", confidence*100);
 
 	//Retorna o nome do objeto
 	if(confidence <= confidence_threshold)

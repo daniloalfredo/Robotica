@@ -10,7 +10,7 @@ int main(int argc, char** argv)
 	ObjectDetector objectDetector(0.8);
 	omp_lock_t framelock;
 	omp_lock_t namelock;
-	Mat frame(100, 100, CV_8UC3, Scalar(255, 0, 255));
+	Mat frame(200, 200, CV_32FC1, Scalar(255, 255, 255));
 	string object_name("Object Not found");
 	VideoCapture cap(0);
 
