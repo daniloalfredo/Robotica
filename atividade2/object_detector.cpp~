@@ -1,5 +1,15 @@
 #include "object_detector.h"
 
+ObjectDetector::ObjectDetector()
+{
+	Init(0.8);
+}
+
+ObjectDetector::ObjectDetector(double confidence_threshold)
+{
+	Init(confidence_threshold);
+}
+
 void ObjectDetector::Init(double confidence)
 {
 	confidence_threshold = confidence;
@@ -100,7 +110,7 @@ void ObjectDetector::Train()
 	}
 	
 	//Constroi o dicionário para o BoF
-	int dictionarySize = 30;
+	int dictionarySize = 50;
 	TermCriteria tc(CV_TERMCRIT_ITER, 100, 0.001);
 	int retries = 1;
 	int flags = KMEANS_PP_CENTERS;

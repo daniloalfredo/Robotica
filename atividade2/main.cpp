@@ -1,4 +1,5 @@
 #include "object_detector.h"
+#include "timer.h"
 
 using namespace cv;
 using namespace std;
@@ -13,6 +14,9 @@ int main(int argc, char** argv)
 	Mat frame(200, 200, CV_32FC1, Scalar(255, 255, 255));
 	string object_name("Object Not found");
 	VideoCapture cap(0);
+	Timer timer_fps;
+	int cont_frames = 0;
+	char frame_rate[20] = "30 fps";
 
 	//Se não conseguir abrir a câmera encerra
 	if(!cap.isOpened())
@@ -24,18 +28,30 @@ int main(int argc, char** argv)
 
 	//Janela de exibição de frames
 	namedWindow("Object Detector", WINDOW_AUTOSIZE);
+	
+	//Inicia timer de fps
+	timer_fps.Start();
 
 	//Inicio do programa
 	#pragma omp parallel sections
    	{ 
    		/*
    			Esta thread captura os frames da câmera e os exibe 
-   			na janela do programa.
+   			na janela do programa contando também a taxa de quadros
+   			por segundo.
    		*/
      	#pragma omp section
      	{ 
 			while(!exit_program)
 			{
+				//Atualiza contador de fps
+				if(timer_fps.GetTimeMsec() >= 1000)
+				{
+					sprintf(frame_rate, "%d fps", cont_frames);
+					cont_frames = 0;
+					timer_fps.Start();
+				}
+			
 				//Pega próximo frame da câmera e faz cópia para exibição
 				omp_set_lock(&framelock);
         		cap >> frame;
@@ -44,9 +60,15 @@ int main(int argc, char** argv)
 				
 				//Desenha nome do objeto na imagem do frame
 				omp_set_lock(&namelock);
-				putText(frame_show, object_name, Point(30, 30), FONT_ITALIC, 1, Scalar(0, 0, 0), 3, false);
-				putText(frame_show, object_name, Point(32, 32), FONT_ITALIC, 1, Scalar(0, 255, 255), 3, false);
+				putText(frame_show, object_name, Point(10, 30), FONT_ITALIC, 1, Scalar(0, 0, 0), 3, false);
+				putText(frame_show, object_name, Point(12, 32), FONT_ITALIC, 1, Scalar(0, 255, 255), 3, false);
 				omp_unset_lock(&namelock);
+				
+				//Desenha framerate na imagem do frame
+				int x = frame_show.cols-120;
+				int y = frame_show.rows-20;
+				putText(frame_show, frame_rate, Point(x, y), FONT_ITALIC, 1, Scalar(0, 0, 0), 3, false);
+				putText(frame_show, frame_rate, Point(x+2, y+2), FONT_ITALIC, 1, Scalar(255, 255, 0), 3, false);
 
 				//Mostra o frame na janela
 				imshow("Object Detector", frame_show);
@@ -54,6 +76,9 @@ int main(int argc, char** argv)
 				//Sai do programa se alguma tecla for pressionada
 				if(waitKey(30) >= 0)
 					exit_program = true;
+					
+				//Conta os frames que se passaram
+				cont_frames++;
 			}
 		}
 

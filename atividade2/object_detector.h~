@@ -48,12 +48,14 @@ class ObjectDetector
 		
 		double confidence_threshold;
 		
+		void Init(double confidence);
 		void Train();
 		void LoadObjects();
 		Mat ComputeHistogram(Mat image);	
 
 	public:
 		ObjectDetector();
+		ObjectDetector(double confidence_threshold);
 		string Detect(Mat frame);
 };
 

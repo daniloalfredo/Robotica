@@ -54,8 +54,8 @@ class ObjectDetector
 		Mat ComputeHistogram(Mat image);	
 
 	public:
-		ObjectDetector() { Init(0.8); }
-		ObjectDetector(double confidence_threshold) { Init(confidence_threshold); }
+		ObjectDetector();
+		ObjectDetector(double confidence_threshold);
 		string Detect(Mat frame);
 };
 
