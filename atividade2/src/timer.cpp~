@@ -2,29 +2,21 @@
 
 void Timer::Start()
 {
-	#ifdef _WIN32
-	QueryPerformanceFrequency(&frequencia);
-    QueryPerformanceCounter(&inicio);
-	#else
-	gettimeofday(&inicio, 0);
-	#endif
+	gettimeofday(&begin, NULL);
+	secs = time(NULL);
 }
 
 int Timer::GetTimeMsec()
 {
-	int tempo;
+	int time_diff;
 	
-	#ifdef _WIN32
-    QueryPerformanceCounter(&final);
-    #else
-	gettimeofday(&final, 0);
-	#endif
+	gettimeofday(&end, NULL);
+	time_diff = (int) (end.tv_sec - begin.tv_sec)*1000 + (end.tv_sec - begin.tv_usec)/1000; 
 
-	#ifdef _WIN32
-    tempo = (int) fabs(((1000LL * final.QuadPart) - (1000LL * inicio.QuadPart)) / frequencia.QuadPart);
-	#else
-	tempo = (int) ( 1000 * (final.tv_sec - inicio.tv_sec) + (final.tv_usec - inicio.tv_usec) / 1000);
-	#endif
+	return time_diff;
+}
 
-	return tempo;
+int Timer::GetTimeSecs()
+{
+	return time(NULL)-secs;
 }

@@ -2,15 +2,21 @@
 
 void Timer::Start()
 {
-	gettimeofday(&inicio, 0);
+	gettimeofday(&begin, NULL);
+	secs = time(NULL);
 }
 
 int Timer::GetTimeMsec()
 {
-	int tempo;
+	int time_diff;
 	
-	gettimeofday(&final, 0);
-	tempo = (int) ( 1000 * (final.tv_sec - inicio.tv_sec) + (final.tv_usec - inicio.tv_usec) / 1000);
+	gettimeofday(&end, NULL);
+	time_diff = (int) (end.tv_sec - begin.tv_sec)*1000 + (end.tv_sec - begin.tv_usec)/1000; 
 
-	return tempo;
+	return time_diff;
+}
+
+int Timer::GetTimeSec()
+{
+	return (int)time(NULL)-secs;
 }

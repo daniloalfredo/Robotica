@@ -11,7 +11,7 @@ int main(int argc, char** argv)
 	ObjectDetector objectDetector;
 	omp_lock_t framelock;
 	omp_lock_t namelock;
-	Mat frame(1, 1, CV_32FC1, Scalar(255, 255, 255));
+	Mat frame(1, 1, CV_32FC1);
 	string object_name("Object Not found");
 	VideoCapture cap(0);
 	Timer timer_fps;
@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 			while(!exit_program)
 			{
 				//Atualiza contador de fps
-				if(timer_fps.GetTimeMsec() >= 1000)
+				if(timer_fps.GetTimeSec() >= 1)
 				{
 					sprintf(frame_rate, "%d fps", cont_frames);
 					cont_frames = 0;

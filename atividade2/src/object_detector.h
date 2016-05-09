@@ -28,18 +28,15 @@ using namespace cv;
 class Object
 {
 	private:
-		int id;
 		string name;
 		vector<string> image_filenames;
 		
 	public:
 		Object() { }
-		Object(int id, string name, vector<string> image_filenames) { this->id = id; this->name = name; this->image_filenames = image_filenames; } 
-		void SetID(int id) { this->id = id; }
+		Object(string name, vector<string> image_filenames) { this->name = name; this->image_filenames = image_filenames; } 
 		void SetName(string name) { this->name = name; }
 		void InsertImageFilename(string image_filename) { image_filenames.push_back(image_filename); }
 		
-		int GetID() { return id; }
 		string GetName() { return name; }
 		vector<string> GetFilenames() { return image_filenames; }
 };

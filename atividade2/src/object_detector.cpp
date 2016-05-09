@@ -78,7 +78,7 @@ void ObjectDetector::LoadObjects()
 		}
 		
 		//Insere objeto na lista de objetos do detector
-		Object new_object(i, name, image_filenames);
+		Object new_object(name, image_filenames);
 		objects.push_back(new_object);
 	}
 	

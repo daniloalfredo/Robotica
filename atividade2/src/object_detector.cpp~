@@ -14,7 +14,7 @@ void ObjectDetector::Init()
 	LoadObjects();
 
 	//Verifica se existe um dicionário
-	FileStorage file_dictionary("dictionary.yml", FileStorage::READ);
+	FileStorage file_dictionary(FILE_DICTIONARY, FileStorage::READ);
 	
 	//Se existe o dicionário carrega ele e carrega o svm
 	if(file_dictionary.isOpened())
@@ -22,7 +22,7 @@ void ObjectDetector::Init()
 		file_dictionary["vocabulary"] >> dictionary;
     	file_dictionary.release();
     	
-    	svm.load("svm.ini");
+    	svm.load(FILE_SVM);
 	}
 	
 	//Se não há dicionário executa o treinamento
@@ -32,7 +32,7 @@ void ObjectDetector::Init()
 
 void ObjectDetector::LoadDetectorParams()
 {
-	FILE* file_params = fopen("params.ini", "r");
+	FILE* file_params = fopen(FILE_PARAMS, "r");
 
 	fscanf(file_params, "%lf", &confidence_threshold);
 	fscanf(file_params, "%d", &dictionary_size);
@@ -43,7 +43,7 @@ void ObjectDetector::LoadDetectorParams()
 void ObjectDetector::LoadObjects()
 {
 	//Abre arquivo com informações das imagens dos objetos
-	FILE* file_database = fopen("database.in", "r");
+	FILE* file_database = fopen(FILE_DATABASE, "r");
 	int num_objects;
 	
 	//Verifica quantos objetos diferentes existem
@@ -124,7 +124,7 @@ void ObjectDetector::Train()
 	dictionary = bowTrainer.cluster(featuresUnclustered);
 	
 	//Salva o dicionário no arquivo
-	FileStorage file_dictionary("dictionary.yml", FileStorage::WRITE);
+	FileStorage file_dictionary(FILE_DICTIONARY, FileStorage::WRITE);
 	file_dictionary << "vocabulary" << dictionary;
 	file_dictionary.release();
 	
@@ -156,7 +156,7 @@ void ObjectDetector::Train()
 	params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
 	
 	svm.train(training_matrix, labels, Mat(), Mat(), params);
-	svm.save("svm.ini");
+	svm.save(FILE_SVM);
 	
 	printf("End of Training\n");
 }
