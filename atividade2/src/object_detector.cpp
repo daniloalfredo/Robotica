@@ -2,23 +2,19 @@
 
 ObjectDetector::ObjectDetector()
 {
-	Init(0.8);
+	Init();
 }
 
-ObjectDetector::ObjectDetector(double confidence_threshold)
+void ObjectDetector::Init()
 {
-	Init(confidence_threshold);
-}
-
-void ObjectDetector::Init(double confidence)
-{
-	confidence_threshold = confidence;
+	//Carrega parâmetros do detector
+	LoadDetectorParams();
 
 	//Carrega lista de objetos
 	LoadObjects();
 
 	//Verifica se existe um dicionário
-	FileStorage file_dictionary("dictionary.yml", FileStorage::READ);
+	FileStorage file_dictionary(FILE_DICTIONARY, FileStorage::READ);
 	
 	//Se existe o dicionário carrega ele e carrega o svm
 	if(file_dictionary.isOpened())
@@ -26,7 +22,7 @@ void ObjectDetector::Init(double confidence)
 		file_dictionary["vocabulary"] >> dictionary;
     	file_dictionary.release();
     	
-    	svm.load("svm_data.in");
+    	svm.load(FILE_SVM);
 	}
 	
 	//Se não há dicionário executa o treinamento
@@ -34,10 +30,20 @@ void ObjectDetector::Init(double confidence)
 		Train();
 }
 
+void ObjectDetector::LoadDetectorParams()
+{
+	FILE* file_params = fopen(FILE_PARAMS, "r");
+
+	fscanf(file_params, "%lf", &confidence_threshold);
+	fscanf(file_params, "%d", &dictionary_size);
+	
+	fclose(file_params);
+}
+
 void ObjectDetector::LoadObjects()
 {
 	//Abre arquivo com informações das imagens dos objetos
-	FILE* file_database = fopen("database.in", "r");
+	FILE* file_database = fopen(FILE_DATABASE, "r");
 	int num_objects;
 	
 	//Verifica quantos objetos diferentes existem
@@ -110,16 +116,15 @@ void ObjectDetector::Train()
 	}
 	
 	//Constroi o dicionário para o BoF
-	int dictionarySize = 70;
 	TermCriteria tc(CV_TERMCRIT_ITER, 100, 0.001);
 	int retries = 1;
 	int flags = KMEANS_PP_CENTERS;
-	BOWKMeansTrainer bowTrainer(dictionarySize, tc, retries, flags);
+	BOWKMeansTrainer bowTrainer(dictionary_size, tc, retries, flags);
 	
 	dictionary = bowTrainer.cluster(featuresUnclustered);
 	
 	//Salva o dicionário no arquivo
-	FileStorage file_dictionary("dictionary.yml", FileStorage::WRITE);
+	FileStorage file_dictionary(FILE_DICTIONARY, FileStorage::WRITE);
 	file_dictionary << "vocabulary" << dictionary;
 	file_dictionary.release();
 	
@@ -151,7 +156,7 @@ void ObjectDetector::Train()
 	params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
 	
 	svm.train(training_matrix, labels, Mat(), Mat(), params);
-	svm.save("svm_data.in");
+	svm.save(FILE_SVM);
 	
 	printf("End of Training\n");
 }

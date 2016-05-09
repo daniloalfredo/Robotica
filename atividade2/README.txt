@@ -24,7 +24,8 @@ de objetos escolhidos.
 
 O programa lê frames da câmera do computador e os processa
 em busca dos objetos escolhidos. Se um objeto é reconhecido
-na cena seu nome é mostrado na tela em tempo real.
+na cena seu nome é mostrado na tela em tempo real. Também
+é exibida a taxa de quadros por segundo em tempo real.
 
 //***************************************************************
 
@@ -45,7 +46,7 @@ openmp.
 
 Para treinar:
 
-O programa lê os objetos que estejam descritos no arquivo "database.in"
+O programa lê os objetos que estejam descritos no arquivo "ini/database.ini"
 Este arquivo contém as seguintes informações (em ordem):
 
 1) Número de objetos diferentes a serem reconhecidos
@@ -56,7 +57,7 @@ Este arquivo contém as seguintes informações (em ordem):
 	2.3) Para cada imagem do objeto
 		2.3.1)	Nome do arquivo de imagem com path
 		
-Exemplo de arquivo "database.in":
+Exemplo de arquivo "ini/database.ini":
 
 	2
 
@@ -77,7 +78,18 @@ e outro denominado Celular). O primeiro objeto possui duas imagens
 e o segundo 3 imagens que serão usadas no treinamento do detector.
 
 Para que o software faça o treinamento é preciso além de alterar
-o arquivo "database.in" remover o arquivo "dictionary.yml" da 
+o arquivo "ini/database.ini" remover o arquivo "ini/dictionary.yml" da 
 pasta do programa. Assim ao rodar o script de execução o programa
 irá gerar um novo dicionário utilizando os objetos listados 
-em "database.in".
+em "ini/database.ini".
+
+Adicionalmente pode-se alterar alguns parâmetros do detector no 
+arquivo "ini/params.ini". Os parâmetros são, em ordem:
+
+1) Confiança de detecção: valor de ponto flutuante entre 0 e 1
+que representa percentagem mínima de confiança para o detector
+considerar um objeto como detectado na cena.
+
+2) Tamanho do dicionário: inteiro maior ou igual a 1 que representa
+o número de features diferentes armazenadas no dicionário (utilizado
+durante treinamento)

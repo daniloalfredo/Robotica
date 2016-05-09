@@ -19,6 +19,12 @@
 using namespace std;
 using namespace cv;
 
+//Arquivos utilizados pelo programa
+#define FILE_DICTIONARY "ini/dictionary.yml"
+#define FILE_DATABASE "ini/database.ini"
+#define FILE_PARAMS "ini/params.ini"
+#define FILE_SVM "ini/svm.ini" 
+
 class Object
 {
 	private:
@@ -46,17 +52,19 @@ class ObjectDetector
 		Mat labels;
 		CvSVM svm;
 		
+		//Parâmetros de aprendizado
 		double confidence_threshold;
 		int dictionary_size;
 		
-		void Init(double confidence);
-		void Train();
+		//Funções auxiliares
+		void Init();
+		void LoadDetectorParams();
 		void LoadObjects();
+		void Train();
 		Mat ComputeHistogram(Mat image);	
 
 	public:
 		ObjectDetector();
-		ObjectDetector(double confidence_threshold);
 		string Detect(Mat frame);
 };
 

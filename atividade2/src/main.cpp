@@ -8,10 +8,10 @@ int main(int argc, char** argv)
 {
 	//Variáveis
 	bool exit_program = false;
-	ObjectDetector objectDetector(0.8);
+	ObjectDetector objectDetector;
 	omp_lock_t framelock;
 	omp_lock_t namelock;
-	Mat frame(200, 200, CV_32FC1, Scalar(255, 255, 255));
+	Mat frame(1, 1, CV_32FC1, Scalar(255, 255, 255));
 	string object_name("Object Not found");
 	VideoCapture cap(0);
 	Timer timer_fps;
@@ -90,19 +90,23 @@ int main(int argc, char** argv)
      	{ 
 			while(!exit_program)
 			{
-				//Converte frame para preto e branco
-				omp_set_lock(&framelock);
-				Mat frame_bw;
-				cvtColor(frame, frame_bw, CV_BGR2GRAY);
-				omp_unset_lock(&framelock); 
+				//Se certifica de que frame já foi inicializado com a câmera
+				if(frame.rows > 1)
+				{
+					//Converte frame para preto e branco
+					omp_set_lock(&framelock);
+					Mat frame_bw;
+					cvtColor(frame, frame_bw, CV_BGR2GRAY);
+					omp_unset_lock(&framelock); 
 
-				//Processa o frame e pega o nome do objeto encontrado
-				string detector_name = objectDetector.Detect(frame_bw);
+					//Processa o frame e pega o nome do objeto encontrado
+					string detector_name = objectDetector.Detect(frame_bw);
 				
-				//Copia a string do nome para a string de exibicao
-				omp_set_lock(&namelock);
-				object_name = detector_name;
-				omp_unset_lock(&namelock);
+					//Copia a string do nome para a string de exibicao
+					omp_set_lock(&namelock);
+					object_name = detector_name;
+					omp_unset_lock(&namelock);
+				}
 			}
 		}
    	}

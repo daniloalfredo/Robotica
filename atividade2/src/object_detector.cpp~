@@ -22,7 +22,7 @@ void ObjectDetector::Init()
 		file_dictionary["vocabulary"] >> dictionary;
     	file_dictionary.release();
     	
-    	svm.load("svm_data.in");
+    	svm.load("svm.ini");
 	}
 	
 	//Se não há dicionário executa o treinamento
@@ -156,7 +156,7 @@ void ObjectDetector::Train()
 	params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
 	
 	svm.train(training_matrix, labels, Mat(), Mat(), params);
-	svm.save("svm_data.in");
+	svm.save("svm.ini");
 	
 	printf("End of Training\n");
 }
