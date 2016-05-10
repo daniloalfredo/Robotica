@@ -176,16 +176,16 @@ Mat ObjectDetector::ComputeHistogram(Mat image)
     return image_histogram;
 }
 
-void ObjectDetector::FindCenter(Mat frame, Point2f* center_pos)
+void ObjectDetector::FindCenter(Mat frame, Point2f* center_pos, int object_class)
 {
 	Mat descriptors_frame;
 	FlannBasedMatcher matcher;
-  	std::vector< DMatch > matches;
+  	vector<DMatch> matches;
   	SiftDescriptorExtractor detector;
   	
   	detector.compute(frame, keypoints, descriptors_frame);
-  	matcher.match(descriptors_frame, dictionary, matches);
-  	
+  	matcher.match(descriptors_frame, objects[object_class].GetDescriptors(), matches);
+
   	double max_dist = 0; double min_dist = 50;
 
 	for( int i = 0; i < descriptors_frame.rows; i++ )
@@ -240,7 +240,7 @@ string ObjectDetector::Detect(Mat frame, Point2f* center_pos)
 	
 	else
 	{
-		FindCenter(frame, center_pos);
+		FindCenter(frame, center_pos, prediction);
 		return objects[prediction].GetName();
 	}
 }

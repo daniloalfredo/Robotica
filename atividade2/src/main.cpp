@@ -63,7 +63,7 @@ void thread_capture()
 	putText(frame_show, object_name, Point(12, 32), FONT_ITALIC, 1, Scalar(0, 255, 255), 3, false);
 				
 	if(object_center.x >= 0)
-		circle(frame_show, object_center, 4, Scalar(0, 0, 255), 4, 8, 0);
+		circle(frame_show, object_center, 40, Scalar(0, 0, 255), 2, 8, 0);
 	
 	#ifdef USE_OPENMP			
 	omp_unset_lock(&namelock);

@@ -30,14 +30,29 @@ class Object
 		string name;
 		vector<string> image_filenames;
 		
+		Mat main_image;
+		vector<KeyPoint> keypoints;
+		Mat descriptors;
+		
 	public:
-		Object() { }
-		Object(string name, vector<string> image_filenames) { this->name = name; this->image_filenames = image_filenames; } 
-		void SetName(string name) { this->name = name; }
+		Object(string name, vector<string> image_filenames)
+		{ 
+			this->name = name; 
+			this->image_filenames = image_filenames;
+			this->main_image = imread(image_filenames[0], CV_LOAD_IMAGE_GRAYSCALE);
+			
+			SiftDescriptorExtractor detector;
+			detector.detect(main_image, keypoints);
+  			detector.compute(main_image, keypoints, descriptors);
+		}
+		 
 		void InsertImageFilename(string image_filename) { image_filenames.push_back(image_filename); }
 		
 		string GetName() { return name; }
 		vector<string> GetFilenames() { return image_filenames; }
+		Mat GetMainImage() { return main_image; }
+		vector<KeyPoint> GetKeypoints() { return keypoints; }
+		Mat GetDescriptors() { return descriptors; }
 };
 
 class ObjectDetector
@@ -60,7 +75,7 @@ class ObjectDetector
 		void LoadObjects();
 		void Train();
 		Mat ComputeHistogram(Mat image);
-		void FindCenter(Mat frame, Point2f* center_pos);	
+		void FindCenter(Mat frame, Point2f* center_pos, int object_class);	
 
 	public:
 		ObjectDetector();
