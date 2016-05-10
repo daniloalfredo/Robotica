@@ -14,7 +14,6 @@
 #include <cstdio>
 #include <ctime>
 #include <string>
-#include <omp.h>
 
 using namespace std;
 using namespace cv;
