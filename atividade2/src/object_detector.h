@@ -49,6 +49,8 @@ class ObjectDetector
 		Mat labels;
 		CvSVM svm;
 		
+		vector<KeyPoint> keypoints;
+		
 		//Parâmetros de aprendizado
 		double confidence_threshold;
 		int dictionary_size;
@@ -58,11 +60,12 @@ class ObjectDetector
 		void LoadDetectorParams();
 		void LoadObjects();
 		void Train();
-		Mat ComputeHistogram(Mat image);	
+		Mat ComputeHistogram(Mat image);
+		void FindCenter(Mat frame, Point2f* center_pos);	
 
 	public:
 		ObjectDetector();
-		string Detect(Mat frame);
+		string Detect(Mat frame, Point2f* center_pos);
 };
 
 #endif

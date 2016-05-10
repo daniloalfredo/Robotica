@@ -167,7 +167,6 @@ Mat ObjectDetector::ComputeHistogram(Mat image)
 	Ptr<FeatureDetector> detector(new SiftFeatureDetector());
     Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor); 
 	BOWImgDescriptorExtractor bowDE(extractor, matcher);
-	vector<KeyPoint> keypoints;
 	Mat image_histogram; 
 	
 	detector->detect(image, keypoints);
@@ -177,7 +176,49 @@ Mat ObjectDetector::ComputeHistogram(Mat image)
     return image_histogram;
 }
 
-string ObjectDetector::Detect(Mat frame)
+void ObjectDetector::FindCenter(Mat frame, Point2f* center_pos)
+{
+	Mat descriptors_frame;
+	FlannBasedMatcher matcher;
+  	std::vector< DMatch > matches;
+  	SiftDescriptorExtractor detector;
+  	
+  	detector.compute(frame, keypoints, descriptors_frame);
+  	matcher.match(descriptors_frame, dictionary, matches);
+  	
+  	double max_dist = 0; double min_dist = 50;
+
+	for( int i = 0; i < descriptors_frame.rows; i++ )
+	{ 
+		double dist = matches[i].distance;
+		if( dist < min_dist ) min_dist = dist;
+		if( dist > max_dist ) max_dist = dist;
+	}
+
+	std::vector< DMatch > good_matches;
+
+	for( int i = 0; i < descriptors_frame.rows; i++ )
+	{ 
+		if(matches[i].distance <= max(2*min_dist, 0.02))
+    		good_matches.push_back( matches[i]);
+	}
+	
+	//---------------------------
+
+	center_pos->x = 0;
+	center_pos->y = 0;
+	
+	for(unsigned int i = 0; i < good_matches.size(); i++)
+	{
+		center_pos->x += keypoints[good_matches[i].queryIdx].pt.x;
+		center_pos->y += keypoints[good_matches[i].queryIdx].pt.y;
+	}	
+	
+	center_pos->x /= good_matches.size();
+	center_pos->y /= good_matches.size();
+}
+
+string ObjectDetector::Detect(Mat frame, Point2f* center_pos)
 {	
 	//Computa histograma do frame segundo BoF
 	Mat frame_histogram = ComputeHistogram(frame);
@@ -191,7 +232,15 @@ string ObjectDetector::Detect(Mat frame)
 
 	//Retorna o nome do objeto
 	if(confidence <= confidence_threshold)
+	{
+		center_pos->x = -1;
+		center_pos->y = -1;
 		return string("Object Not Found");
+	}
+	
 	else
+	{
+		FindCenter(frame, center_pos);
 		return objects[prediction].GetName();
+	}
 }

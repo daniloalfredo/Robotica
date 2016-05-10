@@ -13,6 +13,7 @@ int main(int argc, char** argv)
 	omp_lock_t namelock;
 	Mat frame(1, 1, CV_32FC1);
 	string object_name("Object Not found");
+	Point2f object_center(-1, -1);
 	VideoCapture cap(0);
 	Timer timer_fps;
 	int cont_frames = 0;
@@ -55,13 +56,17 @@ int main(int argc, char** argv)
 				//Pega próximo frame da câmera e faz cópia para exibição
 				omp_set_lock(&framelock);
         		cap >> frame;
-        		Mat frame_show = frame;
+        		Mat frame_show = frame.clone();
 				omp_unset_lock(&framelock); 
 				
-				//Desenha nome do objeto na imagem do frame
+				//Desenha nome do objeto e centro na imagem do frame
 				omp_set_lock(&namelock);
 				putText(frame_show, object_name, Point(10, 30), FONT_ITALIC, 1, Scalar(0, 0, 0), 3, false);
 				putText(frame_show, object_name, Point(12, 32), FONT_ITALIC, 1, Scalar(0, 255, 255), 3, false);
+				
+				if(object_center.x >= 0)
+					circle(frame_show, object_center, 4, Scalar(0, 0, 255), 4, 8, 0);
+				
 				omp_unset_lock(&namelock);
 				
 				//Desenha framerate na imagem do frame
@@ -100,11 +105,13 @@ int main(int argc, char** argv)
 					omp_unset_lock(&framelock); 
 
 					//Processa o frame e pega o nome do objeto encontrado
-					string detector_name = objectDetector.Detect(frame_bw);
+					Point2f detector_center;
+					string detector_name = objectDetector.Detect(frame_bw, &detector_center);
 				
 					//Copia a string do nome para a string de exibicao
 					omp_set_lock(&namelock);
 					object_name = detector_name;
+					object_center = detector_center;
 					omp_unset_lock(&namelock);
 				}
 			}
