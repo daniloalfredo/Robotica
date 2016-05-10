@@ -78,12 +78,11 @@ Este arquivo define que há dois objetos (um denominado Sapato
 e outro denominado Celular). O primeiro objeto possui duas imagens
 e o segundo 3 imagens que serão usadas no treinamento do detector.
 
-Para que o software faça o treinamento é preciso além de alterar
-o arquivo "ini/database.ini" remover o arquivo "ini/dictionary.yml" da 
-pasta do programa. Assim ao rodar o script de execução o programa
-irá gerar um novo dicionário utilizando os objetos listados 
-em "ini/database.ini".
-
+Para que o software faça o treinamento após alterar o arquivo 
+"ini/database.ini" basta rodar o script "run.sh" com a flag
+"-train" ativa com o comando:
+	´./run.sh -train´
+	
 Adicionalmente pode-se alterar alguns parâmetros do detector no 
 arquivo "ini/params.ini". Os parâmetros são, em ordem:
 

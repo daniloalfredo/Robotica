@@ -25,6 +25,12 @@ then
 	g++ $MAIN.o $LIBRARY1.o $LIBRARY2.o -o $BINARY.bin -fopenmp `pkg-config --cflags --libs opencv`
 fi
 
+#train flag triggers new training
+if [ "${1}" == "-train" ]
+then
+	rm ini/dictionary.yml
+fi
+
 #Run
 if [ -f $BINARY.bin ]
 then
