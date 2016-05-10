@@ -74,6 +74,7 @@ class ObjectDetector
 		void LoadDetectorParams();
 		void LoadObjects();
 		void Train();
+		void SaveKeypointImageLog(Mat image, vector<KeyPoint>keypoints, unsigned int i, unsigned int j);
 		Mat ComputeHistogram(Mat image);
 		void FindCenter(Mat frame, Point2f* center_pos, int object_class);	
 

@@ -117,7 +117,10 @@ void ObjectDetector::Train()
 			detector.compute(image, keypoints, descriptor);
 			
 			//Guarda os descritores encontrados
-			featuresUnclustered.push_back(descriptor);     
+			featuresUnclustered.push_back(descriptor); 
+			
+			//Salva log do treino
+			SaveKeypointImageLog(image, keypoints, i, j);    
 		}
 	}
 	
@@ -165,6 +168,14 @@ void ObjectDetector::Train()
 	svm.save(FILE_SVM);
 	
 	printf("End of Training\n");
+}
+
+void ObjectDetector::SaveKeypointImageLog(Mat image, vector<KeyPoint>keypoints, unsigned int i, unsigned int j)
+{
+	drawKeypoints(image, keypoints, image, Scalar(2,254,255), DrawMatchesFlags::DEFAULT);
+	char path[100];
+	sprintf(path, "log/obj%d_img%d.jpg", i, j); 
+	imwrite(path, image);
 }
 
 Mat ObjectDetector::ComputeHistogram(Mat image)
