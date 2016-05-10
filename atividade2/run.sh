@@ -26,7 +26,7 @@ then
 fi
 
 #train flag triggers new training
-if [ "${1}" == "-train" ]
+if [ "${1}" == "-train" ] && [ -f ini/dictionary.yml ];
 then
 	rm ini/dictionary.yml
 fi

@@ -19,9 +19,11 @@ void ObjectDetector::Init()
 	//Se existe o dicionário carrega ele e carrega o svm
 	if(file_dictionary.isOpened())
 	{
+		printf("Loading Dictionary...\n");
 		file_dictionary["vocabulary"] >> dictionary;
     	file_dictionary.release();
     	
+    	printf("Loading SVM...\n");
     	svm.load(FILE_SVM);
 	}
 	
@@ -42,6 +44,8 @@ void ObjectDetector::LoadDetectorParams()
 
 void ObjectDetector::LoadObjects()
 {
+	printf("Loading Objects...\n");
+
 	//Abre arquivo com informações das imagens dos objetos
 	FILE* file_database = fopen(FILE_DATABASE, "r");
 	int num_objects;
@@ -61,6 +65,8 @@ void ObjectDetector::LoadObjects()
 		fscanf(file_database, " %[^\n]", aux);
 		}while(strcmp(aux, "\n") == 0);
 		string name(aux);
+		
+		printf("\tObject: %s\n", name.c_str());
 		
 		//Pega o nome com path de cada imagem
 		vector<string> image_filenames;

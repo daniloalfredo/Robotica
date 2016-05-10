@@ -35,9 +35,11 @@ Para executar:
 Para executar o programa basta executar o script "run.sh" com
 o comando: 
 	´./run.sh´
+
 O script irá compilar o software e executar em seguida. Em caso
 de falta de permissão executar antes o commando:
 	´chmod +x run.sh´
+
 Nota: é necessário possuir instalado a biblioteca opencv
 (o programa foi escrito utilizando a versão 2.4.12)
 disponível em "http://opencv.org/" e compilador g++ com 
@@ -47,8 +49,13 @@ openmp.
 
 Para treinar:
 
-O programa lê os objetos que estejam descritos no arquivo "ini/database.ini"
-Este arquivo contém as seguintes informações (em ordem):
+Para que o software faça o treinamento basta executar o script 
+"run.sh" com a flag "-train" ativa com o comando:
+	´./run.sh -train´
+
+O programa lê os objetos que estejam descritos no arquivo
+"ini/database.ini". Este arquivo contém as seguintes 
+informações (em ordem):
 
 1) Número de objetos diferentes a serem reconhecidos
 
@@ -77,11 +84,6 @@ Exemplo de arquivo "ini/database.ini":
 Este arquivo define que há dois objetos (um denominado Sapato
 e outro denominado Celular). O primeiro objeto possui duas imagens
 e o segundo 3 imagens que serão usadas no treinamento do detector.
-
-Para que o software faça o treinamento após alterar o arquivo 
-"ini/database.ini" basta rodar o script "run.sh" com a flag
-"-train" ativa com o comando:
-	´./run.sh -train´
 	
 Adicionalmente pode-se alterar alguns parâmetros do detector no 
 arquivo "ini/params.ini". Os parâmetros são, em ordem:
