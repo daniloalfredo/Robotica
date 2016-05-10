@@ -24,8 +24,9 @@ de objetos escolhidos.
 
 O programa lê frames da câmera do computador e os processa
 em busca dos objetos escolhidos. Se um objeto é reconhecido
-na cena seu nome é mostrado na tela em tempo real. Também
-é exibida a taxa de quadros por segundo em tempo real.
+na cena seu nome é mostrado na tela em tempo real e sua posicao
+é mostrada com um círculo vermelho. Também é exibida a taxa de
+quadros por segundo que está sendo alcançada.
 
 //***************************************************************
 
