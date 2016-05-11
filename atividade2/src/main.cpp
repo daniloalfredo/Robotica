@@ -1,7 +1,7 @@
 #include "object_detector.h"
 #include "timer.h"
 
-#define USE_OPENMP 1
+#define USE_OPENMP
 
 #ifdef USE_OPENMP 
 #include <omp.h>
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
 	#endif
 
 	//Janela de exibição de frames
-	namedWindow("Object Detector", WINDOW_AUTOSIZE);
+	namedWindow("Object Detector", CV_WINDOW_AUTOSIZE);
 	
 	//Inicia timer de fps
 	timer_fps.Start();

@@ -239,10 +239,17 @@ string ObjectDetector::Detect(Mat frame, Point2f* center_pos)
 {	
 	//Computa histograma do frame segundo BoF
 	Mat frame_histogram = ComputeHistogram(frame);
+
+	//Inpede crash de histogramas zerados
+	if(frame_histogram.rows == 0 || frame_histogram.cols == 0)
+	{
+		Mat noncrash(1, 200, CV_32FC1, Scalar::all(0));
+		frame_histogram = noncrash;
+	}
 	
 	//Classifica frame
 	int prediction = svm.predict(frame_histogram);
-	
+
 	//Verifica a confiança da classificação
 	double confidence = 1.0 / (1.0 + exp(-(svm.predict(frame_histogram, true))));
 	printf("Detection Confidence: %lf%%\n", confidence*100);
