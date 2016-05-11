@@ -37,12 +37,12 @@ void ObjectDetector::LoadDetectorParams()
 	printf("Loading Params...\n");
 	FILE* file_params = fopen(FILE_PARAMS, "r");
 
-	fscanf(file_params, "%*s %lf", &confidence_threshold);
-	fscanf(file_params, "%*s %d", &dictionary_size);
-	fscanf(file_params, "%*s %d", &blur_size);
+	fscanf(file_params, "%*[^:] %*c %lf", &confidence_threshold);
+	fscanf(file_params, "%*[^:] %*c %d", &dictionary_size);
+	fscanf(file_params, "%*[^:] %*c %d", &blur_size);
 	
 	char aux[50];
-	fscanf(file_params, "%*s %[^\n]", aux);
+	fscanf(file_params, "%*[^:] %*c %[^\n]", aux);
 	
 	if(strcmp(aux, "LINEAR") == 0)
 		svm_kernel_type = CvSVM::LINEAR;
@@ -54,8 +54,8 @@ void ObjectDetector::LoadDetectorParams()
 	else
 		svm_kernel_type = CvSVM::RBF;
 		
-	fscanf(file_params, "%*s %d", &svm_degree);
-	fscanf(file_params, "%*s %d", &svm_gamma);
+	fscanf(file_params, "%*[^:] %*c %d", &svm_degree);
+	fscanf(file_params, "%*[^:] %*c %d", &svm_gamma);
 	
 	fclose(file_params);
 	
