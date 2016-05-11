@@ -10,6 +10,18 @@
 using namespace cv;
 using namespace std;
 
+//Pra a webcam não travar se interromper a captura
+volatile int quit_signal = 0;
+#ifdef __unix__
+#include <signal.h>
+extern "C" void quit_signal_handler(int signum)
+{
+	if (quit_signal != 0) 
+		exit(0);
+	quit_signal = 1;
+}
+#endif
+
 //Variáveis
 bool exit_program = false;
 ObjectDetector objectDetector;
@@ -53,6 +65,10 @@ void thread_capture()
 	#ifdef USE_OPENMP
 	omp_unset_lock(&framelock);
 	#endif 
+	
+	//Fecha o programa se apertar ctrl+C no terminal
+	if(quit_signal)
+		exit(0);
 				
 	//Desenha nome do objeto e centro na imagem do frame
 	#ifdef USE_OPENMP
@@ -128,6 +144,10 @@ void thread_detection()
 
 int main(int argc, char** argv)
 {
+	#ifdef __unix__
+   	signal(SIGINT,quit_signal_handler); // listen for ctrl-C
+	#endif
+
 	//Se não conseguir abrir a câmera encerra
 	if(!cap.isOpened())
         return -1;
