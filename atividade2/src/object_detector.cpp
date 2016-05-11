@@ -76,30 +76,26 @@ void ObjectDetector::LoadObjects()
 	int num_objects;
 	
 	//Verifica quantos objetos diferentes existem
-	fscanf(file_database, "%d", &num_objects);
+	fscanf(file_database, "%*[^:] %*c %d", &num_objects);
 	char aux[100];
 	
 	for(int i = 0; i < num_objects; i++)
 	{
-		//Pega o número de imagens do objeto
-		int num_images;
-		fscanf(file_database, "%d", &num_images);
-		
 		//Pega o nome do objeto
-		do{
-		fscanf(file_database, " %[^\n]", aux);
-		}while(strcmp(aux, "\n") == 0);
+		fscanf(file_database, "%*[^:] %*c %[^\n]", aux);
 		string name(aux);
 		
 		printf("\tObject: %s\n", name.c_str());
+	
+		//Pega o número de imagens do objeto
+		int num_images;
+		fscanf(file_database, "%*[^:] %*c %d", &num_images);
 		
 		//Pega o nome com path de cada imagem
 		vector<string> image_filenames;
 		for(int j = 0; j < num_images; j++)
 		{
-			do{
-			fscanf(file_database, " %[^\n]", aux);
-			}while(strcmp(aux, "\n") == 0);
+			fscanf(file_database, "%*[^:] %*c %[^\n]", aux);
 			string filename(aux);
 			image_filenames.push_back(filename);
 			
