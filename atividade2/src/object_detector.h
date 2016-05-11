@@ -68,6 +68,7 @@ class ObjectDetector
 		//Parâmetros de aprendizado
 		double confidence_threshold;
 		int dictionary_size;
+		int blur_size;
 		int svm_kernel_type;
 		int svm_degree;
 		int svm_gamma;

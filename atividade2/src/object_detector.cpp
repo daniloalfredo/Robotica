@@ -34,13 +34,16 @@ void ObjectDetector::Init()
 
 void ObjectDetector::LoadDetectorParams()
 {
+	printf("Loading Params...\n");
 	FILE* file_params = fopen(FILE_PARAMS, "r");
 
-	fscanf(file_params, "%lf", &confidence_threshold);
-	fscanf(file_params, "%d", &dictionary_size);
+	fscanf(file_params, "%*s %lf", &confidence_threshold);
+	fscanf(file_params, "%*s %d", &dictionary_size);
+	fscanf(file_params, "%*s %d", &blur_size);
 	
 	char aux[50];
-	fscanf(file_params, " %[^\n]", aux);
+	fscanf(file_params, "%*s %[^\n]", aux);
+	
 	if(strcmp(aux, "LINEAR") == 0)
 		svm_kernel_type = CvSVM::LINEAR;
 	
@@ -51,10 +54,17 @@ void ObjectDetector::LoadDetectorParams()
 	else
 		svm_kernel_type = CvSVM::RBF;
 		
-	fscanf(file_params, "%d", &svm_degree);
-	fscanf(file_params, "%d", &svm_gamma);
+	fscanf(file_params, "%*s %d", &svm_degree);
+	fscanf(file_params, "%*s %d", &svm_gamma);
 	
 	fclose(file_params);
+	
+	printf("\tCONFIDENCE THRESHOLD: %.2lf\n", confidence_threshold);
+	printf("\tDICTIONARY SIZE: %d\n", dictionary_size);
+	printf("\tBLUR WINDOW SIZE: %d\n", blur_size);
+	printf("\tSVM KERNEL TYPE: %s\n", aux);
+	printf("\tSVM DEGREE: %d\n", svm_degree);
+	printf("\tSVM GAMMA: %d\n", svm_gamma);
 }
 
 void ObjectDetector::LoadObjects()
@@ -165,6 +175,10 @@ void ObjectDetector::Train()
 			//Abre a imagem em escala de cinza
 			Mat image = imread(image_filenames[j], CV_LOAD_IMAGE_GRAYSCALE);
 			
+			//Passa filtro gaussiano na imagem
+			if(blur_size > 0)
+				GaussianBlur(image, image, Size(blur_size, blur_size), 0, 0);
+		
 			//Computa o histograma segundo o BoF
 			Mat image_histogram = ComputeHistogram(image);
 			
@@ -254,6 +268,10 @@ void ObjectDetector::FindCenter(Mat frame, Point2f* center_pos, int object_class
 
 string ObjectDetector::Detect(Mat frame, Point2f* center_pos)
 {	
+	//Passa filtro gaussiano
+	if(blur_size > 0)
+		GaussianBlur(frame, frame, Size(blur_size, blur_size), 0, 0);
+
 	//Computa histograma do frame segundo BoF
 	Mat frame_histogram = ComputeHistogram(frame);
 

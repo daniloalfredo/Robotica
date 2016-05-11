@@ -96,7 +96,11 @@ considerar um objeto como detectado na cena.
 o número de features diferentes armazenadas no dicionário (utilizado
 durante treinamento)
 
-3) Parâmetros da SVM (vide a descriçao completa em "http://docs.opencv.org/2.4/modules/ml/doc/support_vector_machines.html"):
-	3.1) Kernel type (LINEAR, RBF, SIGMOID, POLY)
-	3.2) Degree (inteiro)
-	3.3) Gamma (inteiro)
+3) Tamanho do filtro gaussiano: inteiro representando o tamanho de uma
+janela quadrada de filtro gaussiano. Se maior que 0 o filtro será aplicado
+na imagem antes de detectar os pontos de interesse
+
+4) Parâmetros da SVM (vide a descriçao completa em "http://docs.opencv.org/2.4/modules/ml/doc/support_vector_machines.html"):
+	4.1) Kernel type (LINEAR, RBF, SIGMOID, POLY)
+	4.2) Degree (inteiro)
+	4.3) Gamma (inteiro)
