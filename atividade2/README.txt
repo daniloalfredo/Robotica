@@ -95,3 +95,8 @@ considerar um objeto como detectado na cena.
 2) Tamanho do dicionário: inteiro maior ou igual a 1 que representa
 o número de features diferentes armazenadas no dicionário (utilizado
 durante treinamento)
+
+3) Parâmetros da SVM (vide a descriçao completa em "http://docs.opencv.org/2.4/modules/ml/doc/support_vector_machines.html"):
+	3.1) Kernel type (LINEAR, RBF, SIGMOID, POLY)
+	3.2) Degree (inteiro)
+	3.3) Gamma (inteiro)

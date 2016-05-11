@@ -39,6 +39,21 @@ void ObjectDetector::LoadDetectorParams()
 	fscanf(file_params, "%lf", &confidence_threshold);
 	fscanf(file_params, "%d", &dictionary_size);
 	
+	char aux[50];
+	fscanf(file_params, " %[^\n]", aux);
+	if(strcmp(aux, "LINEAR") == 0)
+		svm_kernel_type = CvSVM::LINEAR;
+	
+	else if(strcmp(aux, "POLY") == 0)
+		svm_kernel_type = CvSVM::POLY;	
+	else if(strcmp(aux, "SIGMOID") == 0)
+		svm_kernel_type = CvSVM::SIGMOID;
+	else
+		svm_kernel_type = CvSVM::RBF;
+		
+	fscanf(file_params, "%d", &svm_degree);
+	fscanf(file_params, "%d", &svm_gamma);
+	
 	fclose(file_params);
 }
 
@@ -160,9 +175,11 @@ void ObjectDetector::Train()
 	
 	//Treina SVM e salva em arquivo
 	CvSVMParams params;
-	params.svm_type = CvSVM::C_SVC;
-	params.kernel_type = CvSVM::RBF;
 	params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
+	params.svm_type = CvSVM::C_SVC;
+	params.kernel_type = svm_kernel_type; //LINEAR / POLY / RBF / SIGMOID
+	params.degree = svm_degree;	//influencia kernel POLY
+	params.gamma = svm_gamma;	//influencia kernels  POLY / RBF / SIGMOID
 	
 	svm.train(training_matrix, labels, Mat(), Mat(), params);
 	svm.save(FILE_SVM);
@@ -243,7 +260,7 @@ string ObjectDetector::Detect(Mat frame, Point2f* center_pos)
 	//Inpede crash de histogramas zerados
 	if(frame_histogram.rows == 0 || frame_histogram.cols == 0)
 	{
-		Mat noncrash(1, 200, CV_32FC1, Scalar::all(0));
+		Mat noncrash(1, dictionary_size, CV_32FC1, Scalar::all(0));
 		frame_histogram = noncrash;
 	}
 	

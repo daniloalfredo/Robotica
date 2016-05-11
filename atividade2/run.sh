@@ -29,6 +29,13 @@ fi
 if [ "${1}" == "-train" ] && [ -f ini/dictionary.yml ];
 then
 	rm ini/dictionary.yml
+	
+	#remove log folder and create empty one
+	if [ -d log ]
+	then
+		rm -r log
+	fi
+	mkdir log
 fi
 
 #Run
