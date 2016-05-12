@@ -398,8 +398,11 @@ int ObjectDetector::ValidateSVM()
 
 		//Classifica imagem
 		int prediction = svm.predict(image_histogram);
+		
+		//Verifica a confiança da classificação
+		double confidence = 1.0 / (1.0 + exp(-(svm.predict(image_histogram, true))));
 	
-		if(objects[prediction].GetName() == objects[i].GetName())
+		if(confidence >= confidence_threshold && objects[prediction].GetName() == objects[i].GetName())
 			hits++;
 	}
 	
