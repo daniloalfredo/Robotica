@@ -138,11 +138,13 @@ void ObjectDetector::LoadObjects()
 
 void ObjectDetector::Train()
 {   
-	printf("Creating Dictionary...\n");
+	printf("Starting Training...\n");
 	
 	SiftDescriptorExtractor detector_sift;
 	SurfDescriptorExtractor detector_surf;
 	Mat featuresUnclustered;
+	
+	printf("\tCreating Dictionary...\n");
 	
 	//Lê cada imagem do banco para extrair descritores
 	for(unsigned int i = 0; i < objects.size(); i++)
@@ -196,7 +198,7 @@ void ObjectDetector::Train()
 	file_dictionary.release();
 	
 	//Prepara matriz de treinamento do SVM
-	printf("Training SVM...\n");
+	printf("\tTraining SVM...\n");
 	Mat training_matrix;
 	
 	for(unsigned int i = 0; i < objects.size(); i++)
