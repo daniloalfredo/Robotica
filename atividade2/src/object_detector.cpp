@@ -154,6 +154,10 @@ void ObjectDetector::Train()
 			//Abre a imagem em escala de cinza
 			Mat image = imread(image_filenames[j], CV_LOAD_IMAGE_GRAYSCALE);
 			
+			//Passa filtro gaussiano na imagem
+			if(blur_size > 0)
+				GaussianBlur(image, image, Size(blur_size, blur_size), 0, 0);
+			
 			//Detecta os pontos de interesse
 			vector<KeyPoint> keypoints;
 			
@@ -228,56 +232,6 @@ void ObjectDetector::Train()
 	svm.save(FILE_SVM);
 }
 
-vector<string> ObjectDetector::GetSubsetOfImages(int obj_id)
-{
-	vector<string> subset;
-	int total_images = objects[obj_id].GetNumImages()-1;
-	srand(time(NULL));
-	
-	//Escolhe um número de imagens pra usar
-	int num_rand_images = 5;//rand()%total_images;
-	
-	if(total_images >= 3)
-	{
-		while(num_rand_images < 3)
-			num_rand_images = rand()%total_images;
-	}
-	
-	vector<string> randomized_filenames = objects[obj_id].GetFilenames();
-	random_shuffle(randomized_filenames.begin(), randomized_filenames.end());
-	
-	for(int i = 0; i < num_rand_images; i++)
-		subset.push_back(randomized_filenames[i]);
-			
-	return subset;
-}
-
-int ObjectDetector::ValidateSVM()
-{
-	int hits = 0;
-
-	for(unsigned int i = 0; i < objects.size(); i++)
-	{
-		//Abre a imagem de validação
-		Mat image = objects[i].GetValidationImage().clone();
-		
-		//Passa filtro gaussiano
-		if(blur_size > 0)
-			GaussianBlur(image, image, Size(blur_size, blur_size), 0, 0);
-
-		//Computa histograma do frame segundo BoF
-		Mat image_histogram = ComputeHistogram(image);
-
-		//Classifica imagem
-		int prediction = svm.predict(image_histogram);
-	
-		if(objects[prediction].GetName() == objects[i].GetName())
-			hits++;
-	}
-	
-	return hits;
-}
-
 void ObjectDetector::TrainAdvanced()
 {
 	printf("Starting Advanced Training...\n");
@@ -300,11 +254,13 @@ void ObjectDetector::TrainAdvanced()
 	params.degree = svm_degree;	//influencia kernel POLY
 	params.gamma = svm_gamma;	//influencia kernels  POLY / RBF / SIGMOID
 	
-	for(int it = 0; it < num_svms_for_advanced_training; it++)
+	for(int it = 1; it <= num_svms_for_advanced_training; it++)
 	{
 		Mat adv_labels;
 		Mat featuresUnclustered;
 		vector<vector<string> > image_filenames;
+	
+		printf("\tCreating Dictionary for SVM %d...\n", it);
 	
 		//Lê um subconjunto de imagens de cada objeto e extrai descritores
 		for(unsigned int i = 0; i < objects.size(); i++)
@@ -319,6 +275,10 @@ void ObjectDetector::TrainAdvanced()
 			
 				//Abre a imagem em escala de cinza
 				Mat image = imread(image_filenames[i][j], CV_LOAD_IMAGE_GRAYSCALE);
+			
+				//Passa filtro gaussiano na imagem
+				if(blur_size > 0)
+					GaussianBlur(image, image, Size(blur_size, blur_size), 0, 0);
 			
 				//Detecta os pontos de interesse
 				vector<KeyPoint> keypoints;
@@ -398,6 +358,52 @@ void ObjectDetector::TrainAdvanced()
 	
 	//Printa resultado do treinamento
 	printf("End of Training. Chosen SVM: %d. Hits: %d\n", best_svm_index, best_svm_hits);
+}
+
+vector<string> ObjectDetector::GetSubsetOfImages(int obj_id)
+{
+	vector<string> subset;
+	int total_images = objects[obj_id].GetNumImages()-1;
+	
+	//Escolhe um número de imagens pra usar
+	int num_rand_images = 5;
+	
+	if(total_images >= total_images)
+		num_rand_images = total_images;
+	
+	vector<string> randomized_filenames = objects[obj_id].GetFilenames();
+	random_shuffle(randomized_filenames.begin(), randomized_filenames.end());
+	
+	for(int i = 0; i < num_rand_images; i++)
+		subset.push_back(randomized_filenames[i]);
+			
+	return subset;
+}
+
+int ObjectDetector::ValidateSVM()
+{
+	int hits = 0;
+
+	for(unsigned int i = 0; i < objects.size(); i++)
+	{
+		//Abre a imagem de validação
+		Mat image = objects[i].GetValidationImage().clone();
+		
+		//Passa filtro gaussiano
+		if(blur_size > 0)
+			GaussianBlur(image, image, Size(blur_size, blur_size), 0, 0);
+
+		//Computa histograma do frame segundo BoF
+		Mat image_histogram = ComputeHistogram(image);
+
+		//Classifica imagem
+		int prediction = svm.predict(image_histogram);
+	
+		if(objects[prediction].GetName() == objects[i].GetName())
+			hits++;
+	}
+	
+	return hits;
 }
 
 void ObjectDetector::SaveKeypointImageLog(Mat image, vector<KeyPoint>keypoints, unsigned int i, unsigned int j)

@@ -66,18 +66,18 @@ informações (em ordem):
 		
 Exemplo de arquivo "ini/database.ini":
 
-	2
+	NUM_OBJECTS: 2
 
-	2
 	Sapato
-	images/Sapato/1.jpg
-	images/Sapato/2.jpg
+	NUM_IMAGES: 2
+	IMAGE: images/Sapato/1.jpg
+	IMAGE: images/Sapato/2.jpg
 
-	3
 	Celular
-	images/Celular/1.jpg
-	images/Celular/2.jpg
-	images/Celular/3.jpg
+	NUM_IMAGES: 3
+	IMAGE: images/Celular/1.jpg
+	IMAGE: images/Celular/2.jpg
+	IMAGE: images/Celular/3.jpg
 	
 	
 Este arquivo define que há dois objetos (um denominado Sapato
