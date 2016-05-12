@@ -29,7 +29,12 @@ void ObjectDetector::Init()
 	
 	//Se não há dicionário executa o treinamento
 	else
-		Train();
+	{
+		if(!use_advanced_training)
+			Train();
+		else
+			TrainAdvanced();
+	}
 }
 
 void ObjectDetector::LoadDetectorParams()
@@ -40,6 +45,12 @@ void ObjectDetector::LoadDetectorParams()
 	fscanf(file_params, "%*[^:] %*c %lf", &confidence_threshold);
 	fscanf(file_params, "%*[^:] %*c %d", &dictionary_size);
 	fscanf(file_params, "%*[^:] %*c %d", &blur_size);
+	
+	int aux_adv_training;
+	fscanf(file_params, "%*[^:] %*c %d", &aux_adv_training);
+	use_advanced_training = (aux_adv_training != 0);
+	
+	fscanf(file_params, "%*[^:] %*c %d", &num_svms_for_advanced_training);
 	
 	char aux[50];
 	fscanf(file_params, "%*[^:] %*c %[^\n]", aux);
@@ -62,6 +73,8 @@ void ObjectDetector::LoadDetectorParams()
 	printf("\tCONFIDENCE THRESHOLD: %.2lf\n", confidence_threshold);
 	printf("\tDICTIONARY SIZE: %d\n", dictionary_size);
 	printf("\tBLUR WINDOW SIZE: %d\n", blur_size);
+	printf("\tUSE ADVANCED TRAINING: %d\n", (int) use_advanced_training);
+	printf("\tNUM OF SVMs FOR ADVANCED TRAINING: %d\n", num_svms_for_advanced_training);
 	printf("\tSVM KERNEL TYPE: %s\n", aux);
 	printf("\tSVM DEGREE: %d\n", svm_degree);
 	printf("\tSVM GAMMA: %d\n", svm_gamma);
@@ -193,8 +206,171 @@ void ObjectDetector::Train()
 	
 	svm.train(training_matrix, labels, Mat(), Mat(), params);
 	svm.save(FILE_SVM);
+}
+
+vector<string> ObjectDetector::GetSubsetOfImages(int obj_id)
+{
+	vector<string> subset;
+	int total_images = objects[obj_id].GetNumImages()-1;
+	srand(time(NULL));
 	
-	printf("End of Training\n");
+	//Escolhe um número de imagens pra usar
+	int num_rand_images = rand()%total_images;
+	
+	if(total_images >= 3)
+	{
+		while(num_rand_images < 3)
+			num_rand_images = rand()%total_images;
+	}
+	
+	vector<string> randomized_filenames = objects[obj_id].GetFilenames();
+	random_shuffle(randomized_filenames.begin(), randomized_filenames.end());
+	
+	for(int i = 0; i < num_rand_images; i++)
+		subset.push_back(randomized_filenames[i]);
+			
+	return subset;
+}
+
+int ObjectDetector::ValidateSVM()
+{
+	int hits = 0;
+
+	for(unsigned int i = 0; i < objects.size(); i++)
+	{
+		//Abre a imagem de validação
+		Mat image = objects[i].GetValidationImage().clone();
+		
+		//Passa filtro gaussiano
+		if(blur_size > 0)
+			GaussianBlur(image, image, Size(blur_size, blur_size), 0, 0);
+
+		//Computa histograma do frame segundo BoF
+		Mat image_histogram = ComputeHistogram(image);
+
+		//Classifica imagem
+		int prediction = svm.predict(image_histogram);
+	
+		if(objects[prediction].GetName() == objects[i].GetName())
+			hits++;
+	}
+	
+	return hits;
+}
+
+void ObjectDetector::TrainAdvanced()
+{
+	printf("Starting Advanced Training...\n");
+	SiftDescriptorExtractor detector;
+	int best_svm_index = 0;
+	int best_svm_hits = 0;
+	
+	//Parametros de dicionario
+	TermCriteria tc(CV_TERMCRIT_ITER, 100, 0.001);
+	int retries = 1;
+	int flags = KMEANS_PP_CENTERS;
+	BOWKMeansTrainer bowTrainer(dictionary_size, tc, retries, flags);
+	
+	//Parametros da SVM
+	CvSVMParams params;
+	params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
+	params.svm_type = CvSVM::C_SVC;
+	params.kernel_type = svm_kernel_type; //LINEAR / POLY / RBF / SIGMOID
+	params.degree = svm_degree;	//influencia kernel POLY
+	params.gamma = svm_gamma;	//influencia kernels  POLY / RBF / SIGMOID
+	
+	for(int it = 0; it < num_svms_for_advanced_training; it++)
+	{
+		Mat adv_labels;
+		Mat featuresUnclustered;
+		vector<vector<string> > image_filenames;
+	
+		//Lê um subconjunto de imagens de cada objeto e extrai descritores
+		for(unsigned int i = 0; i < objects.size(); i++)
+		{
+			image_filenames.push_back(GetSubsetOfImages(i));
+		
+			for(unsigned int j = 0; j < image_filenames[i].size(); j++)
+			{
+				//Insere label no vetor de labels
+				Mat label(1, 1, CV_32FC1, cv::Scalar(i));
+				adv_labels.push_back(label);
+			
+				//Abre a imagem em escala de cinza
+				Mat image = imread(image_filenames[i][j], CV_LOAD_IMAGE_GRAYSCALE);
+			
+				//Detecta os pontos de interesse
+				vector<KeyPoint> keypoints;
+				detector.detect(image, keypoints);
+		
+				//Computa os descritores para cada ponto de interesse
+				Mat descriptor;
+				detector.compute(image, keypoints, descriptor);
+			
+				//Guarda os descritores encontrados
+				featuresUnclustered.push_back(descriptor);   
+			}
+		}
+		
+		//Constroi o dicionário para o BoF
+		dictionary = bowTrainer.cluster(featuresUnclustered);
+	
+		//Treina uma SVM
+		Mat training_matrix;
+		for(unsigned int i = 0; i < objects.size(); i++)
+		{		
+			for(unsigned int j = 0; j < image_filenames[i].size(); j++)
+			{
+				//Abre a imagem em escala de cinza
+				Mat image = imread(image_filenames[i][j], CV_LOAD_IMAGE_GRAYSCALE);
+			
+				//Passa filtro gaussiano na imagem
+				if(blur_size > 0)
+					GaussianBlur(image, image, Size(blur_size, blur_size), 0, 0);
+		
+				//Computa o histograma segundo o BoF
+				Mat image_histogram = ComputeHistogram(image);
+			
+				//Adiciona à matrix de treinamento
+				training_matrix.push_back(image_histogram);  
+			}
+		}
+		
+		printf("\tTraining SVM %d...\n", it);
+		svm.train(training_matrix, adv_labels, Mat(), Mat(), params);
+		
+		//Salva svm num arquivo temporário
+		char temp_svm_filename[50];
+		sprintf(temp_svm_filename, "log/temp_svm/%d.ini", it);
+		svm.save(temp_svm_filename);
+		
+		//Testa a nova svm
+		printf("\tValidating SVM %d...\n", it);
+		int hits = ValidateSVM();
+		printf("\tValidation Results for SVM %d: %d hits\n", it, hits);
+		
+		if(hits > best_svm_hits)
+		{
+			best_svm_hits = hits;
+			best_svm_index = it;
+		}
+	}
+	
+	//Salva o dicionário no arquivo
+	FileStorage file_dictionary(FILE_DICTIONARY, FileStorage::WRITE);
+	file_dictionary << "vocabulary" << dictionary;
+	file_dictionary.release();
+	
+	//Recupera melhor svm encontrada
+	char temp_svm_filename[50];
+	sprintf(temp_svm_filename, "log/temp_svm/%d.ini", best_svm_index);
+	svm.load(temp_svm_filename);
+	
+	//Salva a melhor svm encontrada corretamente
+	svm.save(FILE_SVM);
+	
+	//Printa resultado do treinamento
+	printf("End of Training. Chosen SVM: %d. Hits: %d\n", best_svm_index, best_svm_hits);
 }
 
 void ObjectDetector::SaveKeypointImageLog(Mat image, vector<KeyPoint>keypoints, unsigned int i, unsigned int j)

@@ -25,17 +25,10 @@ then
 	g++ $MAIN.o $LIBRARY1.o $LIBRARY2.o -o $BINARY.bin -fopenmp `pkg-config --cflags --libs opencv`
 fi
 
-#train flag triggers new training
+#Train flag triggers new training
 if [ "${1}" == "-train" ] && [ -f ini/dictionary.yml ];
 then
 	rm ini/dictionary.yml
-	
-	#remove log folder and create empty one
-	if [ -d log ]
-	then
-		rm -r log
-	fi
-	mkdir log
 fi
 
 #Run
@@ -46,4 +39,14 @@ then
 	rm $LIBRARY2.o
 	./$BINARY.bin
 	rm $BINARY.bin
+fi
+
+#Remove log folder and create empty one
+if [ -d log ]
+then
+	rm -r log
+	mkdir log
+	cd log
+	mkdir temp_svm
+	cd ..
 fi

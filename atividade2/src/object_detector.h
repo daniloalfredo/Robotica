@@ -8,6 +8,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/ml/ml.hpp>
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -34,25 +35,35 @@ class Object
 		vector<KeyPoint> keypoints;
 		Mat descriptors;
 		
+		Mat validation_image;
+		vector<KeyPoint> validation_keypoints;
+		Mat validation_descriptors;
+		
 	public:
 		Object(string name, vector<string> image_filenames)
 		{ 
 			this->name = name; 
 			this->image_filenames = image_filenames;
 			this->main_image = imread(image_filenames[0], CV_LOAD_IMAGE_GRAYSCALE);
+			this->validation_image = imread(image_filenames[(int)image_filenames.size()-1], CV_LOAD_IMAGE_GRAYSCALE);
 			
 			SiftDescriptorExtractor detector;
 			detector.detect(main_image, keypoints);
   			detector.compute(main_image, keypoints, descriptors);
+  			detector.detect(validation_image, validation_keypoints);
+  			detector.compute(validation_image, validation_keypoints, validation_descriptors);
 		}
 		 
 		void InsertImageFilename(string image_filename) { image_filenames.push_back(image_filename); }
 		
 		string GetName() { return name; }
 		vector<string> GetFilenames() { return image_filenames; }
+		string GetFilename(int i) { return image_filenames[i]; }
+		int GetNumImages() { return (int) image_filenames.size(); }
 		Mat GetMainImage() { return main_image; }
 		vector<KeyPoint> GetKeypoints() { return keypoints; }
 		Mat GetDescriptors() { return descriptors; }
+		Mat GetValidationImage() { return validation_image; }
 };
 
 class ObjectDetector
@@ -72,15 +83,21 @@ class ObjectDetector
 		int svm_kernel_type;
 		int svm_degree;
 		int svm_gamma;
+		bool use_advanced_training;
+		int num_svms_for_advanced_training;
 		
 		//Funções auxiliares
 		void Init();
 		void LoadDetectorParams();
 		void LoadObjects();
 		void Train();
+		void TrainAdvanced();
 		void SaveKeypointImageLog(Mat image, vector<KeyPoint>keypoints, unsigned int i, unsigned int j);
 		Mat ComputeHistogram(Mat image);
 		void FindCenter(Mat frame, Point2f* center_pos, int object_class);	
+		
+		vector<string> GetSubsetOfImages(int obj_id);
+		int ValidateSVM();
 
 	public:
 		ObjectDetector();

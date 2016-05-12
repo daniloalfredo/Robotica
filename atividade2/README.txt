@@ -100,6 +100,13 @@ durante treinamento)
 janela quadrada de filtro gaussiano. Se maior que 0 o filtro será aplicado
 na imagem antes de detectar os pontos de interesse
 
+4) Usar treinamento avançado (0 ou 1): o treinamento avançado constroi
+multiplas SVMs e as valida com algumas imagens. Ele é muito mais
+demorado.
+
+5) Número de SVMs do treinamento avançado (inteiro >= 1): a quantidade de SVMs que será
+construida se usar treinamento avançado.
+
 4) Parâmetros da SVM (vide a descriçao completa em "http://docs.opencv.org/2.4/modules/ml/doc/support_vector_machines.html"):
 	4.1) Kernel type (LINEAR, RBF, SIGMOID, POLY)
 	4.2) Degree (inteiro)
