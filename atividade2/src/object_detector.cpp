@@ -39,10 +39,19 @@ void ObjectDetector::Init()
 
 void ObjectDetector::LoadDetectorParams()
 {
+	char aux[50];
+
 	printf("Loading Params...\n");
 	FILE* file_params = fopen(FILE_PARAMS, "r");
 
 	fscanf(file_params, "%*[^:] %*c %lf", &confidence_threshold);
+	
+	fscanf(file_params, "%*[^:] %*c %[^\n]", aux);
+	if(strcmp(aux, "SIFT") == 0)
+		descriptor_extractor = 0;
+	else
+		descriptor_extractor = 1;
+	
 	fscanf(file_params, "%*[^:] %*c %d", &dictionary_size);
 	fscanf(file_params, "%*[^:] %*c %d", &blur_size);
 	
@@ -52,9 +61,7 @@ void ObjectDetector::LoadDetectorParams()
 	
 	fscanf(file_params, "%*[^:] %*c %d", &num_svms_for_advanced_training);
 	
-	char aux[50];
 	fscanf(file_params, "%*[^:] %*c %[^\n]", aux);
-	
 	if(strcmp(aux, "LINEAR") == 0)
 		svm_kernel_type = CvSVM::LINEAR;
 	
@@ -71,6 +78,10 @@ void ObjectDetector::LoadDetectorParams()
 	fclose(file_params);
 	
 	printf("\tCONFIDENCE THRESHOLD: %.2lf\n", confidence_threshold);
+	if(descriptor_extractor == 0)
+		printf("\tDESCRIPTOR EXTRACTOR: SIFT\n");
+	else
+		printf("\tDESCRIPTOR EXTRACTOR: SURF\n");
 	printf("\tDICTIONARY SIZE: %d\n", dictionary_size);
 	printf("\tBLUR WINDOW SIZE: %d\n", blur_size);
 	printf("\tUSE ADVANCED TRAINING: %d\n", (int) use_advanced_training);
@@ -118,7 +129,7 @@ void ObjectDetector::LoadObjects()
 		}
 		
 		//Insere objeto na lista de objetos do detector
-		Object new_object(name, image_filenames);
+		Object new_object(name, image_filenames, descriptor_extractor);
 		objects.push_back(new_object);
 	}
 	
@@ -129,7 +140,8 @@ void ObjectDetector::Train()
 {   
 	printf("Creating Dictionary...\n");
 	
-	SiftDescriptorExtractor detector;
+	SiftDescriptorExtractor detector_sift;
+	SurfDescriptorExtractor detector_surf;
 	Mat featuresUnclustered;
 	
 	//Lê cada imagem do banco para extrair descritores
@@ -144,11 +156,19 @@ void ObjectDetector::Train()
 			
 			//Detecta os pontos de interesse
 			vector<KeyPoint> keypoints;
-			detector.detect(image, keypoints);
+			
+			if(descriptor_extractor == 0)
+				detector_sift.detect(image, keypoints);
+			else
+				detector_surf.detect(image, keypoints);
 		
 			//Computa os descritores para cada ponto de interesse
 			Mat descriptor;
-			detector.compute(image, keypoints, descriptor);
+			
+			if(descriptor_extractor == 0)
+				detector_sift.compute(image, keypoints, descriptor);
+			else
+				detector_surf.compute(image, keypoints, descriptor);
 			
 			//Guarda os descritores encontrados
 			featuresUnclustered.push_back(descriptor); 
@@ -215,7 +235,7 @@ vector<string> ObjectDetector::GetSubsetOfImages(int obj_id)
 	srand(time(NULL));
 	
 	//Escolhe um número de imagens pra usar
-	int num_rand_images = rand()%total_images;
+	int num_rand_images = 5;//rand()%total_images;
 	
 	if(total_images >= 3)
 	{
@@ -261,7 +281,8 @@ int ObjectDetector::ValidateSVM()
 void ObjectDetector::TrainAdvanced()
 {
 	printf("Starting Advanced Training...\n");
-	SiftDescriptorExtractor detector;
+	SiftDescriptorExtractor detector_sift;
+	SurfDescriptorExtractor detector_surf;
 	int best_svm_index = 0;
 	int best_svm_hits = 0;
 	
@@ -301,11 +322,17 @@ void ObjectDetector::TrainAdvanced()
 			
 				//Detecta os pontos de interesse
 				vector<KeyPoint> keypoints;
-				detector.detect(image, keypoints);
+				if(descriptor_extractor == 0)
+					detector_sift.detect(image, keypoints);
+				else
+					detector_surf.detect(image, keypoints);
 		
 				//Computa os descritores para cada ponto de interesse
 				Mat descriptor;
-				detector.compute(image, keypoints, descriptor);
+				if(descriptor_extractor == 0)
+					detector_sift.compute(image, keypoints, descriptor);
+				else
+					detector_surf.compute(image, keypoints, descriptor);
 			
 				//Guarda os descritores encontrados
 				featuresUnclustered.push_back(descriptor);   
@@ -384,14 +411,27 @@ void ObjectDetector::SaveKeypointImageLog(Mat image, vector<KeyPoint>keypoints, 
 Mat ObjectDetector::ComputeHistogram(Mat image)
 {
 	Ptr<DescriptorMatcher> matcher(new FlannBasedMatcher);
-	Ptr<FeatureDetector> detector(new SiftFeatureDetector());
-    Ptr<DescriptorExtractor> extractor(new SiftDescriptorExtractor); 
-	BOWImgDescriptorExtractor bowDE(extractor, matcher);
+	Ptr<FeatureDetector> detector_sift(new SiftFeatureDetector());
+	Ptr<FeatureDetector> detector_surf(new SurfFeatureDetector());
+	Ptr<DescriptorExtractor> extractor_sift(new SiftDescriptorExtractor); 
+    Ptr<DescriptorExtractor> extractor_surf(new SurfDescriptorExtractor); 
+	BOWImgDescriptorExtractor bowDE_sift(extractor_sift, matcher);
+	BOWImgDescriptorExtractor bowDE_surf(extractor_surf, matcher);
 	Mat image_histogram; 
 	
-	detector->detect(image, keypoints);
-	bowDE.setVocabulary(dictionary);
-    bowDE.compute(image, keypoints, image_histogram);
+	if(descriptor_extractor == 0)
+	{
+		detector_sift->detect(image, keypoints);
+		bowDE_sift.setVocabulary(dictionary);
+    	bowDE_sift.compute(image, keypoints, image_histogram);
+    }
+    
+    else
+    {
+		detector_surf->detect(image, keypoints);
+		bowDE_surf.setVocabulary(dictionary);
+    	bowDE_surf.compute(image, keypoints, image_histogram);
+    }
     
     return image_histogram;
 }
@@ -401,9 +441,13 @@ void ObjectDetector::FindCenter(Mat frame, Point2f* center_pos, int object_class
 	Mat descriptors_frame;
 	FlannBasedMatcher matcher;
   	vector<DMatch> matches;
-  	SiftDescriptorExtractor detector;
+  	SiftDescriptorExtractor detector_sift;
+  	SurfDescriptorExtractor detector_surf;
   	
-  	detector.compute(frame, keypoints, descriptors_frame);
+  	if(descriptor_extractor == 0)
+  		detector_sift.compute(frame, keypoints, descriptors_frame);
+  	else
+  		detector_surf.compute(frame, keypoints, descriptors_frame);
   	matcher.match(descriptors_frame, objects[object_class].GetDescriptors(), matches);
 
   	double max_dist = 0; double min_dist = 50;

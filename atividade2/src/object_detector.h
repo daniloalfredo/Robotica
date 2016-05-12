@@ -40,18 +40,30 @@ class Object
 		Mat validation_descriptors;
 		
 	public:
-		Object(string name, vector<string> image_filenames)
+		Object(string name, vector<string> image_filenames, int descriptor_extractor)
 		{ 
 			this->name = name; 
 			this->image_filenames = image_filenames;
 			this->main_image = imread(image_filenames[0], CV_LOAD_IMAGE_GRAYSCALE);
 			this->validation_image = imread(image_filenames[(int)image_filenames.size()-1], CV_LOAD_IMAGE_GRAYSCALE);
 			
-			SiftDescriptorExtractor detector;
-			detector.detect(main_image, keypoints);
-  			detector.compute(main_image, keypoints, descriptors);
-  			detector.detect(validation_image, validation_keypoints);
-  			detector.compute(validation_image, validation_keypoints, validation_descriptors);
+			if(descriptor_extractor == 0)
+			{
+				SiftDescriptorExtractor detector_sift;
+				detector_sift.detect(main_image, keypoints);
+	  			detector_sift.compute(main_image, keypoints, descriptors);
+	  			detector_sift.detect(validation_image, validation_keypoints);
+	  			detector_sift.compute(validation_image, validation_keypoints, validation_descriptors);
+	  		}
+  			
+  			else
+  			{
+  				SurfDescriptorExtractor detector_surf;
+				detector_surf.detect(main_image, keypoints);
+	  			detector_surf.compute(main_image, keypoints, descriptors);
+	  			detector_surf.detect(validation_image, validation_keypoints);
+	  			detector_surf.compute(validation_image, validation_keypoints, validation_descriptors);
+  			}
 		}
 		 
 		void InsertImageFilename(string image_filename) { image_filenames.push_back(image_filename); }
@@ -78,6 +90,7 @@ class ObjectDetector
 		
 		//Parâmetros de aprendizado
 		double confidence_threshold;
+		int descriptor_extractor;
 		int dictionary_size;
 		int blur_size;
 		int svm_kernel_type;
