@@ -16,10 +16,9 @@ Heitor Rapela   (hrm@cin.ufpe.br)
 
 Descrição:
 
-Este software utiliza o algoritmo Scale-invariant feature 
-transform (SIFT) para extração de pontos de interesse das
-imagens de treino e algoritmo Bag of Features (BoF) junto
-com uma máquina de aprendizado SVM para aprender o conjunto
+Este software utiliza algoritmos para extração de pontos de interesse
+das imagens de treino (SIFT ou SURF) e o algoritmo Bag of Features 
+(BoF) junto com uma máquina de aprendizado SVM para aprender o conjunto
 de objetos escolhidos.
 
 O programa lê frames da câmera do computador e os processa
@@ -92,22 +91,25 @@ arquivo "ini/params.ini". Os parâmetros são, em ordem:
 que representa percentagem mínima de confiança para o detector
 considerar um objeto como detectado na cena.
 
-2) Tamanho do dicionário: inteiro maior ou igual a 1 que representa
+2) Descriptor Extractor (SIFT ou SURF): permite escolher o algoritmo
+para extrair pontos de interesse.
+
+3) Tamanho do dicionário: inteiro maior ou igual a 1 que representa
 o número de features diferentes armazenadas no dicionário (utilizado
 durante treinamento)
 
-3) Tamanho do filtro gaussiano: inteiro representando o tamanho de uma
+4) Tamanho do filtro gaussiano: inteiro representando o tamanho de uma
 janela quadrada de filtro gaussiano. Se maior que 0 o filtro será aplicado
 na imagem antes de detectar os pontos de interesse
 
-4) Usar treinamento avançado (0 ou 1): o treinamento avançado constroi
+5) Usar treinamento avançado (0 ou 1): o treinamento avançado constroi
 multiplas SVMs e as valida com algumas imagens. Ele é muito mais
 demorado.
 
-5) Número de SVMs do treinamento avançado (inteiro >= 1): a quantidade de SVMs que será
+6) Número de SVMs do treinamento avançado (inteiro >= 1): a quantidade de SVMs que será
 construida se usar treinamento avançado.
 
-4) Parâmetros da SVM (vide a descriçao completa em "http://docs.opencv.org/2.4/modules/ml/doc/support_vector_machines.html"):
-	4.1) Kernel type (LINEAR, RBF, SIGMOID, POLY)
-	4.2) Degree (inteiro)
-	4.3) Gamma (inteiro)
+7) Parâmetros da SVM (vide a descriçao completa em "http://docs.opencv.org/2.4/modules/ml/doc/support_vector_machines.html"):
+	7.1) Kernel type (LINEAR, RBF, SIGMOID, POLY)
+	7.2) Degree (inteiro)
+	7.3) Gamma (inteiro)
