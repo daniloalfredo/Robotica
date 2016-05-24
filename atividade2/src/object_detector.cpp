@@ -5,6 +5,19 @@ ObjectDetector::ObjectDetector()
 	Init();
 }
 
+void ObjectDetector::SetBackground(Mat frame)
+{
+	Mat frame_bw;
+	cvtColor(frame, frame_bw, CV_BGR2GRAY);
+
+	//Passa filtro gaussiano
+	if(blur_size > 0)
+		GaussianBlur(frame, frame, Size(blur_size, blur_size), 0, 0);
+
+	//Computa histograma do background
+	background_histogram = ComputeHistogram(frame_bw);
+}
+
 void ObjectDetector::Init()
 {
 	//Carrega parâmetros do detector
@@ -368,7 +381,7 @@ vector<string> ObjectDetector::GetSubsetOfImages(int obj_id)
 	int total_images = objects[obj_id].GetNumImages()-1;
 	
 	//Escolhe um número de imagens pra usar
-	int num_rand_images = 5;
+	int num_rand_images = 4;
 	
 	if(total_images >= total_images)
 		num_rand_images = total_images;
@@ -510,10 +523,10 @@ string ObjectDetector::Detect(Mat frame, Point2f* center_pos)
 	}
 	
 	//Classifica frame
-	int prediction = svm.predict(frame_histogram);
+	int prediction = svm.predict(frame_histogram-background_histogram);
 
 	//Verifica a confiança da classificação
-	double confidence = 1.0 / (1.0 + exp(-(svm.predict(frame_histogram, true))));
+	double confidence = 1.0 / (1.0 + exp(-(svm.predict(frame_histogram-background_histogram, true))));
 	printf("Detection Confidence: %lf%%\n", confidence*100);
 
 	//Retorna o nome do objeto

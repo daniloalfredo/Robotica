@@ -151,6 +151,11 @@ int main(int argc, char** argv)
 	//Se não conseguir abrir a câmera encerra
 	if(!cap.isOpened())
         return -1;
+        
+    //Seta o background
+    Mat background;
+    cap >> background;
+    objectDetector.SetBackground(background);
     
     //Inicializa locks
     #ifdef USE_OPENMP    

@@ -88,6 +88,9 @@ class ObjectDetector
 		
 		vector<KeyPoint> keypoints;
 		
+		//Background
+		Mat background_histogram;
+		
 		//Parâmetros de aprendizado
 		double confidence_threshold;
 		int descriptor_extractor;
@@ -114,6 +117,7 @@ class ObjectDetector
 
 	public:
 		ObjectDetector();
+		void SetBackground(Mat frame);
 		string Detect(Mat frame, Point2f* center_pos);
 };
 
