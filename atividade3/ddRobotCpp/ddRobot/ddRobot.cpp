@@ -35,11 +35,26 @@ extern "C" {
     /*	#include "extApiCustom.h" if you wanna use custom remote API functions! */
 }
 
+float readSonar()
+
+function readSonar(sonar)
+    local r, dist = simReadProximitySensor(sonar)
+
+    if ((r) and (dist ~= nil)) then
+        return dist
+    end
+
+    return -1
+end
+
 simxInt ddRobotHandle;
 simxInt leftMotorHandle;
 simxInt rightMotorHandle;
 simxInt sensorHandle;
 simxInt graphOdometryHandle;
+simxInt sonarL;
+simxInt sonarR;
+simxInt sonarF;
 
 float to180range(float angle)
 {
@@ -210,11 +225,18 @@ int main(int argc, char* argv[])
         simxGetObjectHandle(clientID, "LeftMotor#", &leftMotorHandle, simx_opmode_oneshot_wait);
         simxGetObjectHandle(clientID, "RightMotor#", &rightMotorHandle, simx_opmode_oneshot_wait);
         simxGetObjectHandle(clientID, "GraphOdometry#", &graphOdometryHandle, simx_opmode_oneshot_wait);
+        //Sonares
+    	simxGetObjectHandle(clientID, "ProximitySensorL#", &sonarL, simx_opmode_oneshot_wait);
+    	simxGetObjectHandle(clientID, "ProximitySensorR#", &sonarR, simx_opmode_oneshot_wait);
+    	simxGetObjectHandle(clientID, "ProximitySensorF#", &sonarF, simx_opmode_oneshot_wait);
+
         
         printf("RobotFrame: %d\n", ddRobotHandle);
         printf("LeftMotor: %d\n", leftMotorHandle);
         printf("RightMotor: %d\n", rightMotorHandle);
-        printf("GraphOdometry: %d\n", graphOdometryHandle);
+        printf("ProximitySensorL: %d\n", sonarL);
+        printf("ProximitySensorR: %d\n", sonarR);
+        printf("ProximitySensorF: %d\n", sonarF);
 
         //start simulation
         int ret = simxStartSimulation(clientID, simx_opmode_oneshot_wait);
