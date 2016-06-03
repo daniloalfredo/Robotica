@@ -35,17 +35,6 @@ extern "C" {
     /*	#include "extApiCustom.h" if you wanna use custom remote API functions! */
 }
 
-float readSonar()
-
-function readSonar(sonar)
-    local r, dist = simReadProximitySensor(sonar)
-
-    if ((r) and (dist ~= nil)) then
-        return dist
-    end
-
-    return -1
-end
 
 simxInt ddRobotHandle;
 simxInt leftMotorHandle;
@@ -55,6 +44,18 @@ simxInt graphOdometryHandle;
 simxInt sonarL;
 simxInt sonarR;
 simxInt sonarF;
+
+/*
+simxFloat readSonar(simxInt &sonar)
+{
+    float dist = simReadProximitySensor(sonar);
+
+    if(dist >= 0)
+    {
+        return dist;
+    }
+    return -1;
+}*/
 
 float to180range(float angle)
 {
@@ -271,6 +272,22 @@ int main(int argc, char* argv[])
             simxFloat dPhiL, dPhiR; //rad
             readOdometers(clientID, dPhiL, dPhiR);
             printf("dPhiL: %.2f dPhiR: %.2f\n", dPhiL, dPhiR);
+
+            /*
+            simxFloat sl = readSonar(sonarL);
+            simxFloat sr = readSonar(sonarR);
+            simxFloat sf = readSonar(sonarF);
+            printf("%.2f %.2f %.2f\n", sl,sr,sf);
+            */
+            //XTAPI_DLLEXPORT simxInt mtlb_simxReadProximitySensor(simxInt* clientIDandSensorHandle,simxUChar* detectionState,simxFloat* detectedPoint,simxInt* detectedObjectHandle,simxFloat* detectedSurfaceNormalVector,simxInt operationMode);
+E
+        //simxInt* detectedObjectHandle,simxFloat* detectedSurfaceNormalVector,simxInt operationMode);
+            simxUChar* detectionState;
+            simxFloat* detectedPoint; simxInt* detectedObjectHandle;simxFloat* detectedSurfaceNormalVector;
+            simxReadProximitySensor(&sonarL);
+            //simInt* detectedObjectHandle,simFloat* detectedSurfaceNormalVector)
+           
+            //simReadProximitySensor(sonarL,simFloat* detectedPoint,simInt* detectedObjectHandle,simFloat* detectedSurfaceNormalVector)
             
             //Set new target speeds: robot going in a circle:
             simxFloat phiL, phiR;
