@@ -12,8 +12,8 @@ void Robot::Init(simxInt clientID)
 	simxGetObjectHandle(clientID, "ProximitySensorF#", &sonarF, simx_opmode_oneshot_wait);
 	
 	//Inicializa as constantes de controle de movimento
-	K_RHO = 0.2;
-	K_ALPHA = 1.5;
+	K_RHO = 0.15;
+	K_ALPHA = 2;
 	K_BETA = -0.5;
 	WHEEL1_R = 0.0325;
 	WHEEL2_R = 0.0325;
@@ -86,10 +86,8 @@ int Robot::ExecuteMotionControl(simxInt clientID)
 
     simxFloat w = (K_ALPHA * alpha + K_BETA * beta);
  
-    // simxFloat wR = 2*v + WHEEL_L*w;
-    // simxFloat wL = wR - 2*WHEEL_L*w;
-    simxFloat wR = v + WHEEL_L*w;
-    simxFloat wL = v - WHEEL_L*w;
+    simxFloat wR = 2*v + WHEEL_L*w;
+    simxFloat wL = wR - 2*WHEEL_L*w;
  
     phiL = wL/WHEEL1_R; //rad/s
     phiR = wR/WHEEL2_R; //rad/s
