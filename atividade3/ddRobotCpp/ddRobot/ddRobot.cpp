@@ -23,14 +23,24 @@ int main(int argc, char* argv[])
         
         //Define caminho para o robô seguir
         int current_goal = 0;
-        
+
         std::vector<simxFloat*> path;
-        simxFloat goal1[3]; goal1[0] = 0.0; goal1[1] = 0.5; goal1[2] = PI;
+        //Landmark Amarelo
+        simxFloat goal1[3]; goal1[0] = -1.0; goal1[1] = 1.5; goal1[2] = PI/2;
         path.push_back(goal1);
-        simxFloat goal2[3]; goal2[0] = -1.0; goal2[1] = 0.5; goal2[2] = PI/2;
-        path.push_back(goal2); 
-        simxFloat goal3[3]; goal3[0] = -1.0; goal3[1] = 1.5; goal3[2] = PI/2;
-        path.push_back(goal3);  
+        simxFloat goal2[3]; goal2[0] = 0; goal2[1] = 0.5; goal2[2] = -PI/4;
+        path.push_back(goal2);
+        simxFloat goal3[3]; goal3[0] = 1.0; goal3[1] = -1.5; goal3[2] = -PI/2;
+        path.push_back(goal3);
+        simxFloat goal4[3]; goal4[0] = 1.0; goal4[1] = 1.5; goal4[2] = PI/2;
+        path.push_back(goal4);
+        simxFloat goal5[3]; goal5[0] = 0.25; goal5[1] = -0.5; goal5[2] = -PI;
+        path.push_back(goal5);
+        simxFloat goal6[3]; goal6[0] = -1.0; goal6[1] = -1.5; goal6[2] = -PI/2;
+        path.push_back(goal6);
+        simxFloat goal7[3]; goal7[0] = 0.25; goal7[1] = 0; goal7[2] = PI/2;
+        path.push_back(goal7);
+
         
         //Inicializa o Robô
         Robot monstrinho;
@@ -59,14 +69,10 @@ int main(int argc, char* argv[])
 		       
 				//Faz a leitura dos sonares
 		        monstrinho.GetSonarReadings(clientID);
-		       
-		        //Faz o robô andar até o próximo objetivo se ainda não chegou
-		        if(!monstrinho.HasReachedGoal())
-	 				monstrinho.ExecuteMotionControl(clientID);
-	 			
-	 			//Se chegou no objetivo seta um novo
-	 			else
-	 			{
+
+                //Se chegou no objetivo seta um novo
+		        if(monstrinho.ExecuteMotionControl(clientID))
+                {
 	 				current_goal++;
 	 			
 	 				if(current_goal < path.size())
@@ -74,6 +80,11 @@ int main(int argc, char* argv[])
 	 					printf("Setando Proximo Objetivo...\n");
 	 					monstrinho.SetNextGoal(path[current_goal][0], path[current_goal][1], path[current_goal][2]);
 	 				}
+                    else
+                    {
+                        current_goal = 0;
+                        monstrinho.SetNextGoal(path[current_goal][0], path[current_goal][1], path[current_goal][2]);
+                    }
 	 			}
 	 
 		        //Espera um tempo para o V-REP

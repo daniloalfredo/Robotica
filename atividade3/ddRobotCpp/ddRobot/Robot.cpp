@@ -12,9 +12,9 @@ void Robot::Init(simxInt clientID)
 	simxGetObjectHandle(clientID, "ProximitySensorF#", &sonarF, simx_opmode_oneshot_wait);
 	
 	//Inicializa as constantes de controle de movimento
-	K_RHO = 0.4;
-	K_ALPHA = 0.8;
-	K_BETA = -0.15;
+	K_RHO = 0.2;
+	K_ALPHA = 1.5;
+	K_BETA = -0.5;
 	WHEEL1_R = 0.0325;
 	WHEEL2_R = 0.0325;
 	WHEEL_L = 0.075;
@@ -59,7 +59,7 @@ void Robot::SetNextGoal(simxFloat x, simxFloat y, simxFloat theta)
 	goal[2] = theta;
 }
 
-void Robot::ExecuteMotionControl(simxInt clientID)
+int Robot::ExecuteMotionControl(simxInt clientID)
 {
 	simxFloat phiL, phiR;
 
@@ -82,22 +82,39 @@ void Robot::ExecuteMotionControl(simxInt clientID)
     beta = to180range(beta);
  
     simxFloat v = K_RHO * rho;
+    if(v < 0.2){v = 0.2;}
+
     simxFloat w = (K_ALPHA * alpha + K_BETA * beta);
  
-    simxFloat wR = 2*v + WHEEL_L*w;
-    simxFloat wL = wR - 2*WHEEL_L*w;
+    // simxFloat wR = 2*v + WHEEL_L*w;
+    // simxFloat wL = wR - 2*WHEEL_L*w;
+    simxFloat wR = v + WHEEL_L*w;
+    simxFloat wL = v - WHEEL_L*w;
  
     phiL = wL/WHEEL1_R; //rad/s
     phiR = wR/WHEEL2_R; //rad/s
 
-    if(rho < 0.02 && fabs(dtheta) >= 0.03)
+    if(rho < 0.05)
     {
 		phiR = 2 * dtheta;
 		phiL = -2 * dtheta;
+		if(fabs(dtheta) >= 0.9)
+		{
+			phiR = 2 * dtheta;
+			phiL = -2 * dtheta;
+		}
+		else
+		{
+			phiR = 0;
+			phiL = 0;
+			SetTargetSpeed(clientID, phiL, phiR);
+			return 1;
+		}
 		//printf("Angle correction\n");
     }
-    
+
     SetTargetSpeed(clientID, phiL, phiR);
+    return 0;
 }
 
 void Robot::SetTargetSpeed(int clientID, simxFloat phiL, simxFloat phiR)
@@ -106,22 +123,22 @@ void Robot::SetTargetSpeed(int clientID, simxFloat phiL, simxFloat phiR)
     simxSetJointTargetVelocity(clientID, rightMotorHandle, phiR, simx_opmode_oneshot);  
 }
 
-bool Robot::HasReachedGoal()
-{
-	const float max_distance_pos = 0.03;
-	const float max_distance_angle = 0.1;
+// bool Robot::HasReachedGoal()
+// {
+// 	const float max_distance_pos = 0.02;
+// 	const float max_distance_angle = 0.5;
 	
-	float distance_pos = sqrt( (pos[0]-goal[0])*(pos[0]-goal[0]) 
-						 + (pos[1]-goal[1])*(pos[1]-goal[1]));
+// 	float distance_pos = sqrt( (pos[0]-goal[0])*(pos[0]-goal[0]) 
+// 						 + (pos[1]-goal[1])*(pos[1]-goal[1]));
 						 
-	float cur_angle = to_positive_angle(pos[2]);
-	float distance_angle = sqrt((cur_angle-goal[2])*(cur_angle-goal[2]));	
+// 	float cur_angle = to_positive_angle(pos[2]);
+// 	float distance_angle = sqrt((cur_angle-goal[2])*(cur_angle-goal[2]));	
 			 
-	if(distance_pos <= max_distance_pos && distance_angle <= max_distance_angle)
-		return true;
-	else
-		return false;
-}
+// 	if(distance_pos <= max_distance_pos && distance_angle <= max_distance_angle)
+// 		return true;
+// 	else
+// 		return false;
+// }
 
 //------------------------------------------------------------------------
 //Funções auxiliares

@@ -54,7 +54,7 @@ class Robot
 		void SetNextGoal(simxFloat x, simxFloat y, simxFloat theta);
 		void GetAPIPosition(simxInt clientID); //seta ´pos´ usando a leitura precisa da API
 		void GetSonarReadings(simxInt clientID); // atualiza a leitura dos sonares
-		void ExecuteMotionControl(simxInt clientID); //faz o robô andar em direção ao alvo
+		int ExecuteMotionControl(simxInt clientID); //faz o robô andar em direção ao alvo
 		void SetTargetSpeed(int clientID, simxFloat phiL, simxFloat phiR);
 		bool HasReachedGoal();
 };
