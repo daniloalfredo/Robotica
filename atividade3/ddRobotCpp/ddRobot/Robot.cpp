@@ -22,9 +22,9 @@ void Robot::Init(simxInt clientID)
 
 void Robot::Log(EnvMap envmap)
 {
-	printf("Posicao Atual: [%.2f %.2f %.2fº]\n", pos[0], pos[1], to_deg(pos[2]));
-	printf("Leituras dos Sonares (L,R,F) = [%.4f, %.4f, %.4f] \n", sonar_reading[0], sonar_reading[1], sonar_reading[2]);
-	printf("Distancia do Mapa: %.2f\n", envmap.MapDistance(pos[0], pos[1], pos[2]));
+	printf("Posicao: [%.2f, %.2f, %.2fº]\t//[X, Y, THETA]\n", pos[0], pos[1], to_deg(pos[2]));
+	printf("Sonares: [%.2f, %.2f, %.2f] \t//[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
+	printf("MapDist: [%.2f]\n", envmap.MapDistance(pos[0], pos[1], pos[2]));
 }
 
 void Robot::GetAPIPosition(simxInt clientID)
