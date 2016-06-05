@@ -56,7 +56,10 @@ class Robot
 		void GetSonarReadings(simxInt clientID); // atualiza a leitura dos sonares
 		int ExecuteMotionControl(simxInt clientID); //faz o robô andar em direção ao alvo
 		void SetTargetSpeed(int clientID, simxFloat phiL, simxFloat phiR);
-		bool HasReachedGoal();
+		//bool HasReachedGoal();
+		
+		simxFloat* GetPos() { return pos; } //posição atual do robô
+		float GetSensorFReading() { return sonar_reading[2]; }
 };
 
 #endif

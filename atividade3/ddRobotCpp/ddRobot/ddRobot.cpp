@@ -22,6 +22,18 @@ int main(int argc, char* argv[])
     {
         printf("Conexao efetuada\n");
         
+        //-------------------------------------------------------
+        //DEFINE O MAPA
+        EnvMap testmap;
+        testmap.AddWall(-2.0, 2.0, 2.0, 2.0); //Parede superior
+        testmap.AddWall(-2.0, -2.0, 2.0, -2.0); //Parede inferior
+        testmap.AddWall(-2.0, 2.0, -2.0, -2.0); //Parede esquerda
+        testmap.AddWall(2.0, 2.0, 2.0, -2.0); //Parede direita
+        testmap.AddWall(-2.0, 0.0, 0.0, 0.0); //Parede central esquerda
+        testmap.AddWall(0.0, 2.0, 0.0, 1.0); //Parede central cima
+        testmap.AddWall(0.0, -1.0, 0.0, -2.0); //Parede central baixo
+        testmap.PrintMap();
+        
         //Define caminho para o robô seguir
         int current_goal = 0;
 
@@ -32,15 +44,18 @@ int main(int argc, char* argv[])
 
         simxFloat goal2[3]; goal2[0] = 0; goal2[1] = 0.5; goal2[2] = -PI/4;
         path.push_back(goal2);
+        
         //Landmark Verde
         simxFloat goal3[3]; goal3[0] = 1.0; goal3[1] = -1.5; goal3[2] = -PI/2;
         path.push_back(goal3);
+        
         //Landmark Azul
         simxFloat goal4[3]; goal4[0] = 1.0; goal4[1] = 1.5; goal4[2] = PI/2;
         path.push_back(goal4);
 
         simxFloat goal5[3]; goal5[0] = 0; goal5[1] = -0.5; goal5[2] = -3*PI/4;
         path.push_back(goal5);
+        
         //Landmark Vermelho
         simxFloat goal6[3]; goal6[0] = -1.0; goal6[1] = -1.5; goal6[2] = -PI/2;
         path.push_back(goal6);
@@ -73,6 +88,10 @@ int main(int argc, char* argv[])
 		    
 		        //Lê a posição atual do robô
 		        monstrinho.GetAPIPosition(clientID);
+		       
+		        //Mostra a distancia que o robo deveria estar vendo
+		        printf("Map: %.2f\n", testmap.MapDistance(monstrinho.GetPos()[0], monstrinho.GetPos()[1], monstrinho.GetPos()[2]));
+		        printf("Sen: %.2f\n", monstrinho.GetSensorFReading());
 		       
 				//Faz a leitura dos sonares
 		        monstrinho.GetSonarReadings(clientID);

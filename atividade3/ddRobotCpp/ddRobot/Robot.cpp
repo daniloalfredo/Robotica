@@ -51,11 +51,8 @@ void Robot::GetSonarReadings(simxInt clientID)
 	sonar_reading[0] = readSonar(clientID, sonarL);
 	sonar_reading[1] = readSonar(clientID, sonarR);
 	sonar_reading[2] = readSonar(clientID, sonarF);
-  //  simxFloat sonar_reading[3]; // [L, R, F]
-    std::cout << "Sonar L : "<< sonarL << " : "<< (float)sonar_reading[0] << std::endl;
-   // printf("%.2f",sonar)
-    std::cout << "Sonar R : "<< sonarR << " : "<< (float)sonar_reading[1] << std::endl;
-    std::cout << "Sonar F : "<< sonarF<< " : "<< (float)sonar_reading[2] << std::endl;
+	
+	//printf("Leituras dos Sonares (L,R,F) = [%.4f, %.4f, %.4f] \n", sonar_reading[0], sonar_reading[1], sonar_reading[2]);
 }
 
 void Robot::SetNextGoal(simxFloat x, simxFloat y, simxFloat theta)
@@ -114,7 +111,6 @@ int Robot::ExecuteMotionControl(simxInt clientID)
 			SetTargetSpeed(clientID, phiL, phiR);
 			return 1;
 		}
-		//printf("Angle correction\n");
     }
 
     SetTargetSpeed(clientID, phiL, phiR);

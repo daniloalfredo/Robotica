@@ -11,6 +11,7 @@ extern "C" {
 
 #define PI 3.141592
 
+float fsignal(float v);
 float to180range(float angle);
 float to_positive_angle(float angle);
 float smallestAngleDiff(float target, float source);

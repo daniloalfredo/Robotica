@@ -1,5 +1,12 @@
 #include "Utils.h"
 
+float fsignal(float v)
+{
+	if(v >= 0)
+		return 1.0;
+	return -1.0;
+}
+
 float to180range(float angle)
 {
     angle = fmod(angle, 2 * M_PI);
