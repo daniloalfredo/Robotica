@@ -1,5 +1,6 @@
 #include "Robot.h"
-
+#include <bits/stdc++.h>
+using namespace std;
 void Robot::Init(simxInt clientID)
 {
 	//Pega referência para os componentes do robô 
@@ -50,6 +51,11 @@ void Robot::GetSonarReadings(simxInt clientID)
 	sonar_reading[0] = readSonar(clientID, sonarL);
 	sonar_reading[1] = readSonar(clientID, sonarR);
 	sonar_reading[2] = readSonar(clientID, sonarF);
+  //  simxFloat sonar_reading[3]; // [L, R, F]
+    std::cout << "Sonar L : "<< sonarL << " : "<< (float)sonar_reading[0] << std::endl;
+   // printf("%.2f",sonar)
+    std::cout << "Sonar R : "<< sonarR << " : "<< (float)sonar_reading[1] << std::endl;
+    std::cout << "Sonar F : "<< sonarF<< " : "<< (float)sonar_reading[2] << std::endl;
 }
 
 void Robot::SetNextGoal(simxFloat x, simxFloat y, simxFloat theta)
