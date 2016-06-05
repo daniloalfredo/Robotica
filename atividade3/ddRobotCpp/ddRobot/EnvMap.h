@@ -8,6 +8,8 @@
 
 #include "Utils.h"
 
+#define INFINITE_DISTANCE 999.9
+
 typedef std::pair<float, float> Point;
 typedef std::pair< Point, Point > Segment;
 

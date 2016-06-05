@@ -86,12 +86,11 @@ int main(int argc, char* argv[])
 		            break;  
 				}
 		    
+		    	//Printa o log do robô
+		    	monstrinho.Log(testmap);
+		    
 		        //Lê a posição atual do robô
 		        monstrinho.GetAPIPosition(clientID);
-		       
-		        //Mostra a distancia que o robo deveria estar vendo
-		        printf("Map: %.2f\n", testmap.MapDistance(monstrinho.GetPos()[0], monstrinho.GetPos()[1], monstrinho.GetPos()[2]));
-		        printf("Sen: %.2f\n", monstrinho.GetSensorFReading());
 		       
 				//Faz a leitura dos sonares
 		        monstrinho.GetSonarReadings(clientID);
@@ -112,7 +111,6 @@ int main(int argc, char* argv[])
                         monstrinho.SetNextGoal(path[current_goal][0], path[current_goal][1], path[current_goal][2]);
                         goalCount++;
                         printf("Vezes que o objetivo total foi alcançado: %d\n", goalCount);
-
                     }
 	 			}
 	 

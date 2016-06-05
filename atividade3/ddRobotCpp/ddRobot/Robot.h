@@ -50,7 +50,7 @@ class Robot
 	
 	public:
 		void Init(simxInt clientID);
-		void Log();
+		void Log(EnvMap envmap);
 		void SetNextGoal(simxFloat x, simxFloat y, simxFloat theta);
 		void GetAPIPosition(simxInt clientID); //seta ´pos´ usando a leitura precisa da API
 		void GetSonarReadings(simxInt clientID); // atualiza a leitura dos sonares

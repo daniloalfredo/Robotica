@@ -22,7 +22,7 @@ void EnvMap::AddWall(float x0, float y0, float x1, float y1)
 float EnvMap::MapDistance(float x, float y, float theta)
 {	
 	//Verifica quais segmentos o vetor intersecta e guarda
-	float min_dist = 99.9;
+	float min_dist = INFINITE_DISTANCE;
 	for(int i = 0; i < (int) segments.size(); i++)
 	{
 		float dist = IntersectionPointToSegment(x, y, theta, segments[i]);
@@ -38,6 +38,7 @@ float EnvMap::MapDistance(float x, float y, float theta)
 //Funções Auxiliares
 //--------------------------------------------------------------
 
+//Retorna a distância do vetor ao segmento de reta (se não houver intersecção retorna distancia infinita)
 float EnvMap::IntersectionPointToSegment(float x, float y, float theta, Segment seg)
 {
 	float angle = to_positive_angle(theta);
@@ -80,5 +81,5 @@ float EnvMap::IntersectionPointToSegment(float x, float y, float theta, Segment 
     }
         
 
-    return 99.9;
+    return INFINITE_DISTANCE;
 }

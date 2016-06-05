@@ -1,6 +1,5 @@
 #include "Robot.h"
-#include <bits/stdc++.h>
-using namespace std;
+
 void Robot::Init(simxInt clientID)
 {
 	//Pega referência para os componentes do robô 
@@ -21,10 +20,11 @@ void Robot::Init(simxInt clientID)
 	WHEEL_L = 0.075;
 }
 
-void Robot::Log()
+void Robot::Log(EnvMap envmap)
 {
 	printf("Posicao Atual: [%.2f %.2f %.2fº]\n", pos[0], pos[1], to_deg(pos[2]));
 	printf("Leituras dos Sonares (L,R,F) = [%.4f, %.4f, %.4f] \n", sonar_reading[0], sonar_reading[1], sonar_reading[2]);
+	printf("Distancia do Mapa: %.2f\n", envmap.MapDistance(pos[0], pos[1], pos[2]));
 }
 
 void Robot::GetAPIPosition(simxInt clientID)
