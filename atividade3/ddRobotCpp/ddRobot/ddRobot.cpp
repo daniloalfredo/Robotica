@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
 		   	printf("Fim da simulação.\n");
 		   
 		    //Para o robô e desconecta do V-Rep;
-		    monstrinho.SetTargetSpeed(clientID, 0, 0);
+		    monstrinho.Stop(clientID);
 		    simxPauseSimulation(clientID, simx_opmode_oneshot_wait);
 		    simxFinish(clientID);
         } 

@@ -6,7 +6,6 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	simxGetObjectHandle(clientID, "RobotFrame#", &ddRobotHandle, simx_opmode_oneshot_wait);
 	simxGetObjectHandle(clientID, "LeftMotor#", &leftMotorHandle, simx_opmode_oneshot_wait);
 	simxGetObjectHandle(clientID, "RightMotor#", &rightMotorHandle, simx_opmode_oneshot_wait);
-	simxGetObjectHandle(clientID, "GraphOdometry#", &graphOdometryHandle, simx_opmode_oneshot_wait);
 	simxGetObjectHandle(clientID, "ProximitySensorL#", &sonarL, simx_opmode_oneshot_wait);
 	simxGetObjectHandle(clientID, "ProximitySensorR#", &sonarR, simx_opmode_oneshot_wait);
 	simxGetObjectHandle(clientID, "ProximitySensorF#", &sonarF, simx_opmode_oneshot_wait);
@@ -31,9 +30,14 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	lastPos[2] = pos[2];
 
 	//Variáveis da odometria
-	cumulativoX = 0.0;
-	cumulativoY = 0.0;
-	cumulativoTheta = 0.0;
+	odoVarianceX = 0.0;
+	odoVarianceY = 0.0;
+	odoVarianceTheta = 0.0;
+}
+
+void Robot::Stop(simxInt clientID)
+{
+	SetTargetSpeed(clientID, 0, 0);
 }
 
 void Robot::Log(EnvMap envmap)
@@ -44,27 +48,9 @@ void Robot::Log(EnvMap envmap)
 	//printf("MapDist: [%.2f]\n", envmap.MapDistance(pos[0], pos[1], pos[2]));
 }
 
-void Robot::GetAPIPosition(simxInt clientID)
-{
-	simxInt ret = simxGetObjectPosition(clientID, ddRobotHandle, -1, realpos, simx_opmode_oneshot_wait);
-    if (ret > 0) {
-        printf("Error reading robot position\n");
-        return;
-    }
- 
-    simxFloat orientation[3];
-    ret = simxGetObjectOrientation(clientID, ddRobotHandle, -1, orientation, simx_opmode_oneshot_wait);
-    if (ret > 0) {
-        printf("Error reading robot orientation\n");
-        return;
-    }
-
-    realpos[2] = orientation[2];
-}
-
 void Robot::Update(simxInt clientID, EnvMap testmap)
 {	
-	//Guarda a posicao real da api
+	//Guarda a posicao real da api para comparação
 	GetAPIPosition(clientID);
 
 	//Executa o controle de movimento
@@ -74,11 +60,12 @@ void Robot::Update(simxInt clientID, EnvMap testmap)
 	UpdatePositionWithOdometry(clientID);
 	
 	//Se já se deslocou o bastante
-	if(cumulativoX >= 0.01 || cumulativoY >= 0.01 || cumulativoTheta >= PI/180)
+	if(odoVarianceX >= 0.01 || odoVarianceY >= 0.01 || odoVarianceTheta >= PI/180)
 	{
-		cumulativoX = 0.0;
-		cumulativoY = 0.0;
-		cumulativoTheta = 0.0;
+		//Reinicia as variâncias de posição
+		odoVarianceX = 0.0;
+		odoVarianceY = 0.0;
+		odoVarianceTheta = 0.0;
 
 		//Faz a leitura dos sonares
 		UpdateSonarReadings(clientID);
@@ -106,6 +93,24 @@ void Robot::Update(simxInt clientID, EnvMap testmap)
 	}
 }
 
+void Robot::GetAPIPosition(simxInt clientID)
+{
+	simxInt ret = simxGetObjectPosition(clientID, ddRobotHandle, -1, realpos, simx_opmode_oneshot_wait);
+    if (ret > 0) {
+        printf("Error reading robot position\n");
+        return;
+    }
+ 
+    simxFloat orientation[3];
+    ret = simxGetObjectOrientation(clientID, ddRobotHandle, -1, orientation, simx_opmode_oneshot_wait);
+    if (ret > 0) {
+        printf("Error reading robot orientation\n");
+        return;
+    }
+
+    realpos[2] = orientation[2];
+}
+
 void Robot::ExecuteMotionControl(simxInt clientID)
 {	
     simxFloat theta = pos[2];
@@ -123,7 +128,9 @@ void Robot::ExecuteMotionControl(simxInt clientID)
     beta = to180range(beta);
  
     simxFloat v = K_RHO * rho;
-    if(v < 0.2){v = 0.2;}
+    
+    if(v < 0.2)
+    	v = 0.2;
 
     simxFloat w = (K_ALPHA * alpha + K_BETA * beta);
  
@@ -180,7 +187,7 @@ void Robot::UpdatePositionWithAPI(simxInt clientID)
 
 void Robot::UpdatePositionWithOdometry(simxInt clientID)
 {
-    readOdometers(clientID);
+    /*readOdometers(clientID);
 
     simxFloat b = 2*WHEEL_L;
     simxFloat deltaSr = dPhiL*WHEEL1_R;
@@ -200,12 +207,12 @@ void Robot::UpdatePositionWithOdometry(simxInt clientID)
   	printf("New Pos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
    	printf("Deltas: [%f, %f, %f]\t\n", deltaX, deltaY, deltaTheta);
 
-	cumulativoX += deltaX;
-	cumulativoY += deltaY;
-	cumulativoTheta += deltaTheta;
+	odoVarianceX += ??;
+	odoVarianceY += ??;
+	odoVarianceTheta += ??;*/
 
-	//Por enquanto usando api (remover depois)
-	//UpdatePositionWithAPI(clientID);
+	//Por enquanto usando posição da API (remover depois)
+	UpdatePositionWithAPI(clientID);
 }
 
 void Robot::UpdatePositionWithSensorsAndMap(simxInt clientID, EnvMap testmap)
@@ -213,10 +220,6 @@ void Robot::UpdatePositionWithSensorsAndMap(simxInt clientID, EnvMap testmap)
 	//Por enquanto usando api (remover depois)
 	UpdatePositionWithAPI(clientID);
 }
-
-//------------------------------------------------------------------------
-//Funções auxiliares
-//------------------------------------------------------------------------
 
 void Robot::readOdometers(int clientID)
 {

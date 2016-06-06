@@ -18,7 +18,8 @@ all:
 	gcc $(CFLAGS) -c ../remoteApi/extApi.c -o ../remoteApi/extApi.o
 	gcc $(CFLAGS) -c ../remoteApi/extApiPlatform.c -o ../remoteApi/extApiPlatform.o
 	@mkdir -p bin
-	g++ ../remoteApi/extApi.o ../remoteApi/extApiPlatform.o ddRobot.o Utils.o EnvMap.o Robot.o -o bin/ddRobot -lpthread
+	g++ ../remoteApi/extApi.o ../remoteApi/extApiPlatform.o ddRobot.o Utils.o EnvMap.o Robot.o -o bin/ddRobot.bin -lpthread
+	@rm -f *.o 
 
 clean:
 	@rm -f bin/*.*

@@ -31,8 +31,6 @@ class Robot
 		simxInt ddRobotHandle;
 		simxInt leftMotorHandle;
 		simxInt rightMotorHandle;
-		simxInt sensorHandle;
-		simxInt graphOdometryHandle;
 		simxInt sonarL;
 		simxInt sonarR;
 		simxInt sonarF;
@@ -54,26 +52,28 @@ class Robot
 		//Variáveis da odometria
 		simxFloat dPhiL;
 		simxFloat dPhiR;
-		simxFloat cumulativoX;
-		simxFloat cumulativoY;
-		simxFloat cumulativoTheta;
+		
+		simxFloat odoVarianceX;
+		simxFloat odoVarianceY;
+		simxFloat odoVarianceTheta;
 
 		//Funções auxiliares
-		void readOdometers(int clientID);
-		simxFloat readSonar(int clientID, simxInt &sonar);
-	
-	public:
-		void Init(simxInt clientID, std::vector<simxFloat*> path);
-		void Log(EnvMap envmap);
 		void GetAPIPosition(simxInt clientID);
-		void Update(simxInt clientID, EnvMap testmap);
 		void ExecuteMotionControl(simxInt clientID); //faz o robô andar em direção ao alvo
 		void SetTargetSpeed(int clientID, simxFloat phiL, simxFloat phiR);
 		void UpdateSonarReadings(simxInt clientID); // atualiza a leitura dos sonares
 		void UpdatePositionWithAPI(simxInt clientID);
 		void UpdatePositionWithOdometry(simxInt clientID);
 		void UpdatePositionWithSensorsAndMap(simxInt clientID, EnvMap testmap);
-		
+		void readOdometers(int clientID);
+		simxFloat readSonar(int clientID, simxInt &sonar);
+	
+	public:
+		//Funções principais de interface do robô
+		void Init(simxInt clientID, std::vector<simxFloat*> path);
+		void Stop(simxInt clientID);
+		void Log(EnvMap envmap);
+		void Update(simxInt clientID, EnvMap testmap);
 };
 
 #endif
