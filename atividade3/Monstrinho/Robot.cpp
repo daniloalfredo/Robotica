@@ -47,7 +47,8 @@ void Robot::Log(EnvMap envmap)
 {
 	printf("RealPos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", realpos[0], realpos[1], realpos[2]);
 	printf("CalcPos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
-	printf("Sonars: [%.2f, %.2f, %.2f] \t//[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
+	printf("ErroPos: [%.2f, %.2f, %.2f]\t//realpos - pos\n", realpos[0]-pos[0], realpos[1]-pos[1], realpos[2]-pos[2]);
+	printf("Sonares: [%.2f, %.2f, %.2f] \t//[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
 	printf("MapDist: [%.2f]\n", envmap.MapDistance(pos[0], pos[1], pos[2]));
 }
 
@@ -59,6 +60,9 @@ void Robot::Update(EnvMap testmap)
 	//Executa o controle de movimento
 	ExecuteMotionControl();
 	
+	//Faz a leitura dos sonares
+	UpdateSonarReadings();
+	
 	//Atualiza a posição usando odometria
 	UpdatePositionWithOdometry();
 	
@@ -69,9 +73,6 @@ void Robot::Update(EnvMap testmap)
 		odoVarianceX = 0.0;
 		odoVarianceY = 0.0;
 		odoVarianceTheta = 0.0;
-
-		//Faz a leitura dos sonares
-		UpdateSonarReadings();
 	
 		//Atualiza a posição atual do robô usando os sensores e o mapa
 		UpdatePositionWithSensorsAndMap(testmap);
@@ -194,9 +195,7 @@ void Robot::UpdatePositionWithOdometry()
     simxFloat deltaSr = dPhiL*WHEEL1_R;
     simxFloat deltaSl = dPhiR*WHEEL2_R;
     simxFloat deltaTheta = (deltaSr-deltaSl)/b;
-  
     simxFloat deltaS = (deltaSr+deltaSl)/2;
-
     simxFloat deltaX = deltaS*cos(pos[2] + deltaTheta/2);
     simxFloat deltaY = deltaS*sin(pos[2] + deltaTheta/2);
   
@@ -250,8 +249,8 @@ simxFloat Robot::readSonar(simxInt &sonar)
     simxInt operationMode;
     
     simxInt errorCode = simxReadProximitySensor(clientID,sonar,&detectionState,detectedPoint,&detectedObjectHandle,detectedSurfaceNormalVector,operationMode);
-    if (detectionState!=0)
-       return detectedPoint[2];
+    if (detectionState != 0)
+		return detectedPoint[2];
     else
         return -1;
 }
