@@ -9,8 +9,9 @@ extern "C" {
 /* #include "extApiCustom.h" if you wanna use custom remote API functions! */
 }
 
-#define PI 3.141592
+#define PI M_PI
 
+//Funções de Ângulos
 float fsignal(float v);
 float to180range(float angle);
 float to_2pi_range(float angle);

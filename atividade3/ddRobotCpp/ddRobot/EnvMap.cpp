@@ -6,9 +6,9 @@ EnvMap::EnvMap()
 
 void EnvMap::PrintMap()
 {
-	printf("Map Format:\n");
+	printf("Mapa do Ambiente:\n");
 	for(int i = 0; i < (int) segments.size(); i++)
-		printf("\tSegment from (%.2f, %.2f) to (%.2f, %.2f)\n", segments[i].first.first, segments[i].first.second, segments[i].second.first, segments[i].second.second);
+		printf("\tSegmento de (%.2f, %.2f) para (%.2f, %.2f)\n", segments[i].first.first, segments[i].first.second, segments[i].second.first, segments[i].second.second);
 }
 
 void EnvMap::AddWall(float x0, float y0, float x1, float y1)
@@ -81,6 +81,5 @@ float EnvMap::IntersectionPointToSegment(float x, float y, float theta, Segment 
     	return sqrt((x-xp)*(x-xp) + (y-yp)*(y-yp));
     }
         
-
     return INFINITE_DISTANCE;
 }

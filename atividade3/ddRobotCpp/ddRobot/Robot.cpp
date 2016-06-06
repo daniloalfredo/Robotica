@@ -2,6 +2,9 @@
 
 void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 {
+	//Guarda referência do clientID da API
+	this->clientID = clientID; 
+
 	//Pega referência para os componentes do robô 
 	simxGetObjectHandle(clientID, "RobotFrame#", &ddRobotHandle, simx_opmode_oneshot_wait);
 	simxGetObjectHandle(clientID, "LeftMotor#", &leftMotorHandle, simx_opmode_oneshot_wait);
@@ -24,7 +27,7 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	reached_goal = true;
 	
 	//Inicializa a posição
-	UpdatePositionWithAPI(clientID);
+	UpdatePositionWithAPI();
 	lastPos[0] = pos[0];
 	lastPos[1] = pos[1];
 	lastPos[2] = pos[2];
@@ -35,29 +38,29 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	odoVarianceTheta = 0.0;
 }
 
-void Robot::Stop(simxInt clientID)
+void Robot::Stop()
 {
-	SetTargetSpeed(clientID, 0, 0);
+	SetTargetSpeed(0, 0);
 }
 
 void Robot::Log(EnvMap envmap)
 {
-	//printf("RealPos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", realpos[0], realpos[1], realpos[2]);
-	//printf("CalcPos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
-	//printf("Sonars: [%.2f, %.2f, %.2f] \t//[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
-	//printf("MapDist: [%.2f]\n", envmap.MapDistance(pos[0], pos[1], pos[2]));
+	printf("RealPos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", realpos[0], realpos[1], realpos[2]);
+	printf("CalcPos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
+	printf("Sonars: [%.2f, %.2f, %.2f] \t//[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
+	printf("MapDist: [%.2f]\n", envmap.MapDistance(pos[0], pos[1], pos[2]));
 }
 
-void Robot::Update(simxInt clientID, EnvMap testmap)
+void Robot::Update(EnvMap testmap)
 {	
 	//Guarda a posicao real da api para comparação
-	GetAPIPosition(clientID);
+	GetAPIPosition();
 
 	//Executa o controle de movimento
-	ExecuteMotionControl(clientID);
+	ExecuteMotionControl();
 	
 	//Atualiza a posição usando odometria
-	UpdatePositionWithOdometry(clientID);
+	UpdatePositionWithOdometry();
 	
 	//Se já se deslocou o bastante
 	if(odoVarianceX >= 0.01 || odoVarianceY >= 0.01 || odoVarianceTheta >= PI/180)
@@ -68,10 +71,10 @@ void Robot::Update(simxInt clientID, EnvMap testmap)
 		odoVarianceTheta = 0.0;
 
 		//Faz a leitura dos sonares
-		UpdateSonarReadings(clientID);
+		UpdateSonarReadings();
 	
 		//Atualiza a posição atual do robô usando os sensores e o mapa
-		UpdatePositionWithSensorsAndMap(clientID, testmap);
+		UpdatePositionWithSensorsAndMap(testmap);
 	
 		lastPos[0] = pos[0];
 		lastPos[1] = pos[1];
@@ -93,25 +96,25 @@ void Robot::Update(simxInt clientID, EnvMap testmap)
 	}
 }
 
-void Robot::GetAPIPosition(simxInt clientID)
+void Robot::GetAPIPosition()
 {
 	simxInt ret = simxGetObjectPosition(clientID, ddRobotHandle, -1, realpos, simx_opmode_oneshot_wait);
     if (ret > 0) {
-        printf("Error reading robot position\n");
+        printf("Erro ao ler posicao do robo.\n");
         return;
     }
  
     simxFloat orientation[3];
     ret = simxGetObjectOrientation(clientID, ddRobotHandle, -1, orientation, simx_opmode_oneshot_wait);
     if (ret > 0) {
-        printf("Error reading robot orientation\n");
+        printf("Erro ao ler orientacao do robo.\n");
         return;
     }
 
     realpos[2] = orientation[2];
 }
 
-void Robot::ExecuteMotionControl(simxInt clientID)
+void Robot::ExecuteMotionControl()
 {	
     simxFloat theta = pos[2];
     simxFloat dtheta = smallestAngleDiff(goal[2], theta);
@@ -154,38 +157,36 @@ void Robot::ExecuteMotionControl(simxInt clientID)
 		//Se chegou ao objetivo
 		else
 		{
-			phiR = 0;
-			phiL = 0;
-			SetTargetSpeed(clientID, phiL, phiR);
+			Stop();
 			reached_goal = true;
 		}
     }
 
-    SetTargetSpeed(clientID, phiL, phiR);
+    SetTargetSpeed(phiL, phiR);
 }
 
-void Robot::SetTargetSpeed(int clientID, simxFloat phiL, simxFloat phiR)
+void Robot::SetTargetSpeed(simxFloat phiL, simxFloat phiR)
 {
     simxSetJointTargetVelocity(clientID, leftMotorHandle, phiL, simx_opmode_oneshot);
     simxSetJointTargetVelocity(clientID, rightMotorHandle, phiR, simx_opmode_oneshot);  
 }
 
-void Robot::UpdateSonarReadings(simxInt clientID)
+void Robot::UpdateSonarReadings()
 {
-	sonar_reading[0] = readSonar(clientID, sonarL);
-	sonar_reading[1] = readSonar(clientID, sonarR);
-	sonar_reading[2] = readSonar(clientID, sonarF);
+	sonar_reading[0] = readSonar(sonarL);
+	sonar_reading[1] = readSonar(sonarR);
+	sonar_reading[2] = readSonar(sonarF);
 }
 
-void Robot::UpdatePositionWithAPI(simxInt clientID)
+void Robot::UpdatePositionWithAPI()
 {
-	GetAPIPosition(clientID);
+	GetAPIPosition();
 	pos[0] = realpos[0];
 	pos[1] = realpos[1];
 	pos[2] = realpos[2];
 }
 
-void Robot::UpdatePositionWithOdometry(simxInt clientID)
+void Robot::UpdatePositionWithOdometry()
 {
     /*readOdometers(clientID);
 
@@ -212,16 +213,16 @@ void Robot::UpdatePositionWithOdometry(simxInt clientID)
 	odoVarianceTheta += ??;*/
 
 	//Por enquanto usando posição da API (remover depois)
-	UpdatePositionWithAPI(clientID);
+	UpdatePositionWithAPI();
 }
 
-void Robot::UpdatePositionWithSensorsAndMap(simxInt clientID, EnvMap testmap)
+void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 {
 	//Por enquanto usando api (remover depois)
-	UpdatePositionWithAPI(clientID);
+	UpdatePositionWithAPI();
 }
 
-void Robot::readOdometers(int clientID)
+void Robot::readOdometers()
 {
     //Old joint angle position
     static simxFloat lwprev = 0;
@@ -240,7 +241,7 @@ void Robot::readOdometers(int clientID)
     rwprev = rwcur;
 }
 
-simxFloat Robot::readSonar(int clientID, simxInt &sonar)
+simxFloat Robot::readSonar(simxInt &sonar)
 {
     simxUChar detectionState;
     simxFloat detectedPoint[3];

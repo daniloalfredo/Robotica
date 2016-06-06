@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
 				}
 		    
 		    	//Atualiza o robô
-		    	monstrinho.Update(clientID, testmap);
+		    	monstrinho.Update(testmap);
 		    	
 		    	//Printa o log do robô
 		    	monstrinho.Log(testmap);
@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
 		   	printf("Fim da simulação.\n");
 		   
 		    //Para o robô e desconecta do V-Rep;
-		    monstrinho.Stop(clientID);
+		    monstrinho.Stop();
 		    simxPauseSimulation(clientID, simx_opmode_oneshot_wait);
 		    simxFinish(clientID);
         } 

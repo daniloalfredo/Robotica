@@ -19,13 +19,8 @@ extern "C" {
 class Robot
 {
 	private:
-		//Constantes do controle de movimento
-		float K_RHO;
-		float K_ALPHA;
-		float K_BETA;
-		float WHEEL1_R;
-		float WHEEL2_R;
-		float WHEEL_L;
+		//Client ID da API
+		simxFloat clientID;
 		
 		//Componentes do robô
 		simxInt ddRobotHandle;
@@ -34,6 +29,14 @@ class Robot
 		simxInt sonarL;
 		simxInt sonarR;
 		simxInt sonarF;
+		
+		//Constantes do controle de movimento
+		float K_RHO;
+		float K_ALPHA;
+		float K_BETA;
+		float WHEEL1_R;
+		float WHEEL2_R;
+		float WHEEL_L;
 		
 		//Posição atual e próximo objetivo
 		simxFloat lastPos[3];
@@ -58,22 +61,22 @@ class Robot
 		simxFloat odoVarianceTheta;
 
 		//Funções auxiliares
-		void GetAPIPosition(simxInt clientID);
-		void ExecuteMotionControl(simxInt clientID); //faz o robô andar em direção ao alvo
-		void SetTargetSpeed(int clientID, simxFloat phiL, simxFloat phiR);
-		void UpdateSonarReadings(simxInt clientID); // atualiza a leitura dos sonares
-		void UpdatePositionWithAPI(simxInt clientID);
-		void UpdatePositionWithOdometry(simxInt clientID);
-		void UpdatePositionWithSensorsAndMap(simxInt clientID, EnvMap testmap);
-		void readOdometers(int clientID);
-		simxFloat readSonar(int clientID, simxInt &sonar);
+		void GetAPIPosition();
+		void ExecuteMotionControl(); //faz o robô andar em direção ao alvo
+		void SetTargetSpeed(simxFloat phiL, simxFloat phiR);
+		void UpdateSonarReadings(); // atualiza a leitura dos sonares
+		void UpdatePositionWithAPI();
+		void UpdatePositionWithOdometry();
+		void UpdatePositionWithSensorsAndMap(EnvMap testmap);
+		void readOdometers();
+		simxFloat readSonar(simxInt &sonar);
 	
 	public:
 		//Funções principais de interface do robô
 		void Init(simxInt clientID, std::vector<simxFloat*> path);
-		void Stop(simxInt clientID);
+		void Stop();
 		void Log(EnvMap envmap);
-		void Update(simxInt clientID, EnvMap testmap);
+		void Update(EnvMap testmap);
 };
 
 #endif
