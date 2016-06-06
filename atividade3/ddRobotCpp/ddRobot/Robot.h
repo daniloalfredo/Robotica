@@ -40,6 +40,7 @@ class Robot
 		//Posição atual e próximo objetivo
 		simxFloat lastPos[3];
 		simxFloat pos[3];
+		simxFloat realpos[3];
 		simxFloat goal[3];
 		
 		//Leituras dos sonares e das odometrias
@@ -51,18 +52,22 @@ class Robot
 		bool reached_goal;
 		
 		//Variáveis da odometria
-		//...
-		
+		simxFloat dPhiL;
+		simxFloat dPhiR;
+		simxFloat cumulativoX;
+		simxFloat cumulativoY;
+		simxFloat cumulativoTheta;
+
 		//Funções auxiliares
-		float DistanceBeetweenPos(simxFloat pos1[3], simxFloat pos2[3]);
-		void readOdometers(int clientID, simxFloat &dPhiL, simxFloat &dPhiR);
+		void readOdometers(int clientID);
 		simxFloat readSonar(int clientID, simxInt &sonar);
 	
 	public:
 		void Init(simxInt clientID, std::vector<simxFloat*> path);
 		void Log(EnvMap envmap);
+		void GetAPIPosition(simxInt clientID);
 		void Update(simxInt clientID, EnvMap testmap);
-		int ExecuteMotionControl(simxInt clientID); //faz o robô andar em direção ao alvo
+		void ExecuteMotionControl(simxInt clientID); //faz o robô andar em direção ao alvo
 		void SetTargetSpeed(int clientID, simxFloat phiL, simxFloat phiR);
 		void UpdateSonarReadings(simxInt clientID); // atualiza a leitura dos sonares
 		void UpdatePositionWithAPI(simxInt clientID);

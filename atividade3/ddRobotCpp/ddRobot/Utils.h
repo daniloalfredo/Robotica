@@ -13,6 +13,7 @@ extern "C" {
 
 float fsignal(float v);
 float to180range(float angle);
+float to_2pi_range(float angle);
 float to_positive_angle(float angle);
 float smallestAngleDiff(float target, float source);
 double to_deg(double radians);

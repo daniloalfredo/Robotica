@@ -48,6 +48,7 @@ float EnvMap::IntersectionPointToSegment(float x, float y, float theta, Segment 
 	float b1 = y - a1*x;
 	
 	float increment = 10.0*fsignal(a1);
+	
 	if(angle > PI)
 		increment *= -1;
 	

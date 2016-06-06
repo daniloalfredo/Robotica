@@ -10,7 +10,7 @@ float fsignal(float v)
 float to180range(float angle)
 {
     angle = fmod(angle, 2 * M_PI);
-    if (angle<-M_PI)
+    if (angle < -M_PI)
         angle = angle + 2 * M_PI;
     else if (angle > M_PI)
         angle = angle - 2 * M_PI;
@@ -20,11 +20,20 @@ float to180range(float angle)
  
 float to_positive_angle(float angle)
 {
- 
     angle = fmod(angle, 2 * M_PI);
     while (angle < 0) {
         angle = angle + 2 * M_PI;
     }
+    return angle;
+}
+
+float to_2pi_range(float angle)
+{
+    angle = to_positive_angle(angle);
+
+    while(angle > 2*M_PI)
+        angle -= 2*M_PI;
+
     return angle;
 }
  
