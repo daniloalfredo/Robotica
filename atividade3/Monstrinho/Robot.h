@@ -39,7 +39,6 @@ class Robot
 		float WHEEL_L;
 		
 		//Posição atual e próximo objetivo
-		simxFloat lastPos[3];
 		simxFloat pos[3];
 		simxFloat realpos[3];
 		simxFloat goal[3];
@@ -53,12 +52,15 @@ class Robot
 		bool reached_goal;
 		
 		//Variáveis da odometria
+		float lastCommandTime;
 		simxFloat dPhiL;
 		simxFloat dPhiR;
-		
 		simxFloat odoVarianceX;
 		simxFloat odoVarianceY;
 		simxFloat odoVarianceTheta;
+		float ERROR_PER_SECOND_X; //erros de odometria
+		float ERROR_PER_SECOND_Y;
+		float ERROR_PER_SECOND_THETA;
 
 		//Funções auxiliares
 		void GetAPIPosition();

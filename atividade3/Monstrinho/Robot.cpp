@@ -28,14 +28,15 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	
 	//Inicializa a posição
 	UpdatePositionWithAPI();
-	lastPos[0] = pos[0];
-	lastPos[1] = pos[1];
-	lastPos[2] = pos[2];
 
 	//Variáveis da odometria
+	lastCommandTime = GetSimulationTimeInSecs(clientID);
 	odoVarianceX = 0.0;
 	odoVarianceY = 0.0;
 	odoVarianceTheta = 0.0;
+	ERROR_PER_SECOND_X = 0.1;
+	ERROR_PER_SECOND_Y = 0.1;
+	ERROR_PER_SECOND_THETA = 2*(PI/180.0);
 }
 
 void Robot::Stop()
@@ -48,8 +49,8 @@ void Robot::Log(EnvMap envmap)
 	printf("RealPos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", realpos[0], realpos[1], realpos[2]);
 	printf("CalcPos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
 	printf("ErroPos: [%.2f, %.2f, %.2f]\t//realpos - pos\n", realpos[0]-pos[0], realpos[1]-pos[1], realpos[2]-pos[2]);
-	printf("Sonares: [%.2f, %.2f, %.2f] \t//[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
-	printf("MapDist: [%.2f]\n", envmap.MapDistance(pos[0], pos[1], pos[2]));
+	//printf("Sonares: [%.2f, %.2f, %.2f] \t//[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
+	//printf("MapDist: [%.2f]\n", envmap.MapDistance(pos[0], pos[1], pos[2]));
 }
 
 void Robot::Update(EnvMap testmap)
@@ -57,32 +58,23 @@ void Robot::Update(EnvMap testmap)
 	//Guarda a posicao real da api para comparação
 	GetAPIPosition();
 
-	//Executa o controle de movimento
-	ExecuteMotionControl();
+	//Atualiza a posição usando odometria
+	UpdatePositionWithOdometry();
 	
 	//Faz a leitura dos sonares
 	UpdateSonarReadings();
 	
-	//Atualiza a posição usando odometria
-	UpdatePositionWithOdometry();
-	
 	//Se já se deslocou o bastante
-	if(odoVarianceX >= 0.01 || odoVarianceY >= 0.01 || odoVarianceTheta >= PI/180)
-	{
-		//Reinicia as variâncias de posição
-		odoVarianceX = 0.0;
-		odoVarianceY = 0.0;
-		odoVarianceTheta = 0.0;
-	
+	if(odoVarianceX >= 0.05 || odoVarianceY >= 0.05 || odoVarianceTheta >= PI / 180.0)
+	{	
 		//Atualiza a posição atual do robô usando os sensores e o mapa
 		UpdatePositionWithSensorsAndMap(testmap);
-	
-		lastPos[0] = pos[0];
-		lastPos[1] = pos[1];
-		lastPos[2] = pos[2];
 	}
 	
-	//Faz a atualização das posições objetivo do robô
+	//Executa o controle de movimento
+	ExecuteMotionControl();
+	
+	//Verifica se já chegou no objetivo
 	if(reached_goal)
 	{
 		current_goal++;
@@ -164,6 +156,7 @@ void Robot::ExecuteMotionControl()
     }
 
     SetTargetSpeed(phiL, phiR);
+    lastCommandTime = GetSimulationTimeInSecs(clientID);
 }
 
 void Robot::SetTargetSpeed(simxFloat phiL, simxFloat phiR)
@@ -189,34 +182,41 @@ void Robot::UpdatePositionWithAPI()
 
 void Robot::UpdatePositionWithOdometry()
 {
-    /*readOdometers();
+	//Leitura do odometro para saber as variações dPhiL e dPhiR 
+	readOdometers();
+	
+	//Variáveis do commando: U[t, vl, vr]
+	float t = GetTimeSinceLastCommandInSecs(clientID, lastCommandTime);
+	float vl = dPhiL * WHEEL1_R;
+	float vr = dPhiR * WHEEL2_R;
+	
+	//Variáveis auxiliares
+	float v = (vl + vr) / 2.0;
+	float angVel = (vl - vr) / (2*WHEEL_L);
+	float turnRadius = 0.0;
+	if(angVel != 0.0)
+		turnRadius = v / angVel;
 
-    simxFloat b = 2*WHEEL_L;
-    simxFloat deltaSr = dPhiL*WHEEL1_R;
-    simxFloat deltaSl = dPhiR*WHEEL2_R;
-    simxFloat deltaTheta = (deltaSr-deltaSl)/b;
-    simxFloat deltaS = (deltaSr+deltaSl)/2;
-    simxFloat deltaX = deltaS*cos(pos[2] + deltaTheta/2);
-    simxFloat deltaY = deltaS*sin(pos[2] + deltaTheta/2);
-  
-    pos[0] = pos[0] + deltaX;
-	pos[1] = pos[1] + deltaY;
-	pos[2] = pos[2] + deltaTheta;*/
+	//Nova posição
+	pos[0] = pos[0] - turnRadius*sin(pos[2]) + turnRadius*sin(pos[2] + angVel*t);
+	pos[1] = pos[1] + turnRadius*cos(pos[2]) - turnRadius*cos(pos[2] + angVel*t); 
+	pos[2] = pos[2] + angVel*t;
 
-  	//printf("Posicao: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", realpos[0], realpos[1], realpos[2]);
-  	//printf("New Pos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
-   	//printf("Deltas: [%f, %f, %f]\t\n", deltaX, deltaY, deltaTheta);
-
-	//odoVarianceX += ??;
-	//odoVarianceY += ??;
-	//odoVarianceTheta += ??;
+	//Atualiza Incertezas de posição
+	odoVarianceX += t * ERROR_PER_SECOND_X;
+	odoVarianceY += t * ERROR_PER_SECOND_Y;
+	odoVarianceTheta += t * ERROR_PER_SECOND_THETA;
 
 	//Por enquanto usando posição da API (remover depois)
-	UpdatePositionWithAPI();
+	//UpdatePositionWithAPI();
 }
 
 void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 {
+	odoVarianceX = 0.0;
+	odoVarianceY = 0.0;
+	odoVarianceTheta = 0.0;
+
 	//Por enquanto usando api (remover depois)
 	UpdatePositionWithAPI();
 }

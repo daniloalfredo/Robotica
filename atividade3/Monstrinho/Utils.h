@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <unistd.h>
+#include <sys/time.h>
  
 extern "C" {
 #include "extApi.h"
@@ -19,6 +20,8 @@ float to_positive_angle(float angle);
 float smallestAngleDiff(float target, float source);
 double to_deg(double radians);
 
-simxInt getSimTimeMs(int clientID);
+//Funções de Tempo
+float GetSimulationTimeInSecs(simxInt clientID);
+float GetTimeSinceLastCommandInSecs(simxInt clientID, float lastCommandTime);
 
 #endif

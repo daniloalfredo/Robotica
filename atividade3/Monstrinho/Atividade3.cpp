@@ -63,14 +63,11 @@ int main(int argc, char* argv[])
         	//LOOP DA SIMULAÇÃO
         	//---------------------------------------------------------
 		    while (simxGetConnectionId(clientID) != -1)
-		    {    
-		    	//Lê tempo de simulação do ultimo comando
-		        simxInt time = getSimTimeMs(clientID); //Simulation time in ms or 0 if sim is not running
-		       
+		    {      
 		        //Encerra o loop se a simulacao acabou
-		        if (time == 0)
+		        if (simxGetLastCmdTime(clientID) == 0) //Retorna o tempo de simulação em ms ou 0 se o simulador não está rodando
 		        {
-		        	printf("Parando Simulação...\n");
+		        	printf("Parando a simulação...\n");
 		            break;  
 				}
 		    
@@ -94,11 +91,11 @@ int main(int argc, char* argv[])
         } 
         
         else
-        	printf("Nao foi possível iniciar a simulação.\n");
+        	printf("Não foi possível iniciar a simulação.\n");
     } 
     
     else
-        printf("Nao foi possivel conectar.\n");
+        printf("Não foi possível conectar.\n");
    
     return 0;
 }

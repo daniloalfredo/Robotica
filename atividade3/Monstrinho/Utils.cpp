@@ -55,7 +55,12 @@ double to_deg(double radians)
     return radians * (180.0 / M_PI);
 }
 
-simxInt getSimTimeMs(int clientID) //In Miliseconds
+float GetSimulationTimeInSecs(simxInt clientID)
 {
-    return simxGetLastCmdTime(clientID);
+	return (((float) simxGetLastCmdTime(clientID)) / 1000.0);
+}
+
+float GetTimeSinceLastCommandInSecs(simxInt clientID, float lastCommandTime)
+{
+	return GetSimulationTimeInSecs(clientID) - lastCommandTime;
 }
