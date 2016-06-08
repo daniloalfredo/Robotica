@@ -118,11 +118,11 @@ void Robot::ExecuteMotionControl()
     simxFloat rho = sqrt(deltax*deltax + deltay*deltay);
  
     simxFloat atg = atan2(deltay, deltax);
-    atg = to180range(atg);
+    atg = to_pi_range(atg);
     simxFloat alpha = smallestAngleDiff(atg, theta);
-    alpha = to180range(alpha);
+    alpha = to_pi_range(alpha);
     simxFloat beta = goal[2] - theta - alpha;
-    beta = to180range(beta);
+    beta = to_pi_range(beta);
  
     simxFloat v = K_RHO * rho;
     
@@ -213,8 +213,84 @@ void Robot::UpdatePositionWithOdometry()
 
 void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 {
+	#define STEPS_X 40
+	#define STEPS_Y 40
+	#define STEPS_THETA 360
+	static float SIZE_PER_STEP_X = 0.1;
+	static float SIZE_PER_STEP_Y = 0.1;
+	static float SIZE_PER_STEP_THETA = 1.0;
+	static float sensorVariance = 0.1;
+	static float probMatrix[STEPS_X][STEPS_Y][STEPS_THETA];
+	
+	//Desvio padrão das medições
+	float desvioX = sqrt(odoVarianceX);
+	float desvioY = sqrt(odoVarianceY);
+	float desvioTheta = sqrt(odoVarianceTheta);
+	
+	//Faixas de índices pra usar em [J,I,K]
+	int min_idx_i = (pos[1]-odoVarianceY+2.0) / SIZE_PER_STEP_Y;
+	int max_idx_i = (pos[1]+odoVarianceY+2.0) / SIZE_PER_STEP_Y;
+	int min_idx_j = (pos[0]-odoVarianceX+2.0) / SIZE_PER_STEP_X;
+	int max_idx_j = (pos[0]+odoVarianceX+2.0) / SIZE_PER_STEP_X;
+	int min_idx_k = (to_pos_deg(pos[2])-to_pos_deg(odoVarianceTheta)+2.0) / SIZE_PER_STEP_THETA;
+	int max_idx_k = (to_pos_deg(pos[2])+to_pos_deg(odoVarianceTheta)+2.0) / SIZE_PER_STEP_THETA;
+	
+	//Melhor probabilidade encontrada de estar em uma célula
+	float melhorProb = 0.0;
+	
+	for(int i = min_idx_i; i < max_idx_i; i++)
+	{
+		for(int j = min_idx_j; j < max_idx_j; j++)
+		{
+			for(int k = min_idx_k; k < max_idx_k; k++)
+			{
+				//Reseta a probabilidade de estar nessa célula
+				probMatrix[i][j][k] = 0.0;
+				
+				//Calcula probabilidade de estar nela pela odometria
+				float minX = j * SIZE_PER_STEP_X;
+				float maxX = minX + SIZE_PER_STEP_X;
+				float minY = i * SIZE_PER_STEP_Y;
+				float maxY = minY + SIZE_PER_STEP_Y;
+				float minTheta = k * SIZE_PER_STEP_THETA;
+				float maxTheta = minTheta + SIZE_PER_STEP_THETA;
+				float probOdoX = normalDistribution((maxX-pos[0])/desvioX) - normalDistribution((minX-pos[0])/desvioX);
+				float probOdoY = normalDistribution((maxY-pos[1])/desvioY) - normalDistribution((minY-pos[1])/desvioY);
+				float probOdoTheta = normalDistribution((maxTheta-pos[2])/desvioTheta) - normalDistribution((minTheta-pos[2])/desvioTheta);
+				float probOdo = probOdoX * probOdoY * probOdoTheta;
+				
+				//Calcula a probabilidade de estar nela pelo sensor e mapa
+				float mapL = testmap.MapDistance((j+0.5)*SIZE_PER_STEP_X, (i+0.5)*SIZE_PER_STEP_Y, to_rad((k+0.5)*SIZE_PER_STEP_THETA)+PI/2.0);
+				float mapR = testmap.MapDistance((j+0.5)*SIZE_PER_STEP_X, (i+0.5)*SIZE_PER_STEP_Y, to_rad((k+0.5)*SIZE_PER_STEP_THETA)-PI/2.0);
+				float mapF = testmap.MapDistance((j+0.5)*SIZE_PER_STEP_X, (i+0.5)*SIZE_PER_STEP_Y, to_rad((k+0.5)*SIZE_PER_STEP_THETA));
+				float probSen = 0.0;
+				
+				if(sonar_reading[0] >= mapL-sensorVariance && sonar_reading[0] <= mapL+sensorVariance
+				   && sonar_reading[1] >= mapR-sensorVariance && sonar_reading[1] <= mapR+sensorVariance
+				   && sonar_reading[2] >= mapF-sensorVariance && sonar_reading[2] <= mapF+sensorVariance)
+					probSen = 1.0;
+				
+				//Combina as probabilidades e define a probabilidade final de estar na célula
+				probMatrix[i][j][k] = probOdo * probSen;
+				
+				//Se achou a maior probabilidade define essa posição como estimativa
+				if(probMatrix[i][j][k] > melhorProb)
+				{
+					melhorProb = probMatrix[i][j][k];
+					pos[0] = j * SIZE_PER_STEP_X;
+					pos[1] = i * SIZE_PER_STEP_Y;
+					pos[2] = k * SIZE_PER_STEP_THETA;
+				}
+			}
+		}
+	}
+	
+	odoVarianceX = 0.0;
+	odoVarianceY = 0.0;
+	odoVarianceTheta = 0.0;
+
 	//Por enquanto usando api (remover depois)
-	UpdatePositionWithAPI();
+	//UpdatePositionWithAPI();
 }
 
 void Robot::readOdometers()

@@ -12,17 +12,22 @@ extern "C" {
 
 #define PI M_PI
 
-//Funções de Ângulos
+//Obter sinal do número
 float fsignal(float v);
-float to180range(float angle);
-float to_2pi_range(float angle);
-float to_positive_angle(float angle);
+
+//Funções de Ângulos
+float to_pi_range(float radians);
+float to_2pi_range(float radians);
+float to_rad(float degrees);
+float to_deg(float radians);
+float to_pos_deg(float radians);
 float smallestAngleDiff(float target, float source);
-double to_deg(double radians);
-double to_rad(double degrees);
 
 //Funções de Tempo
 float GetSimulationTimeInSecs(simxInt clientID);
 float GetTimeSinceLastCommandInSecs(simxInt clientID, float lastCommandTime);
+
+//Distribuição de probabilidade
+double normalDistribution(double x);
 
 #endif
