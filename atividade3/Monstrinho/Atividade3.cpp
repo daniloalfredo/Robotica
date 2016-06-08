@@ -34,8 +34,8 @@ int main(int argc, char* argv[])
         testmap.PrintMap();
         
         //Define caminho para o robô seguir
-        std::vector<simxFloat*> path;
-        simxFloat goal1[3] = {-1.0, 1.5, PI/2};
+        std::vector<simxFloat*> path;        
+       	simxFloat goal1[3] = {-1.0, 1.5, PI/2};
         simxFloat goal2[3] = {0.0, 0.5, -PI/4};
         simxFloat goal3[3] = {1.0, -1.5, -PI/2};
         simxFloat goal4[3] = {1.0, 1.5, PI/2};

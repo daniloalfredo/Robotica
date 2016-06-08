@@ -14,9 +14,9 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	simxGetObjectHandle(clientID, "ProximitySensorF#", &sonarF, simx_opmode_oneshot_wait);
 	
 	//Inicializa as constantes de controle de movimento
-	K_RHO = 0.1;
+	K_RHO = 0.07;
 	K_ALPHA = 2.0;
-	K_BETA = -0.5;
+	K_BETA = -0.25;
 	WHEEL1_R = 0.0325;
 	WHEEL2_R = 0.0325;
 	WHEEL_L = 0.075;
@@ -30,13 +30,12 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	UpdatePositionWithAPI();
 
 	//Variáveis da odometria
-	lastCommandTime = GetSimulationTimeInSecs(clientID);
 	odoVarianceX = 0.0;
 	odoVarianceY = 0.0;
 	odoVarianceTheta = 0.0;
-	ERROR_PER_METER_X = 0.1;
-	ERROR_PER_METER_Y = 0.1;
-	ERROR_PER_METER_THETA = 5*(PI/180.0);
+	ERROR_PER_METER_X = 0.10;
+	ERROR_PER_METER_Y = 0.10;
+	ERROR_PER_METER_THETA = 1*(PI/180.0);
 }
 
 void Robot::Stop()
@@ -49,6 +48,7 @@ void Robot::Log(EnvMap envmap)
 	printf("RealPos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", realpos[0], realpos[1], realpos[2]);
 	printf("CalcPos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
 	printf("ErroPos: [%.2f, %.2f, %.2f]\t//realpos - pos\n", realpos[0]-pos[0], realpos[1]-pos[1], realpos[2]-pos[2]);
+	printf("VarOdom: [%.2f, %.2f, %.2f]\t\n", odoVarianceX, odoVarianceY, odoVarianceTheta);
 	//printf("Sonares: [%.2f, %.2f, %.2f] \t//[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
 	//printf("MapDist: [%.2f]\n", envmap.MapDistance(pos[0], pos[1], pos[2]));
 }
@@ -65,10 +65,11 @@ void Robot::Update(EnvMap testmap)
 	UpdateSonarReadings();
 	
 	//Se já se deslocou o bastante
-	if(odoVarianceX >= 0.05 || odoVarianceY >= 0.05 || odoVarianceTheta >= PI / 180.0)
+	if(odoVarianceX >= 0.05 || odoVarianceY >= 0.05 || odoVarianceTheta >= 0.1*(PI/180.0))
 	{	
 		//Atualiza a posição atual do robô usando os sensores e o mapa
 		UpdatePositionWithSensorsAndMap(testmap);
+		printf("Passo de Correção.\n");
 	}
 	
 	//Executa o controle de movimento
@@ -137,10 +138,11 @@ void Robot::ExecuteMotionControl()
     phiL = wL/WHEEL1_R; //rad/s
     phiR = wR/WHEEL2_R; //rad/s
 
-    if(rho < 0.05)
+    if(rho < 0.08/*0.05*/)
     {
 		phiR = 2 * dtheta;
 		phiL = -2 * dtheta;
+		
 		if(fabs(dtheta) >= 0.9)
 		{
 			phiR = 2 * dtheta;
@@ -150,13 +152,12 @@ void Robot::ExecuteMotionControl()
 		//Se chegou ao objetivo
 		else
 		{
-			Stop();
 			reached_goal = true;
+			//printf("Objetivo alcançado.\n");
 		}
     }
 
     SetTargetSpeed(phiL, phiR);
-    lastCommandTime = GetSimulationTimeInSecs(clientID);
 }
 
 void Robot::SetTargetSpeed(simxFloat phiL, simxFloat phiR)
@@ -187,32 +188,27 @@ void Robot::UpdatePositionWithAPI()
 void Robot::UpdatePositionWithOdometry()
 {
 	//Leitura do odometro para saber as variações dPhiL e dPhiR 
-	/*readOdometers();
+	readOdometers();
 	
-	//Variáveis do commando: U[t, vl, vr]
-	float t = GetTimeSinceLastCommandInSecs(clientID, lastCommandTime);
-	float vl = dPhiL * WHEEL1_R;
-	float vr = dPhiR * WHEEL2_R;
-	
-	//Variáveis auxiliares
-	float v = (vl + vr) / 2.0;
-	float angVel = (vl - vr) / (2*WHEEL_L);
-	float turnRadius = 0.0;
-	if(angVel != 0.0)
-		turnRadius = v / angVel;
+	float deltaSl = WHEEL1_R * dPhiL;
+	float deltaSr = WHEEL1_R * dPhiR;
+	float deltaS = (deltaSl + deltaSr) / 2.0;
+	float deltaTheta = (deltaSr - deltaSl) / (2*WHEEL_L);
+	float deltaX = deltaS * cos(pos[2] + deltaTheta/2.0);
+	float deltaY = deltaS * sin(pos[2] + deltaTheta/2.0);
 
 	//Atualiza Incertezas de posição
-	odoVarianceX += (v*cos(pos[2])*t) * ERROR_PER_METER_X;
-	odoVarianceY += (v*sin(pos[2])*t) * ERROR_PER_METER_Y;
-	odoVarianceTheta += (v*t) * ERROR_PER_METER_THETA;
+	odoVarianceX += fabs(deltaX * ERROR_PER_METER_X);
+	odoVarianceY += fabs(deltaY * ERROR_PER_METER_Y);
+	odoVarianceTheta += fabs(deltaTheta * ERROR_PER_METER_THETA);
 
 	//Nova posição
-	pos[0] = pos[0] - turnRadius*sin(pos[2]) + turnRadius*sin(pos[2] + angVel*t);
-	pos[1] = pos[1] + turnRadius*cos(pos[2]) - turnRadius*cos(pos[2] + angVel*t); 
-	pos[2] = pos[2] + angVel*t;*/
+	pos[0] += deltaX;
+	pos[1] += deltaY;
+	pos[2] += deltaTheta;
 
 	//Por enquanto usando posição da API (remover depois)
-	UpdatePositionWithAPI();
+	//UpdatePositionWithAPI();
 }
 
 void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)

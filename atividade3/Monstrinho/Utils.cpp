@@ -55,6 +55,15 @@ double to_deg(double radians)
     return radians * (180.0 / M_PI);
 }
 
+//Considera apenas angulos entre -360 e 360 graus
+double to_rad(double degrees)
+{
+	if(degrees < 0)
+		degrees = 360 - degrees;
+		
+	return (degrees * (PI/180.0));
+}
+
 float GetSimulationTimeInSecs(simxInt clientID)
 {
 	return (((float) simxGetLastCmdTime(clientID)) / 1000.0);

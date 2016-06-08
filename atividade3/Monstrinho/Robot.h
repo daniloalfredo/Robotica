@@ -52,7 +52,6 @@ class Robot
 		bool reached_goal;
 		
 		//Variáveis da odometria
-		float lastCommandTime;
 		simxFloat dPhiL;
 		simxFloat dPhiR;
 		simxFloat odoVarianceX;
