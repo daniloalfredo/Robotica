@@ -58,9 +58,9 @@ class Robot
 		simxFloat odoVarianceX;
 		simxFloat odoVarianceY;
 		simxFloat odoVarianceTheta;
-		float ERROR_PER_SECOND_X; //erros de odometria
-		float ERROR_PER_SECOND_Y;
-		float ERROR_PER_SECOND_THETA;
+		float ERROR_PER_METER_X; //erros de odometria
+		float ERROR_PER_METER_Y;
+		float ERROR_PER_METER_THETA;
 
 		//Funções auxiliares
 		void GetAPIPosition();

@@ -34,9 +34,9 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	odoVarianceX = 0.0;
 	odoVarianceY = 0.0;
 	odoVarianceTheta = 0.0;
-	ERROR_PER_SECOND_X = 0.1;
-	ERROR_PER_SECOND_Y = 0.1;
-	ERROR_PER_SECOND_THETA = 2*(PI/180.0);
+	ERROR_PER_METER_X = 0.1;
+	ERROR_PER_METER_Y = 0.1;
+	ERROR_PER_METER_THETA = 5*(PI/180.0);
 }
 
 void Robot::Stop()
@@ -174,6 +174,10 @@ void Robot::UpdateSonarReadings()
 
 void Robot::UpdatePositionWithAPI()
 {
+	odoVarianceX = 0.0;
+	odoVarianceY = 0.0;
+	odoVarianceTheta = 0.0;
+
 	GetAPIPosition();
 	pos[0] = realpos[0];
 	pos[1] = realpos[1];
@@ -183,7 +187,7 @@ void Robot::UpdatePositionWithAPI()
 void Robot::UpdatePositionWithOdometry()
 {
 	//Leitura do odometro para saber as variações dPhiL e dPhiR 
-	readOdometers();
+	/*readOdometers();
 	
 	//Variáveis do commando: U[t, vl, vr]
 	float t = GetTimeSinceLastCommandInSecs(clientID, lastCommandTime);
@@ -197,26 +201,22 @@ void Robot::UpdatePositionWithOdometry()
 	if(angVel != 0.0)
 		turnRadius = v / angVel;
 
+	//Atualiza Incertezas de posição
+	odoVarianceX += (v*cos(pos[2])*t) * ERROR_PER_METER_X;
+	odoVarianceY += (v*sin(pos[2])*t) * ERROR_PER_METER_Y;
+	odoVarianceTheta += (v*t) * ERROR_PER_METER_THETA;
+
 	//Nova posição
 	pos[0] = pos[0] - turnRadius*sin(pos[2]) + turnRadius*sin(pos[2] + angVel*t);
 	pos[1] = pos[1] + turnRadius*cos(pos[2]) - turnRadius*cos(pos[2] + angVel*t); 
-	pos[2] = pos[2] + angVel*t;
-
-	//Atualiza Incertezas de posição
-	odoVarianceX += t * ERROR_PER_SECOND_X;
-	odoVarianceY += t * ERROR_PER_SECOND_Y;
-	odoVarianceTheta += t * ERROR_PER_SECOND_THETA;
+	pos[2] = pos[2] + angVel*t;*/
 
 	//Por enquanto usando posição da API (remover depois)
-	//UpdatePositionWithAPI();
+	UpdatePositionWithAPI();
 }
 
 void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 {
-	odoVarianceX = 0.0;
-	odoVarianceY = 0.0;
-	odoVarianceTheta = 0.0;
-
 	//Por enquanto usando api (remover depois)
 	UpdatePositionWithAPI();
 }
