@@ -14,9 +14,9 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	simxGetObjectHandle(clientID, "ProximitySensorF#", &sonarF, simx_opmode_oneshot_wait);
 	
 	//Inicializa as constantes de controle de movimento
-	K_RHO = 0.07;
+	K_RHO = 0.1;
 	K_ALPHA = 2.0;
-	K_BETA = -0.25;
+	K_BETA = -0.5;
 	WHEEL1_R = 0.0325;
 	WHEEL2_R = 0.0325;
 	WHEEL_L = 0.075;
