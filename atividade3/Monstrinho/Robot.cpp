@@ -28,11 +28,11 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	
 	//Inicializa a posição
 	UpdatePositionWithAPI();
+	posVariance[0] = 0.0;
+	posVariance[1] = 0.0;
+	posVariance[2] = 0.0;
 
 	//Variáveis da odometria
-	odoVarianceX = 0.0;
-	odoVarianceY = 0.0;
-	odoVarianceTheta = 0.0;
 	ERROR_PER_METER_X = 0.10;
 	ERROR_PER_METER_Y = 0.10;
 	ERROR_PER_METER_THETA = 1*(PI/180.0);
@@ -48,7 +48,7 @@ void Robot::Log(EnvMap envmap)
 	printf("RealPos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", realpos[0], realpos[1], realpos[2]);
 	printf("CalcPos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
 	printf("ErroPos: [%.2f, %.2f, %.2f]\t//realpos - pos\n", realpos[0]-pos[0], realpos[1]-pos[1], realpos[2]-pos[2]);
-	printf("VarOdom: [%.2f, %.2f, %.2f]\t\n", odoVarianceX, odoVarianceY, odoVarianceTheta);
+	printf("PosVari: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", posVariance[0], posVariance[1], posVariance[2]);
 	//printf("Sonares: [%.2f, %.2f, %.2f] \t//[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
 	//printf("MapDist: [%.2f]\n", envmap.MapDistance(pos[0], pos[1], pos[2]));
 }
@@ -65,7 +65,7 @@ void Robot::Update(EnvMap testmap)
 	UpdateSonarReadings();
 	
 	//Se já se deslocou o bastante
-	if(odoVarianceX >= 0.05 || odoVarianceY >= 0.05 || odoVarianceTheta >= 0.1*(PI/180.0))
+	if(posVariance[0] >= 0.05 || posVariance[1] >= 0.05 || posVariance[2] >= 0.1*(PI/180.0))
 	{	
 		//Atualiza a posição atual do robô usando os sensores e o mapa
 		UpdatePositionWithSensorsAndMap(testmap);
@@ -160,12 +160,6 @@ void Robot::ExecuteMotionControl()
     SetTargetSpeed(phiL, phiR);
 }
 
-void Robot::SetTargetSpeed(simxFloat phiL, simxFloat phiR)
-{
-    simxSetJointTargetVelocity(clientID, leftMotorHandle, phiL, simx_opmode_oneshot);
-    simxSetJointTargetVelocity(clientID, rightMotorHandle, phiR, simx_opmode_oneshot);  
-}
-
 void Robot::UpdateSonarReadings()
 {
 	sonar_reading[0] = readSonar(sonarL);
@@ -175,9 +169,9 @@ void Robot::UpdateSonarReadings()
 
 void Robot::UpdatePositionWithAPI()
 {
-	odoVarianceX = 0.0;
-	odoVarianceY = 0.0;
-	odoVarianceTheta = 0.0;
+	posVariance[0] = 0.0;
+	posVariance[1] = 0.0;
+	posVariance[2] = 0.0;
 
 	GetAPIPosition();
 	pos[0] = realpos[0];
@@ -198,9 +192,9 @@ void Robot::UpdatePositionWithOdometry()
 	float deltaY = deltaS * sin(pos[2] + deltaTheta/2.0);
 
 	//Atualiza Incertezas de posição
-	odoVarianceX += fabs(deltaX * ERROR_PER_METER_X);
-	odoVarianceY += fabs(deltaY * ERROR_PER_METER_Y);
-	odoVarianceTheta += fabs(deltaTheta * ERROR_PER_METER_THETA);
+	posVariance[0] += fabs(deltaX * ERROR_PER_METER_X);
+	posVariance[1] += fabs(deltaY * ERROR_PER_METER_Y);
+	posVariance[2] += fabs(deltaTheta * ERROR_PER_METER_THETA);
 
 	//Nova posição
 	pos[0] += deltaX;
@@ -213,7 +207,7 @@ void Robot::UpdatePositionWithOdometry()
 
 void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 {
-	#define STEPS_X 40
+	/*#define STEPS_X 40
 	#define STEPS_Y 40
 	#define STEPS_THETA 360
 	static float SIZE_PER_STEP_X = 0.1;
@@ -223,17 +217,17 @@ void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 	static float probMatrix[STEPS_X][STEPS_Y][STEPS_THETA];
 	
 	//Desvio padrão das medições
-	float desvioX = sqrt(odoVarianceX);
-	float desvioY = sqrt(odoVarianceY);
-	float desvioTheta = sqrt(odoVarianceTheta);
+	float desvioX = sqrt(posVariance[0]);
+	float desvioY = sqrt(posVariance[1]);
+	float desvioTheta = sqrt(posVariance[2]);
 	
 	//Faixas de índices pra usar em [J,I,K]
-	int min_idx_i = (pos[1]-odoVarianceY+2.0) / SIZE_PER_STEP_Y;
-	int max_idx_i = (pos[1]+odoVarianceY+2.0) / SIZE_PER_STEP_Y;
-	int min_idx_j = (pos[0]-odoVarianceX+2.0) / SIZE_PER_STEP_X;
-	int max_idx_j = (pos[0]+odoVarianceX+2.0) / SIZE_PER_STEP_X;
-	int min_idx_k = (to_pos_deg(pos[2])-to_pos_deg(odoVarianceTheta)+2.0) / SIZE_PER_STEP_THETA;
-	int max_idx_k = (to_pos_deg(pos[2])+to_pos_deg(odoVarianceTheta)+2.0) / SIZE_PER_STEP_THETA;
+	int min_idx_i = (pos[1]-posVariance[1]+2.0) / SIZE_PER_STEP_Y;
+	int max_idx_i = (pos[1]+posVariance[1]+2.0) / SIZE_PER_STEP_Y;
+	int min_idx_j = (pos[0]-posVariance[0]+2.0) / SIZE_PER_STEP_X;
+	int max_idx_j = (pos[0]+posVariance[0]+2.0) / SIZE_PER_STEP_X;
+	int min_idx_k = (to_pos_deg(pos[2])-to_pos_deg(posVariance[2])+2.0) / SIZE_PER_STEP_THETA;
+	int max_idx_k = (to_pos_deg(pos[2])+to_pos_deg(posVariance[2])+2.0) / SIZE_PER_STEP_THETA;
 	
 	//Melhor probabilidade encontrada de estar em uma célula
 	float melhorProb = 0.0;
@@ -285,12 +279,12 @@ void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 		}
 	}
 	
-	odoVarianceX = 0.0;
-	odoVarianceY = 0.0;
-	odoVarianceTheta = 0.0;
+	posVariance[0] = 0.0;
+	posVariance[1] = 0.0;
+	posVariance[2] = 0.0;*/
 
 	//Por enquanto usando api (remover depois)
-	//UpdatePositionWithAPI();
+	UpdatePositionWithAPI();
 }
 
 void Robot::readOdometers()
@@ -325,4 +319,10 @@ simxFloat Robot::readSonar(simxInt &sonar)
 		return detectedPoint[2];
     else
         return -1;
+}
+
+void Robot::SetTargetSpeed(simxFloat phiL, simxFloat phiR)
+{
+    simxSetJointTargetVelocity(clientID, leftMotorHandle, phiL, simx_opmode_oneshot);
+    simxSetJointTargetVelocity(clientID, rightMotorHandle, phiR, simx_opmode_oneshot);  
 }

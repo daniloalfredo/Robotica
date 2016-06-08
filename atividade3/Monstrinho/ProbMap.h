@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cmath>
 #include <cstdlib>
+
 #include "Utils.h"
 
 #define X_DELTA 
@@ -18,6 +19,9 @@
 #define CELLS_Y MAP_SIZE_Y/Y_DELTA
 #define CELLS_DEG MAP_SIZE_DEG/DEG_DELTA
 
+//Mapa de probabilidades
+		//float Map[CELLS_X][CELLS_Y][CELLS_DEG];
+		//float covar[3][3];
 
 class ProbMap
 {
