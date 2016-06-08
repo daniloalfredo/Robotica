@@ -26,11 +26,8 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	current_goal = -1;
 	reached_goal = true;
 	
-	//Inicializa a posição
+	//Inicializa a posição estimada e variâncias do robô
 	UpdatePositionWithAPI();
-	posVariance[0] = 0.0;
-	posVariance[1] = 0.0;
-	posVariance[2] = 0.0;
 
 	//Variáveis da odometria
 	ERROR_PER_METER_X = 0.10;
@@ -45,10 +42,10 @@ void Robot::Stop()
 
 void Robot::Log(EnvMap envmap)
 {
-	printf("RealPos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", realpos[0], realpos[1], realpos[2]);
-	printf("CalcPos: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
-	printf("ErroPos: [%.2f, %.2f, %.2f]\t//realpos - pos\n", realpos[0]-pos[0], realpos[1]-pos[1], realpos[2]-pos[2]);
-	printf("PosVari: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", posVariance[0], posVariance[1], posVariance[2]);
+	printf("realpos[]:     [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", realpos[0], realpos[1], realpos[2]);
+	printf("pos[]:         [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
+	printf("pos error:     [%.2f, %.2f, %.2f]\t//realpos[] - pos[]\n", realpos[0]-pos[0], realpos[1]-pos[1], realpos[2]-pos[2]);
+	printf("posVariance[]: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", posVariance[0], posVariance[1], posVariance[2]);
 	//printf("Sonares: [%.2f, %.2f, %.2f] \t//[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
 	//printf("MapDist: [%.2f]\n", envmap.MapDistance(pos[0], pos[1], pos[2]));
 }
@@ -68,8 +65,8 @@ void Robot::Update(EnvMap testmap)
 	if(posVariance[0] >= 0.05 || posVariance[1] >= 0.05 || posVariance[2] >= 0.1*(PI/180.0))
 	{	
 		//Atualiza a posição atual do robô usando os sensores e o mapa
+		printf("Corrigindo estimativa de posição...\n");
 		UpdatePositionWithSensorsAndMap(testmap);
-		printf("Passo de Correção.\n");
 	}
 	
 	//Executa o controle de movimento
@@ -169,14 +166,18 @@ void Robot::UpdateSonarReadings()
 
 void Robot::UpdatePositionWithAPI()
 {
-	posVariance[0] = 0.0;
-	posVariance[1] = 0.0;
-	posVariance[2] = 0.0;
-
+	//Lê posição real e guarda em realpos[]
 	GetAPIPosition();
+
+	//Utiliza a posição de referência realpos[]
 	pos[0] = realpos[0];
 	pos[1] = realpos[1];
 	pos[2] = realpos[2];
+
+	//A incerteza é 0 já que a posição é precisa
+	posVariance[0] = 0.0;
+	posVariance[1] = 0.0;
+	posVariance[2] = 0.0;
 }
 
 void Robot::UpdatePositionWithOdometry()
@@ -184,6 +185,7 @@ void Robot::UpdatePositionWithOdometry()
 	//Leitura do odometro para saber as variações dPhiL e dPhiR 
 	readOdometers();
 	
+	//Cálculo de deltaX, deltaY e deltaTheta
 	float deltaSl = WHEEL1_R * dPhiL;
 	float deltaSr = WHEEL1_R * dPhiR;
 	float deltaS = (deltaSl + deltaSr) / 2.0;
@@ -196,7 +198,7 @@ void Robot::UpdatePositionWithOdometry()
 	posVariance[1] += fabs(deltaY * ERROR_PER_METER_Y);
 	posVariance[2] += fabs(deltaTheta * ERROR_PER_METER_THETA);
 
-	//Nova posição
+	//Atualiza posição
 	pos[0] += deltaX;
 	pos[1] += deltaY;
 	pos[2] += deltaTheta;
