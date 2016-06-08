@@ -16,6 +16,19 @@ extern "C" {
 #include "Utils.h"
 #include "EnvMap.h"
 
+//DEFINES DO MAPA
+#define X_DELTA 
+#define Y_DELTA
+#define DEG_DELTA 1
+
+#define MAP_SIZE_X 
+#define MAP_SIZE_Y
+#define MAP_SIZE_DEG 360
+
+#define CELLS_X MAP_SIZE_X/X_DELTA
+#define CELLS_Y MAP_SIZE_Y/Y_DELTA
+#define CELLS_DEG MAP_SIZE_DEG/DEG_DELTA
+
 class Robot
 {
 	private:
@@ -60,6 +73,10 @@ class Robot
 		float ERROR_PER_METER_X; //erros de odometria
 		float ERROR_PER_METER_Y;
 		float ERROR_PER_METER_THETA;
+
+		//Mapa de probabilidades
+		float Map[CELLS_X][CELLS_Y][CELLS_DEG];
+		float covar[3][3];
 
 		//Funções auxiliares
 		void GetAPIPosition();
