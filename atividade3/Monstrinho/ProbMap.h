@@ -20,8 +20,8 @@
 #define CELLS_DEG MAP_SIZE_DEG/DEG_DELTA
 
 //Mapa de probabilidades
-		//float Map[CELLS_X][CELLS_Y][CELLS_DEG];
-		//float covar[3][3];
+//float Map[CELLS_X][CELLS_Y][CELLS_DEG];
+//float covar[3][3];
 
 class ProbMap
 {
@@ -36,3 +36,5 @@ class ProbMap
 		void PerceptionUpdate(int x, int y, int deg);
 		void ErrorPropagationOdometry(simxFloat dPhiL, simxFloat dPhiR); //calcula as variâncias em x e y para montar a Gaussiana 2-D
 }
+
+#endif

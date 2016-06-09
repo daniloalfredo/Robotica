@@ -1,9 +1,10 @@
 #ifndef UTILS_H_INCLUDED
 #define UTILS_H_INCLUDED
 
-#include <math.h>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
 #include <unistd.h>
-#include <sys/time.h>
  
 extern "C" {
 #include "extApi.h"
@@ -14,6 +15,10 @@ extern "C" {
 
 //Obter sinal do número
 float fsignal(float v);
+
+//Números aleatórios
+float rand_beetween_0_and_1();
+float rand_signal();
 
 //Funções de Ângulos
 float to_pi_range(float radians);

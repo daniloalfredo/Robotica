@@ -7,6 +7,28 @@ float fsignal(float v)
 	return -1.0;
 }
 
+float rand_beetween_0_and_1()
+{
+	static bool seeded = false;
+	
+	if(!seeded)
+		srand(time(NULL));
+		
+	return (rand()%1001) / 1000.0;
+}
+
+float rand_signal()
+{
+	static bool seeded = false;
+	
+	if(!seeded)
+		srand(time(NULL));
+		
+	if(rand()%2 == 0)
+		return 1.0;
+	return -1.0;
+}
+
 float to_pi_range(float radians)
 {
     radians = fmod(radians, 2*PI);

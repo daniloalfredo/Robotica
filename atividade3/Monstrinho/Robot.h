@@ -51,6 +51,7 @@ class Robot
 		std::vector<simxFloat*> path;	//Vetor de objetivos do robô
 		int current_goal;				//Índice do objetivo atual no path
 		bool reached_goal;				//Se chegou ao objetivo atual
+		int num_voltas;					//Quantidade de voltas que o robô deu no percurso
 		
 		//Variáveis da odometria
 		simxFloat dPhiL;				//Diferenca de ângulo em PhiL desde o último comando de movimento 

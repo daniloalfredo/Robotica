@@ -25,6 +25,7 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	this->path = path;
 	current_goal = -1;
 	reached_goal = true;
+	num_voltas = 0;
 	
 	//Inicializa a posição estimada e variâncias do robô
 	UpdatePositionWithAPI();
@@ -42,12 +43,14 @@ void Robot::Stop()
 
 void Robot::Log(EnvMap envmap)
 {
-	printf("realpos[]:     [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", realpos[0], realpos[1], realpos[2]);
-	printf("pos[]:         [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
-	printf("pos error:     [%.2f, %.2f, %.2f]\t//realpos[] - pos[]\n", realpos[0]-pos[0], realpos[1]-pos[1], realpos[2]-pos[2]);
-	printf("posVariance[]: [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", posVariance[0], posVariance[1], posVariance[2]);
-	//printf("Sonares: [%.2f, %.2f, %.2f] \t//[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
-	//printf("MapDist: [%.2f]\n", envmap.MapDistance(pos[0], pos[1], pos[2]));
+	printf("----------------------------------------------------\n");
+	printf("realpos[]:       [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", realpos[0], realpos[1], realpos[2]);
+	printf("pos[]:           [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
+	printf("posVariance[]:   [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", posVariance[0], posVariance[1], posVariance[2]);
+	printf("Position error:  [%.2f, %.2f, %.2f]\t//[E = realpos-pos]\n", realpos[0]-pos[0], realpos[1]-pos[1], realpos[2]-pos[2]);
+	printf("Leitura Sonares: [%.2f, %.2f, %.2f] \t//[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
+	printf("Numero voltas:   [%d]\n", num_voltas);
+	printf("Tempo Simulação: [%.2f]\t\t//[Em segundos]\n", GetSimulationTimeInSecs(clientID));
 }
 
 void Robot::Update(EnvMap testmap)
@@ -61,7 +64,7 @@ void Robot::Update(EnvMap testmap)
 	//Faz a leitura dos sonares
 	UpdateSonarReadings();
 	
-	//Se já se deslocou o bastante
+	//Se o erro na estimativa fica grande demais
 	if(posVariance[0] >= 0.05 || posVariance[1] >= 0.05 || posVariance[2] >= 0.1*(PI/180.0))
 	{	
 		//Atualiza a posição atual do robô usando os sensores e o mapa
@@ -78,7 +81,10 @@ void Robot::Update(EnvMap testmap)
 		current_goal++;
 		
 		if(current_goal >= (int) path.size())
+		{
 			current_goal = 0;
+			num_voltas++;
+		}
 			
 		goal[0] = path[current_goal][0];
 		goal[1] = path[current_goal][1];
@@ -91,14 +97,14 @@ void Robot::GetAPIPosition()
 {
 	simxInt ret = simxGetObjectPosition(clientID, ddRobotHandle, -1, realpos, simx_opmode_oneshot_wait);
     if (ret > 0) {
-        printf("Erro ao ler posicao do robo.\n");
+        printf("Erro ao ler posição do robô.\n");
         return;
     }
  
     simxFloat orientation[3];
     ret = simxGetObjectOrientation(clientID, ddRobotHandle, -1, orientation, simx_opmode_oneshot_wait);
     if (ret > 0) {
-        printf("Erro ao ler orientacao do robo.\n");
+        printf("Erro ao ler orientação do robô.\n");
         return;
     }
 
@@ -193,12 +199,12 @@ void Robot::UpdatePositionWithOdometry()
 	float deltaX = deltaS * cos(pos[2] + deltaTheta/2.0);
 	float deltaY = deltaS * sin(pos[2] + deltaTheta/2.0);
 
-	//Atualiza Incertezas de posição
+	//Atualiza incertezas de posição
 	posVariance[0] += fabs(deltaX * ERROR_PER_METER_X);
 	posVariance[1] += fabs(deltaY * ERROR_PER_METER_Y);
 	posVariance[2] += fabs(deltaTheta * ERROR_PER_METER_THETA);
 
-	//Atualiza posição
+	//Atualiza estimativa de posição
 	pos[0] += deltaX;
 	pos[1] += deltaY;
 	pos[2] += deltaTheta;
@@ -209,84 +215,37 @@ void Robot::UpdatePositionWithOdometry()
 
 void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 {
-	/*#define STEPS_X 40
-	#define STEPS_Y 40
-	#define STEPS_THETA 360
-	static float SIZE_PER_STEP_X = 0.1;
-	static float SIZE_PER_STEP_Y = 0.1;
-	static float SIZE_PER_STEP_THETA = 1.0;
-	static float sensorVariance = 0.1;
-	static float probMatrix[STEPS_X][STEPS_Y][STEPS_THETA];
+	//Encontrando estimativa segundo sensores e mapa
+	simxFloat zpos[3];
+	simxFloat zVariance[3];
 	
-	//Desvio padrão das medições
-	float desvioX = sqrt(posVariance[0]);
-	float desvioY = sqrt(posVariance[1]);
-	float desvioTheta = sqrt(posVariance[2]);
+	//------------------------------------------------------------
+	//TESTE
+	//Assumindo que eu poderia encontrar o zpos e zVariance 
+	//fazendo um teste do melhor caso onde a estimativa Z 
+	//é a posicao real + um errinho aleatório
+	//para ver se kalman funciona
+	zVariance[0] = 0.025*rand_beetween_0_and_1(); //2.5cm
+	zVariance[1] = 0.025*rand_beetween_0_and_1(); //2.5cm
+	zVariance[2] = 0.01*rand_beetween_0_and_1();  //1/2 grau +-
 	
-	//Faixas de índices pra usar em [J,I,K]
-	int min_idx_i = (pos[1]-posVariance[1]+2.0) / SIZE_PER_STEP_Y;
-	int max_idx_i = (pos[1]+posVariance[1]+2.0) / SIZE_PER_STEP_Y;
-	int min_idx_j = (pos[0]-posVariance[0]+2.0) / SIZE_PER_STEP_X;
-	int max_idx_j = (pos[0]+posVariance[0]+2.0) / SIZE_PER_STEP_X;
-	int min_idx_k = (to_pos_deg(pos[2])-to_pos_deg(posVariance[2])+2.0) / SIZE_PER_STEP_THETA;
-	int max_idx_k = (to_pos_deg(pos[2])+to_pos_deg(posVariance[2])+2.0) / SIZE_PER_STEP_THETA;
+	//Um ponto proximo da posição real dentro da variancia acima
+	zpos[0] = realpos[0] + zVariance[0]*rand_beetween_0_and_1()*rand_signal();
+	zpos[1] = realpos[1] + zVariance[1]*rand_beetween_0_and_1()*rand_signal();
+	zpos[2] = realpos[2] + zVariance[2]*rand_beetween_0_and_1()*rand_signal();
+	//------------------------------------------------------------
 	
-	//Melhor probabilidade encontrada de estar em uma célula
-	float melhorProb = 0.0;
-	
-	for(int i = min_idx_i; i < max_idx_i; i++)
-	{
-		for(int j = min_idx_j; j < max_idx_j; j++)
-		{
-			for(int k = min_idx_k; k < max_idx_k; k++)
-			{
-				//Reseta a probabilidade de estar nessa célula
-				probMatrix[i][j][k] = 0.0;
-				
-				//Calcula probabilidade de estar nela pela odometria
-				float minX = j * SIZE_PER_STEP_X;
-				float maxX = minX + SIZE_PER_STEP_X;
-				float minY = i * SIZE_PER_STEP_Y;
-				float maxY = minY + SIZE_PER_STEP_Y;
-				float minTheta = k * SIZE_PER_STEP_THETA;
-				float maxTheta = minTheta + SIZE_PER_STEP_THETA;
-				float probOdoX = normalDistribution((maxX-pos[0])/desvioX) - normalDistribution((minX-pos[0])/desvioX);
-				float probOdoY = normalDistribution((maxY-pos[1])/desvioY) - normalDistribution((minY-pos[1])/desvioY);
-				float probOdoTheta = normalDistribution((maxTheta-pos[2])/desvioTheta) - normalDistribution((minTheta-pos[2])/desvioTheta);
-				float probOdo = probOdoX * probOdoY * probOdoTheta;
-				
-				//Calcula a probabilidade de estar nela pelo sensor e mapa
-				float mapL = testmap.MapDistance((j+0.5)*SIZE_PER_STEP_X, (i+0.5)*SIZE_PER_STEP_Y, to_rad((k+0.5)*SIZE_PER_STEP_THETA)+PI/2.0);
-				float mapR = testmap.MapDistance((j+0.5)*SIZE_PER_STEP_X, (i+0.5)*SIZE_PER_STEP_Y, to_rad((k+0.5)*SIZE_PER_STEP_THETA)-PI/2.0);
-				float mapF = testmap.MapDistance((j+0.5)*SIZE_PER_STEP_X, (i+0.5)*SIZE_PER_STEP_Y, to_rad((k+0.5)*SIZE_PER_STEP_THETA));
-				float probSen = 0.0;
-				
-				if(sonar_reading[0] >= mapL-sensorVariance && sonar_reading[0] <= mapL+sensorVariance
-				   && sonar_reading[1] >= mapR-sensorVariance && sonar_reading[1] <= mapR+sensorVariance
-				   && sonar_reading[2] >= mapF-sensorVariance && sonar_reading[2] <= mapF+sensorVariance)
-					probSen = 1.0;
-				
-				//Combina as probabilidades e define a probabilidade final de estar na célula
-				probMatrix[i][j][k] = probOdo * probSen;
-				
-				//Se achou a maior probabilidade define essa posição como estimativa
-				if(probMatrix[i][j][k] > melhorProb)
-				{
-					melhorProb = probMatrix[i][j][k];
-					pos[0] = j * SIZE_PER_STEP_X;
-					pos[1] = i * SIZE_PER_STEP_Y;
-					pos[2] = k * SIZE_PER_STEP_THETA;
-				}
-			}
-		}
-	}
-	
-	posVariance[0] = 0.0;
-	posVariance[1] = 0.0;
-	posVariance[2] = 0.0;*/
+	//Utilizando filtro de Kalman
+	pos[0] = pos[0] + (posVariance[0] / (posVariance[0] + zVariance[0])) * (zpos[0] - pos[0]);
+	pos[1] = pos[1] + (posVariance[1] / (posVariance[1] + zVariance[1])) * (zpos[1] - pos[1]);
+	pos[2] = pos[2] + (posVariance[2] / (posVariance[2] + zVariance[2])) * (zpos[2] - pos[2]); 
 
-	//Por enquanto usando api (remover depois)
-	UpdatePositionWithAPI();
+	posVariance[0] = posVariance[0] - ((posVariance[0] * posVariance[0]) / (posVariance[0] + zVariance[0])); 
+	posVariance[1] = posVariance[1] - ((posVariance[1] * posVariance[1]) / (posVariance[1] + zVariance[1])); 
+	posVariance[2] = posVariance[2] - ((posVariance[2] * posVariance[2]) / (posVariance[2] + zVariance[2])); 
+
+	//Por enquanto usando API (remover depois)
+	//UpdatePositionWithAPI();
 }
 
 void Robot::readOdometers()

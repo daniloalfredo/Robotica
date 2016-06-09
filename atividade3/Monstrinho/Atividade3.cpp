@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
     if (argc > 1)
         ipAddr = argv[1];
 
-    printf("Iniciando conexao com: %s...\n", ipAddr.c_str());
+    printf("Iniciando conexão com: %s...\n", ipAddr.c_str());
  
  	//Pega o ID do cliente
     simxInt clientID = simxStart((simxChar*) (simxChar*) ipAddr.c_str(), portNb, true, true, 2000, 5);
@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
 	//Se conseguiu conectar executa o programa
     if (clientID != -1)
     {
-        printf("Conexao efetuada\n");
+        printf("Conexão efetuada.\n");
         
         //Define o mapa do experimento
         EnvMap testmap;
