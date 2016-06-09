@@ -35,6 +35,6 @@ class ProbMap
 		void ActionUpdate(int x, int y, int deg);
 		void PerceptionUpdate(int x, int y, int deg);
 		void ErrorPropagationOdometry(simxFloat dPhiL, simxFloat dPhiR); //calcula as variâncias em x e y para montar a Gaussiana 2-D
-}
+};
 
 #endif

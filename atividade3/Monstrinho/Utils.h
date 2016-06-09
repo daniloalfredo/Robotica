@@ -33,6 +33,12 @@ float GetSimulationTimeInSecs(simxInt clientID);
 float GetTimeSinceLastCommandInSecs(simxInt clientID, float lastCommandTime);
 
 //Distribuição de probabilidade
+double Gaussian(double mean, double variance, double x);
 double normalDistribution(double x);
+
+//Funções de matrizes
+float** mult_matrix(float** A, float** B, int m, int n, int p); //multiplicação de matrix (m x n) por (n x p)
+float** mat_transposta(float** Mat, int rows, int cols); //transpõe a matriz
+void sum_matrix(float** A, float** B, int rows, int cols); //armazena resultado em A
 
 #endif

@@ -20,7 +20,19 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	WHEEL1_R = 0.0325;
 	WHEEL2_R = 0.0325;
 	WHEEL_L = 0.075;
-	
+
+	//Inicializa a constante de odometria e matriz de covariância da odometria
+	K_ODO = 0.02; //valor deve calculado experimentalmente	
+	covar = (float**) malloc(3*sizeof(float*));
+	for (int i = 0; i < 3; i++)
+	{
+		covar[i] = (float*) malloc(3*sizeof(float));
+		for (int j = 0; j < 3; j++)
+		{
+			covar[i][j] = 0;
+		}
+	}
+
 	//Variáveis do caminho
 	this->path = path;
 	current_goal = -1;
@@ -286,4 +298,70 @@ void Robot::SetTargetSpeed(simxFloat phiL, simxFloat phiR)
 {
     simxSetJointTargetVelocity(clientID, leftMotorHandle, phiL, simx_opmode_oneshot);
     simxSetJointTargetVelocity(clientID, rightMotorHandle, phiR, simx_opmode_oneshot);  
+}
+
+void Robot::UpdateMap()
+{
+	this->ErrorPropagationOdometry();
+	for (int i = 0; i < CELLS_X; i++)
+	{
+		for (int j = 0; j < CELLS_Y; j++)
+		{
+			for (int k = 0; k < CELLS_DEG; k++)
+			{
+				this->ActionUpdate(i, j, k);
+				this->PerceptionUpdate(i, j, k);
+			}
+		}
+	}
+}
+
+void Robot::ActionUpdate(int x, int y, int deg) //Atualiza a célula [x,y, theta]
+{
+
+}
+
+void Robot::ErrorPropagationOdometry()
+{
+	//Leitura do odometro para saber as variações dPhiL e dPhiR 
+	readOdometers();
+	
+	//Cálculo de deltaX, deltaY e deltaTheta
+	float deltaSl = WHEEL1_R * dPhiL;
+	float deltaSr = WHEEL1_R * dPhiR;
+	float deltaS = (deltaSl + deltaSr) / 2.0;
+	float deltaTheta = (deltaSr - deltaSl) / (2*WHEEL_L);
+	float auxTheta = pos[2] + deltaTheta/2.0;
+	float deltaX = deltaS * cos(auxTheta);
+	float deltaY = deltaS * sin(auxTheta);
+
+	//Matrix Fx
+	float Fx[3][3] = {{1, 1, 0}, {0, 1, 0}, {0, 0, 1}};
+	Fx[1][3] = -deltaY; Fx[2][3] = deltaX;
+
+	//matrix Fx1
+	float Fx1[3][2];
+	Fx1[1][1] = 1/2*cos(auxTheta) - (deltaS/2*WHEEL1_R)*sin(auxTheta);
+	Fx1[1][2] = 1/2*cos(auxTheta) + (deltaS/2*WHEEL1_R)*sin(auxTheta);
+	Fx1[2][1] = 1/2*sin(auxTheta) + (deltaS/2*WHEEL1_R)*cos(auxTheta);
+	Fx1[2][2] = 1/2*sin(auxTheta) + (deltaS/2*WHEEL1_R)*cos(auxTheta);
+	Fx1[3][1] = 1/WHEEL1_R; Fx[3][2] = -1/WHEEL1_R;
+
+	//Matrix Cx1
+	float Cx1[2][2] = {{0,0},{0,0}};
+	Cx1[1][1] = K_ODO*abs(dPhiR);
+	Cx1[2][2] = K_ODO*abs(dPhiL);
+
+	//Calcula a equação Cx' = Fx*Cx*FxT + Fx1*Cx1*Fx1T
+	float** aux1 = mult_matrix(Fx, this->covar, 3, 3, 3);
+	float** aux2 = mult_matrix(aux1, mat_transposta(Fx, 3, 3), 3, 3, 3);
+	float** aux3 = mult_matrix(Fx1, Cx1, 3, 2, 2);
+	float** aux4 = mult_matrix(aux3, mat_transposta(Fx1, 3, 2), 3, 2, 3);
+	sum_matrix(aux2, aux4, 3, 3);
+	this->covar = aux2;
+
+	free(aux1); free(aux3); free(aux4); 
+	//O resultado é a matriz 3x3 COVAR, cuja diagonal principal representa as variâncias de x, y e theta. 
+	//Essas variâncias são parâmetros para a Gaussiana. A média das Gaussianas é representada pelo valor
+	//de x, y e theta calculado pela odometria. 
 }
