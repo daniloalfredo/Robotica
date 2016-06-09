@@ -44,13 +44,13 @@ void Robot::Stop()
 void Robot::Log(EnvMap envmap)
 {
 	printf("----------------------------------------------------\n");
-	printf("realpos[]:       [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", realpos[0], realpos[1], realpos[2]);
-	printf("pos[]:           [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
-	printf("posVariance[]:   [%.2f, %.2f, %.2f]\t//[X, Y, THETA]\n", posVariance[0], posVariance[1], posVariance[2]);
-	printf("Position error:  [%.2f, %.2f, %.2f]\t//[E = realpos-pos]\n", realpos[0]-pos[0], realpos[1]-pos[1], realpos[2]-pos[2]);
-	printf("Leitura Sonares: [%.2f, %.2f, %.2f] \t//[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
-	printf("Numero voltas:   [%d]\n", num_voltas);
-	printf("Tempo Simulação: [%.2f]\t\t//[Em segundos]\n", GetSimulationTimeInSecs(clientID));
+	printf("realpos[]:           [%.2f, %.2f, %.2f]  //[X, Y, THETA]\n", realpos[0], realpos[1], realpos[2]);
+	printf("pos[]:               [%.2f, %.2f, %.2f]  //[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
+	printf("posVariance[]:       [%.2f, %.2f, %.2f]  //[X, Y, THETA]\n", posVariance[0], posVariance[1], posVariance[2]);
+	printf("Erro de Posição:     [%.2f, %.2f, %.2f]  //[E = realpos-pos]\n", realpos[0]-pos[0], realpos[1]-pos[1], realpos[2]-pos[2]);
+	printf("Leitura dos Sonares: [%.2f, %.2f, %.2f]  //[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
+	printf("Tempo de simulação:  [%.2f]              //[Em segundos]\n", GetSimulationTimeInSecs(clientID));
+	printf("Numero de voltas:    [%d]\n", num_voltas);
 }
 
 void Robot::Update(EnvMap testmap)
@@ -202,7 +202,7 @@ void Robot::UpdatePositionWithOdometry()
 	//Atualiza incertezas de posição
 	posVariance[0] += fabs(deltaX * ERROR_PER_METER_X);
 	posVariance[1] += fabs(deltaY * ERROR_PER_METER_Y);
-	posVariance[2] += fabs(deltaTheta * ERROR_PER_METER_THETA);
+	posVariance[2] += fabs(deltaS * ERROR_PER_METER_THETA);
 
 	//Atualiza estimativa de posição
 	pos[0] += deltaX;
@@ -225,14 +225,14 @@ void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 	//fazendo um teste do melhor caso onde a estimativa Z 
 	//é a posicao real + um errinho aleatório
 	//para ver se kalman funciona
-	zVariance[0] = 0.025*rand_beetween_0_and_1(); //2.5cm
-	zVariance[1] = 0.025*rand_beetween_0_and_1(); //2.5cm
-	zVariance[2] = 0.01*rand_beetween_0_and_1();  //1/2 grau +-
+	zVariance[0] = 0.1 * rand_beetween_0_and_1();
+	zVariance[1] = 0.1 * rand_beetween_0_and_1();
+	zVariance[2] = (1.8*(PI/180.0)) * rand_beetween_0_and_1();
 	
 	//Um ponto proximo da posição real dentro da variancia acima
-	zpos[0] = realpos[0] + zVariance[0]*rand_beetween_0_and_1()*rand_signal();
-	zpos[1] = realpos[1] + zVariance[1]*rand_beetween_0_and_1()*rand_signal();
-	zpos[2] = realpos[2] + zVariance[2]*rand_beetween_0_and_1()*rand_signal();
+	zpos[0] = realpos[0] + zVariance[0] * rand_beetween_0_and_1()*rand_signal();
+	zpos[1] = realpos[1] + zVariance[1] * rand_beetween_0_and_1()*rand_signal();
+	zpos[2] = realpos[2] + zVariance[2] * rand_beetween_0_and_1()*rand_signal();
 	//------------------------------------------------------------
 	
 	//Utilizando filtro de Kalman
@@ -242,7 +242,7 @@ void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 
 	posVariance[0] = posVariance[0] - ((posVariance[0] * posVariance[0]) / (posVariance[0] + zVariance[0])); 
 	posVariance[1] = posVariance[1] - ((posVariance[1] * posVariance[1]) / (posVariance[1] + zVariance[1])); 
-	posVariance[2] = posVariance[2] - ((posVariance[2] * posVariance[2]) / (posVariance[2] + zVariance[2])); 
+	posVariance[2] = posVariance[2] - ((posVariance[2] * posVariance[2]) / (posVariance[2] + zVariance[2]));
 
 	//Por enquanto usando API (remover depois)
 	//UpdatePositionWithAPI();
