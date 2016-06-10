@@ -20,19 +20,7 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	WHEEL1_R = 0.0325;
 	WHEEL2_R = 0.0325;
 	WHEEL_L = 0.075;
-
-	//Inicializa a constante de odometria e matriz de covariância da odometria
-	K_ODO = 0.02; //valor deve calculado experimentalmente	
-	covar = (float**) malloc(3*sizeof(float*));
-	for (int i = 0; i < 3; i++)
-	{
-		covar[i] = (float*) malloc(3*sizeof(float));
-		for (int j = 0; j < 3; j++)
-		{
-			covar[i][j] = 0;
-		}
-	}
-
+	
 	//Variáveis do caminho
 	this->path = path;
 	current_goal = -1;
@@ -42,7 +30,7 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	//Inicializa a posição estimada e variâncias do robô
 	UpdatePositionWithAPI();
 
-	//Variáveis da odometria
+	//Variáveis da odometria // Ignora essa parte
 	ERROR_PER_METER_X = 0.10;
 	ERROR_PER_METER_Y = 0.10;
 	ERROR_PER_METER_THETA = 1*(PI/180.0);
@@ -61,7 +49,8 @@ void Robot::Log(EnvMap envmap)
 	printf("posVariance[]:       [%.2f, %.2f, %.2f]  //[X, Y, THETA]\n", posVariance[0], posVariance[1], posVariance[2]);
 	printf("Erro de Posição:     [%.2f, %.2f, %.2f]  //[E = realpos-pos]\n", realpos[0]-pos[0], realpos[1]-pos[1], realpos[2]-pos[2]);
 	printf("Leitura dos Sonares: [%.2f, %.2f, %.2f]  //[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
-	printf("Tempo de simulação:  [%.2f]              //[Em segundos]\n", GetSimulationTimeInSecs(clientID));
+	float t_time = GetSimulationTimeInSecs(clientID);
+	printf("Tempo de simulação:  [%.2f, %0d:%0d]              //[Em segundos, Em minutos]\n", t_time,(int) t_time/60,(int) t_time%60);
 	printf("Numero de voltas:    [%d]\n", num_voltas);
 }
 
@@ -198,6 +187,42 @@ void Robot::UpdatePositionWithAPI()
 	posVariance[2] = 0.0;
 }
 
+
+/* Multiplying matrix a and b and storing in array mult. */
+
+float** Robot::matrixMultiplication(int r1,int c1, int r2,int c2, float** a, float** b)
+{
+	if(c1 == r2)
+	{
+		float mult[r1][c2];
+
+	    for(int i = 0; i < r1; i++)
+	    {
+	    	for(int j = 0; j < c2; j++)
+	    	{
+	    		for(int k = 0; k < c1; k++)
+			    {
+			        mult[i][j]+=(a[i][k]*b[k][j]);
+			    }		
+	    	}	
+	    }
+	}
+	return mult;
+}    
+
+float** Robot::matrixTranspose(int r1,int c1, float** a)
+{
+	float b[c1][r1];
+	for(int i = 0; i < r1;i++)
+	{
+		for(int j = 0; j < c1; j++)
+		{	
+			b[j][i] = a[i][j];
+		}
+	}
+	return b;
+} 
+
 void Robot::UpdatePositionWithOdometry()
 {
 	//Leitura do odometro para saber as variações dPhiL e dPhiR 
@@ -206,28 +231,177 @@ void Robot::UpdatePositionWithOdometry()
 	//Cálculo de deltaX, deltaY e deltaTheta
 	float deltaSl = WHEEL1_R * dPhiL;
 	float deltaSr = WHEEL1_R * dPhiR;
+	float b = (2*WHEEL_L);
+
 	float deltaS = (deltaSl + deltaSr) / 2.0;
-	float deltaTheta = (deltaSr - deltaSl) / (2*WHEEL_L);
-	float deltaX = deltaS * cos(pos[2] + deltaTheta/2.0);
-	float deltaY = deltaS * sin(pos[2] + deltaTheta/2.0);
+	float deltaTheta = (deltaSr - deltaSl) / b;
+	float deltaX = deltaS * cos(argumento);
+	float deltaY = deltaS * sin(argumento);
 
 	//Atualiza incertezas de posição
-	posVariance[0] += fabs(deltaX * ERROR_PER_METER_X);
-	posVariance[1] += fabs(deltaY * ERROR_PER_METER_Y);
-	posVariance[2] += fabs(deltaS * ERROR_PER_METER_THETA);
+	//posVariance[0] += fabs(deltaX * ERROR_PER_METER_X);
+	//posVariance[1] += fabs(deltaY * ERROR_PER_METER_Y);
+	//posVariance[2] += fabs(deltaS * ERROR_PER_METER_THETA);
 
 	//Atualiza estimativa de posição
-	pos[0] += deltaX;
-	pos[1] += deltaY;
-	pos[2] += deltaTheta;
+	//pos[0] += deltaX;
+	//pos[1] += deltaY;
+	//pos[2] += deltaTheta;
+
+
+	// Heitor here // \/ \/
+	// Equações da página 67 - Slide 12	
+	
+	float p_linha[3];
+
+	p_linha[0] = pos[0] + deltaX;
+	p_linha[1] = pos[1] + deltaX;
+	p_linha[2] = pos[2] + deltaTheta;
+
+
+	// Equações da página 68 - Slide 12	
+	// Lei da propagação dos Erros
+	
+	float kr = 1;
+	float kl = 1;
+	
+	// Somatorio delta = covar(deltaSr,deltaSl);
+	float covar[2][2];
+	covar[0][0] = kr*abs(deltaSr);
+	covar[1][1] = kl*abs(deltaSl);
+	covar[0][1] = covar[1][0] = 0;
+	
+
+	// Fp , fp = fp_transposto // No slide diz que é igual
+	// Mas se vc transpor, não da igual
+	float fp[3][3], fpt[3][3];
+	fp[0][0] = 1;
+	fp[0][1] = 0;
+	fp[0][2] = -(deltaY);
+	fp[1][0] = 0;
+	fp[1][1] = 1;
+	fp[1][2] = (deltaX);
+	fp[2][0] = 0;
+	fp[2][1] = 0;
+	fp[2][2] = 1;
+
+	// fpt, considerando fp != fpt
+	/*
+	fpt[0][0] = fp[0][0];
+	fpt[0][1] = fp[1][0];
+	fpt[0][2] = fp[2][0];
+	fpt[1][0] = fp[0][1];
+	fpt[1][1] = fp[1][1];
+	fpt[1][2] = fp[2][1];
+	fpt[2][0] = fp[0][2];
+	fpt[2][1] = fp[1][2];
+	fpt[2][2] = fp[2][2];
+	*/
+
+	fpt = matrixTranspose(3,3,fp);
+
+	// fDeltaRl
+	float fDeltaRL[3][2];
+	float argumento;  
+	fDeltaRL[0][0] = cos(argumento)/2 - deltaS*sin(argumento)/(2*b);
+	fDeltaRL[0][1] = cos(argumento)/2 + deltaS*sin(argumento)/(2*b);
+	fDeltaRL[1][0] = sin(argumento)/2 + deltaS*cos(argumento)/(2*b);
+	fDeltaRL[1][1] = sin(argumento)/2 - deltaS*cos(argumento)/(2*b);
+	fDeltaRL[2][0] = 1/b;
+	fDeltaRL[2][1] = -1/b;
+
+	// fDeltaRLt 
+	float fDeltaRLt[2][3];
+	/*
+	fDeltaRLt[0][0] = fDeltaRL[0][0];
+	fDeltaRLt[0][1] = fDeltaRL[1][0];
+	fDeltaRLt[0][2] = fDeltaRL[2][0];
+	fDeltaRLt[1][0] = fDeltaRL[0][1];
+	fDeltaRLt[1][1] = fDeltaRL[1][1];
+	fDeltaRLt[1][2] = fDeltaRL[2][1];
+	*/
+	fDeltaRLt = matrixTranspose(3,2,fDeltaRL);
+
+	// incertezaPosicaoInterior = fp * CovarianciaAnterior * fpt  
+	// Covariancia inicial = {0000000000000000}
+	// Essa matriz de covariancia tem que ser global, inicializada com zeros, e depois atualizadas
+	// em cada passo futuro, vai usar ela pra atualizar
+	float covarianciaAnterior[3][3];
+
+	float incertezaPosicaoAnterior[3][3];
+	/*
+	// fp * Covaranancia 
+	incertezaPosicaoAnterior[0][0] = fp[0][0]*covarianciaAnterior[0][0]+fp[0][1]*covarianciaAnterior[1][0]+fp[0][2]*covarianciaAnterior[2][0];
+	incertezaPosicaoAnterior[0][1] = fp[0][0]*covarianciaAnterior[0][1]+fp[0][1]*covarianciaAnterior[1][1]+fp[0][2]*covarianciaAnterior[2][1];
+	incertezaPosicaoAnterior[0][2] = fp[0][0]*covarianciaAnterior[0][2]+fp[0][1]*covarianciaAnterior[1][2]+fp[0][2]*covarianciaAnterior[2][2];
+
+	incertezaPosicaoAnterior[1][0] = fp[1][0]*covarianciaAnterior[0][0]+fp[1][1]*covarianciaAnterior[1][0]+fp[1][2]*covarianciaAnterior[2][0];
+	incertezaPosicaoAnterior[1][1] = fp[1][0]*covarianciaAnterior[0][1]+fp[1][1]*covarianciaAnterior[1][1]+fp[1][2]*covarianciaAnterior[2][1];
+	incertezaPosicaoAnterior[1][2] = fp[1][0]*covarianciaAnterior[0][2]+fp[1][1]*covarianciaAnterior[1][2]+fp[1][2]*covarianciaAnterior[2][2];
+	
+	incertezaPosicaoAnterior[2][0] = fp[2][0]*covarianciaAnterior[0][0]+fp[2][1]*covarianciaAnterior[1][0]+fp[2][2]*covarianciaAnterior[2][0];
+	incertezaPosicaoAnterior[2][1] = fp[2][0]*covarianciaAnterior[0][1]+fp[2][1]*covarianciaAnterior[1][1]+fp[2][2]*covarianciaAnterior[2][1];
+	incertezaPosicaoAnterior[2][2] = fp[2][0]*covarianciaAnterior[0][2]+fp[2][1]*covarianciaAnterior[1][2]+fp[2][2]*covarianciaAnterior[2][2];
+
+	// fp * Covaranancia * fDeltaRLt
+	incertezaPosicaoAnterior[0][0] = incertezaPosicaoAnterior[0][0]*fdeltaRlt[0][0] + incertezaPosicaoAnterior[0][1]*fdeltaRlt[1][0] + incertezaPosicaoAnterior[0][2]*fdeltaRlt[2][0]; 
+	incertezaPosicaoAnterior[0][1] = incertezaPosicaoAnterior[0][0]*fdeltaRlt[0][1] + incertezaPosicaoAnterior[0][1]*fdeltaRlt[1][1] + incertezaPosicaoAnterior[0][2]*fdeltaRlt[2][1]; 
+	incertezaPosicaoAnterior[0][2] = incertezaPosicaoAnterior[0][0]*fdeltaRlt[0][2] + incertezaPosicaoAnterior[0][1]*fdeltaRlt[1][2] + incertezaPosicaoAnterior[0][2]*fdeltaRlt[2][2]; 
+
+	incertezaPosicaoAnterior[1][0] = incertezaPosicaoAnterior[1][0]*fdeltaRlt[0][0] + incertezaPosicaoAnterior[1][1]*fdeltaRlt[1][0] + incertezaPosicaoAnterior[1][2]*fdeltaRlt[2][0]; 
+	incertezaPosicaoAnterior[1][1] = incertezaPosicaoAnterior[1][0]*fdeltaRlt[0][1] + incertezaPosicaoAnterior[1][1]*fdeltaRlt[1][1] + incertezaPosicaoAnterior[1][2]*fdeltaRlt[2][1]; 
+	incertezaPosicaoAnterior[1][2] = incertezaPosicaoAnterior[1][0]*fdeltaRlt[0][2] + incertezaPosicaoAnterior[1][1]*fdeltaRlt[1][2] + incertezaPosicaoAnterior[1][2]*fdeltaRlt[2][2];	
+	
+	incertezaPosicaoAnterior[2][0] = incertezaPosicaoAnterior[2][0]*fdeltaRlt[0][0] + incertezaPosicaoAnterior[2][1]*fdeltaRlt[1][0] + incertezaPosicaoAnterior[2][2]*fdeltaRlt[2][0]; 
+	incertezaPosicaoAnterior[2][1] = incertezaPosicaoAnterior[2][0]*fdeltaRlt[0][1] + incertezaPosicaoAnterior[2][1]*fdeltaRlt[1][1] + incertezaPosicaoAnterior[2][2]*fdeltaRlt[2][1]; 
+	incertezaPosicaoAnterior[2][2] = incertezaPosicaoAnterior[2][0]*fdeltaRlt[0][2] + incertezaPosicaoAnterior[2][1]*fdeltaRlt[1][2] + incertezaPosicaoAnterior[2][2]*fdeltaRlt[2][2]; 
+	*/
+
+	incertezaPosicaoAnterior = matrixMultiplication(3,3,3,3,fp,covarianciaAnterior);
+	incertezaPosicaoAnterior = matrixMultiplication(3,3,3,3,incertezaPosicaoAnterior,fpt);
+
+	// IncertezaNoMovimento
+	float incertezaMovimento[3][3];
+
+	float fDeltaRL[3][2];  
+	float fDeltaRLt[2][3];
+
+	incertezaMovimento = matrixMultiplication(3,2,2,2,fDeltaRL,covar);
+	incertezaMovimento = matrixMultiplication(3,2,2,3,incertezaMovimento,fDeltaRLt);
+
+	/// Fim da atualização da ação
+	/// Proximo passo checar todas as equações acima
+	/// Partir para atualização na percepção
+
+	float P[3][3];
+	P = matrixSum(3,3,3,3,incertezaPosicaoAnterior,incertezaMovimento);
+
+	float R[3][3];
+	R[0][0] = R[1][1] = R[2][2] = 0.2;
+	R[0][1] = R[0][2] = R[1][0] = R[1][2] = R[2][0] = R[2][1] = 0; 
+	
+	// Ganho de Kalman = Kt
+	float Kt[3][3];
+	float sumPR[3][3];
+	sumPR = matrixSum(3,3,3,3,P,R);	
+	Kt = matrixMultiplication(3,3,3,3,P,sumPR);
+
+	// vt = xzt - xt;
+	// xt = xt + kt*vt;
+	// Pt = Pt - Kt*Ev*Ktt
+	// Ev = Pt + Rt 
+
 
 	//Por enquanto usando posição da API (remover depois)
 	//UpdatePositionWithAPI();
 }
 
+
+
 void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 {
 	//Encontrando estimativa segundo sensores e mapa
+	
 	simxFloat zpos[3];
 	simxFloat zVariance[3];
 	
@@ -255,10 +429,26 @@ void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 	posVariance[0] = posVariance[0] - ((posVariance[0] * posVariance[0]) / (posVariance[0] + zVariance[0])); 
 	posVariance[1] = posVariance[1] - ((posVariance[1] * posVariance[1]) / (posVariance[1] + zVariance[1])); 
 	posVariance[2] = posVariance[2] - ((posVariance[2] * posVariance[2]) / (posVariance[2] + zVariance[2]));
+	
+	//Atualiza incertezas de posição
+	posVariance[0] += fabs(deltaX * ERROR_PER_METER_X);
+	posVariance[1] += fabs(deltaY * ERROR_PER_METER_Y);
+	posVariance[2] += fabs(deltaS * ERROR_PER_METER_THETA);
 
+	//Atualiza estimativa de posição
+	pos[0] += deltaX;
+	pos[1] += deltaY;
+	pos[2] += deltaTheta;
+  
+
+	
 	//Por enquanto usando API (remover depois)
-	//UpdatePositionWithAPI();
+	
+
+
+	UpdatePositionWithAPI();
 }
+
 
 void Robot::readOdometers()
 {
@@ -298,70 +488,4 @@ void Robot::SetTargetSpeed(simxFloat phiL, simxFloat phiR)
 {
     simxSetJointTargetVelocity(clientID, leftMotorHandle, phiL, simx_opmode_oneshot);
     simxSetJointTargetVelocity(clientID, rightMotorHandle, phiR, simx_opmode_oneshot);  
-}
-
-void Robot::UpdateMap()
-{
-	this->ErrorPropagationOdometry();
-	for (int i = 0; i < CELLS_X; i++)
-	{
-		for (int j = 0; j < CELLS_Y; j++)
-		{
-			for (int k = 0; k < CELLS_DEG; k++)
-			{
-				this->ActionUpdate(i, j, k);
-				this->PerceptionUpdate(i, j, k);
-			}
-		}
-	}
-}
-
-void Robot::ActionUpdate(int x, int y, int deg) //Atualiza a célula [x,y, theta]
-{
-
-}
-
-void Robot::ErrorPropagationOdometry()
-{
-	//Leitura do odometro para saber as variações dPhiL e dPhiR 
-	readOdometers();
-	
-	//Cálculo de deltaX, deltaY e deltaTheta
-	float deltaSl = WHEEL1_R * dPhiL;
-	float deltaSr = WHEEL1_R * dPhiR;
-	float deltaS = (deltaSl + deltaSr) / 2.0;
-	float deltaTheta = (deltaSr - deltaSl) / (2*WHEEL_L);
-	float auxTheta = pos[2] + deltaTheta/2.0;
-	float deltaX = deltaS * cos(auxTheta);
-	float deltaY = deltaS * sin(auxTheta);
-
-	//Matrix Fx
-	float Fx[3][3] = {{1, 1, 0}, {0, 1, 0}, {0, 0, 1}};
-	Fx[1][3] = -deltaY; Fx[2][3] = deltaX;
-
-	//matrix Fx1
-	float Fx1[3][2];
-	Fx1[1][1] = 1/2*cos(auxTheta) - (deltaS/2*WHEEL1_R)*sin(auxTheta);
-	Fx1[1][2] = 1/2*cos(auxTheta) + (deltaS/2*WHEEL1_R)*sin(auxTheta);
-	Fx1[2][1] = 1/2*sin(auxTheta) + (deltaS/2*WHEEL1_R)*cos(auxTheta);
-	Fx1[2][2] = 1/2*sin(auxTheta) + (deltaS/2*WHEEL1_R)*cos(auxTheta);
-	Fx1[3][1] = 1/WHEEL1_R; Fx[3][2] = -1/WHEEL1_R;
-
-	//Matrix Cx1
-	float Cx1[2][2] = {{0,0},{0,0}};
-	Cx1[1][1] = K_ODO*abs(dPhiR);
-	Cx1[2][2] = K_ODO*abs(dPhiL);
-
-	//Calcula a equação Cx' = Fx*Cx*FxT + Fx1*Cx1*Fx1T
-	float** aux1 = mult_matrix(Fx, this->covar, 3, 3, 3);
-	float** aux2 = mult_matrix(aux1, mat_transposta(Fx, 3, 3), 3, 3, 3);
-	float** aux3 = mult_matrix(Fx1, Cx1, 3, 2, 2);
-	float** aux4 = mult_matrix(aux3, mat_transposta(Fx1, 3, 2), 3, 2, 3);
-	sum_matrix(aux2, aux4, 3, 3);
-	this->covar = aux2;
-
-	free(aux1); free(aux3); free(aux4); 
-	//O resultado é a matriz 3x3 COVAR, cuja diagonal principal representa as variâncias de x, y e theta. 
-	//Essas variâncias são parâmetros para a Gaussiana. A média das Gaussianas é representada pelo valor
-	//de x, y e theta calculado pela odometria. 
 }

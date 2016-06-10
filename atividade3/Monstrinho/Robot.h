@@ -16,10 +16,6 @@ extern "C" {
 #include "Utils.h"
 #include "EnvMap.h"
 
-#define CELLS_X 200
-#define CELLS_Y 200
-#define CELLS_DEG 365
-
 class Robot
 {
 	private:
@@ -41,9 +37,6 @@ class Robot
 		float WHEEL1_R;
 		float WHEEL2_R;
 		float WHEEL_L;
-
-		//constante da odometria
-		float K_ODO;
 		
 		//Posição do robô
 		simxFloat realpos[3];			//posição verdadeira de referencia da API
@@ -67,28 +60,19 @@ class Robot
 		float ERROR_PER_METER_Y;		//Erro adicionado no Y por metro andado
 		float ERROR_PER_METER_THETA;	//Erro adicionado no THETA por metro andado
 
-
 		//Funções auxiliares
 		void GetAPIPosition();			//Lê a posição verdadeira do robô e guarda no vetor realpos[]
 		void ExecuteMotionControl(); 	//Faz o robô andar em direção ao objetivo atual
 		void UpdateSonarReadings(); 	//Atualiza a leitura dos sonares do robô e armazena em sonar_reading[]
 		void UpdatePositionWithAPI();	//Atualiza pos[] e posVariance[] usando precisão perfeita da API (apenas para testes)
+		float** matrixMultiplication(int r1,int c1, int r2,int c2, float** a, float** b);
+		float** matrixTranspose(int r1,int c1, float** a);
 		void UpdatePositionWithOdometry();	//Atualiza pos[] e posVariance[] após movimento do robô usando a odometria
 		void UpdatePositionWithSensorsAndMap(EnvMap testmap); //Melhora a estimativa de posição do robô com os sensores e o mapa
 		void readOdometers();	
 		simxFloat readSonar(simxInt &sonar);
 		void SetTargetSpeed(simxFloat phiL, simxFloat phiR);
 	
-		//variáveis do mapa
-		float prob_map[CELLS_X][CELLS_Y][CELLS_DEG];
-		float **covar;
-
-		//métodos do mapa
-		void UpdateMap();
-		void ActionUpdate(int x, int y, int deg);
-		void PerceptionUpdate(int x, int y, int deg);
-		void ErrorPropagationOdometry(); //calcula as variâncias em x e y para montar a Gaussiana 2-D
-
 	public:
 		//Funções principais de interface do robô
 		void Init(simxInt clientID, std::vector<simxFloat*> path);

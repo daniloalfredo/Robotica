@@ -98,14 +98,6 @@ float GetTimeSinceLastCommandInSecs(simxInt clientID, float lastCommandTime)
 	return GetSimulationTimeInSecs(clientID) - lastCommandTime;
 }
 
-double Gaussian(double mean, double variance, double x) //calcula o valor da Gaussiana definida por mean e variance na posição x
-{
-	double term1 = 1/(sqrt(2*variance*PI));
-	double term2 = exp(-(x - mean)/(2*variance));
-	double f = term1*term2;
-	return f;
-}
-
 double normalDistribution(double x)
 {
 	if(x < -10.0)return 0.0;
@@ -134,55 +126,4 @@ double normalDistribution(double x)
 	sum = 0.5 + h*sum/3./sqrt(8.*atan(1.));
 	// return result
 	return sum;
-}
-
-float** mult_matrix(float** A, float** B, int m, int n, int p) //multiplicação de matrix (m x n) por (n x p)
-{
-	float** resultado = (float**) malloc (m*sizeof(float*))
-	for (int i = 0; i < m; i++)
-	{
-		resultado[i] = (float*) malloc (n*sizeof(float));
-	}
-
-	for (int i = 0; i < m; i++)
-	{
-		for (int j = 0; j < p; j++)
-		{
-			float sum = 0;
-			for (int k = 0; k < n; k++)
-			{
-				sum += A[i][k]*A[k][j];
-			}
-			resultado[i][j] = sum;
-		}
-	}
-	return resultado;
-}
-
-float** mat_transposta(float** Mat, int rows, int cols)
-{
-	float** transposta = (float**) malloc(cols*sizeof(float*));
-	for (int i = 0; i < cols; i++)
-	{
-		transposta[i] = (float*) malloc(rows*sizeof(float));
-	}
-
-	for (int i = 0; i < cols; i++)
-	{
-		for (int j = 0; j < rows; j++)
-		{
-			transposta[i][j] = Mat[j][i];
-		}
-	}
-	return transposta;
-} 
-void sum_matrix(float** A, float** B, int rows, int cols)
-{
-	for (int i = 0; i < rows; i++)
-	{
-		for (int j = 0; j < cols; j++)
-		{
-			A[i][j] += B[i][j];
-		}
-	}
 }

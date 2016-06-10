@@ -26,7 +26,7 @@ void ProbMap::UpdateMap()
 	}
 }
 
-void ProbMap::ActionUpdate(int x, int y, int deg) //Atualiza a célula [x,y, theta]
+void ProbMap::ActionUpdate(int x, int y, int deg)
 {
 	
 }
