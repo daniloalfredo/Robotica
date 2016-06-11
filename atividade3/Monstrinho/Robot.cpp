@@ -187,42 +187,6 @@ void Robot::UpdatePositionWithAPI()
 	posVariance[2] = 0.0;
 }
 
-
-/* Multiplying matrix a and b and storing in array mult. */
-
-float** Robot::matrixMultiplication(int r1,int c1, int r2,int c2, float** a, float** b)
-{
-	if(c1 == r2)
-	{
-		float mult[r1][c2];
-
-	    for(int i = 0; i < r1; i++)
-	    {
-	    	for(int j = 0; j < c2; j++)
-	    	{
-	    		for(int k = 0; k < c1; k++)
-			    {
-			        mult[i][j]+=(a[i][k]*b[k][j]);
-			    }		
-	    	}	
-	    }
-	}
-	return mult;
-}    
-
-float** Robot::matrixTranspose(int r1,int c1, float** a)
-{
-	float b[c1][r1];
-	for(int i = 0; i < r1;i++)
-	{
-		for(int j = 0; j < c1; j++)
-		{	
-			b[j][i] = a[i][j];
-		}
-	}
-	return b;
-} 
-
 void Robot::UpdatePositionWithOdometry()
 {
 	//Leitura do odometro para saber as variações dPhiL e dPhiR 
@@ -400,8 +364,7 @@ void Robot::UpdatePositionWithOdometry()
 
 void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 {
-	//Encontrando estimativa segundo sensores e mapa
-	
+	/*//Encontrando estimativa segundo sensores e mapa
 	simxFloat zpos[3];
 	simxFloat zVariance[3];
 	
@@ -428,24 +391,9 @@ void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 
 	posVariance[0] = posVariance[0] - ((posVariance[0] * posVariance[0]) / (posVariance[0] + zVariance[0])); 
 	posVariance[1] = posVariance[1] - ((posVariance[1] * posVariance[1]) / (posVariance[1] + zVariance[1])); 
-	posVariance[2] = posVariance[2] - ((posVariance[2] * posVariance[2]) / (posVariance[2] + zVariance[2]));
-	
-	//Atualiza incertezas de posição
-	posVariance[0] += fabs(deltaX * ERROR_PER_METER_X);
-	posVariance[1] += fabs(deltaY * ERROR_PER_METER_Y);
-	posVariance[2] += fabs(deltaS * ERROR_PER_METER_THETA);
-
-	//Atualiza estimativa de posição
-	pos[0] += deltaX;
-	pos[1] += deltaY;
-	pos[2] += deltaTheta;
-  
-
+	posVariance[2] = posVariance[2] - ((posVariance[2] * posVariance[2]) / (posVariance[2] + zVariance[2]));*/
 	
 	//Por enquanto usando API (remover depois)
-	
-
-
 	UpdatePositionWithAPI();
 }
 

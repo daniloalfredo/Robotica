@@ -65,8 +65,6 @@ class Robot
 		void ExecuteMotionControl(); 	//Faz o robô andar em direção ao objetivo atual
 		void UpdateSonarReadings(); 	//Atualiza a leitura dos sonares do robô e armazena em sonar_reading[]
 		void UpdatePositionWithAPI();	//Atualiza pos[] e posVariance[] usando precisão perfeita da API (apenas para testes)
-		float** matrixMultiplication(int r1,int c1, int r2,int c2, float** a, float** b);
-		float** matrixTranspose(int r1,int c1, float** a);
 		void UpdatePositionWithOdometry();	//Atualiza pos[] e posVariance[] após movimento do robô usando a odometria
 		void UpdatePositionWithSensorsAndMap(EnvMap testmap); //Melhora a estimativa de posição do robô com os sensores e o mapa
 		void readOdometers();	
