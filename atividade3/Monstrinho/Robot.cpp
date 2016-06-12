@@ -21,19 +21,32 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	WHEEL2_R = 0.0325;
 	WHEEL_L = 0.075;
 	
+	//Inicializa constantes de odometria
+	kl = 0.8;
+	kr = 0.8;
+	
+	//Variáveis do Filtro de Kalman
+	R.Resize(3, 3);
+	R.mat[0][0] = 0.2;
+	R.mat[0][1] = 0.0;
+	R.mat[0][2] = 0.0;
+	R.mat[1][0] = 0.0;
+	R.mat[1][1] = 0.2;
+	R.mat[1][2] = 0.0;
+	R.mat[2][0] = 0.0;
+	R.mat[2][1] = 0.0;
+	R.mat[2][2] = 0.2; 
+	
 	//Variáveis do caminho
 	this->path = path;
 	current_goal = -1;
 	reached_goal = true;
 	num_voltas = 0;
 	
-	//Inicializa a posição estimada e variâncias do robô
+	//Inicializa a posição estimada e a incerteza do robô
+	pos.ResizeAndNulify(3, 1);
+	realpos.ResizeAndNulify(3, 1);
 	UpdatePositionWithAPI();
-
-	//Variáveis da odometria // Ignora essa parte
-	ERROR_PER_METER_X = 0.10;
-	ERROR_PER_METER_Y = 0.10;
-	ERROR_PER_METER_THETA = 1*(PI/180.0);
 }
 
 void Robot::Stop()
@@ -44,14 +57,13 @@ void Robot::Stop()
 void Robot::Log(EnvMap envmap)
 {
 	printf("----------------------------------------------------\n");
-	printf("realpos[]:           [%.2f, %.2f, %.2f]  //[X, Y, THETA]\n", realpos[0], realpos[1], realpos[2]);
-	printf("pos[]:               [%.2f, %.2f, %.2f]  //[X, Y, THETA]\n", pos[0], pos[1], pos[2]);
-	printf("posVariance[]:       [%.2f, %.2f, %.2f]  //[X, Y, THETA]\n", posVariance[0], posVariance[1], posVariance[2]);
-	printf("Erro de Posição:     [%.2f, %.2f, %.2f]  //[E = realpos-pos]\n", realpos[0]-pos[0], realpos[1]-pos[1], realpos[2]-pos[2]);
+	printf("realpos[]:           [%.2f, %.2f, %.2f]  //[X, Y, THETA]\n", realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]);
+	printf("pos[]:               [%.2f, %.2f, %.2f]  //[X, Y, THETA]\n", pos.mat[0][0], pos.mat[1][0], pos.mat[2][0]);
 	printf("Leitura dos Sonares: [%.2f, %.2f, %.2f]  //[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
+	printf("Numero de voltas:    [%d]\n", num_voltas);
+	
 	float t_time = GetSimulationTimeInSecs(clientID);
 	printf("Tempo de simulação:  [%.2f, %0d:%0d]              //[Em segundos, Em minutos]\n", t_time,(int) t_time/60,(int) t_time%60);
-	printf("Numero de voltas:    [%d]\n", num_voltas);
 }
 
 void Robot::Update(EnvMap testmap)
@@ -65,13 +77,8 @@ void Robot::Update(EnvMap testmap)
 	//Faz a leitura dos sonares
 	UpdateSonarReadings();
 	
-	//Se o erro na estimativa fica grande demais
-	if(posVariance[0] >= 0.05 || posVariance[1] >= 0.05 || posVariance[2] >= 0.1*(PI/180.0))
-	{	
-		//Atualiza a posição atual do robô usando os sensores e o mapa
-		printf("Corrigindo estimativa de posição...\n");
-		UpdatePositionWithSensorsAndMap(testmap);
-	}
+	//Atualiza a posição atual do robô usando os sensores e o mapa
+	UpdatePositionWithSensorsAndMap(testmap);
 	
 	//Executa o controle de movimento
 	ExecuteMotionControl();
@@ -96,29 +103,32 @@ void Robot::Update(EnvMap testmap)
 
 void Robot::GetAPIPosition()
 {
-	simxInt ret = simxGetObjectPosition(clientID, ddRobotHandle, -1, realpos, simx_opmode_oneshot_wait);
+	static simxFloat real[3];
+	simxInt ret = simxGetObjectPosition(clientID, ddRobotHandle, -1, real, simx_opmode_oneshot_wait);
     if (ret > 0) {
         printf("Erro ao ler posição do robô.\n");
         return;
     }
  
-    simxFloat orientation[3];
+    static simxFloat orientation[3];
     ret = simxGetObjectOrientation(clientID, ddRobotHandle, -1, orientation, simx_opmode_oneshot_wait);
     if (ret > 0) {
         printf("Erro ao ler orientação do robô.\n");
         return;
     }
 
-    realpos[2] = orientation[2];
+	realpos.mat[0][0] = real[0];
+	realpos.mat[1][0] = real[1];
+    realpos.mat[2][0] = orientation[2];
 }
 
 void Robot::ExecuteMotionControl()
 {	
-    simxFloat theta = pos[2];
+    simxFloat theta = pos.mat[2][0];
     simxFloat dtheta = smallestAngleDiff(goal[2], theta);
  
-    simxFloat deltax = goal[0] - pos[0];
-    simxFloat deltay = goal[1] - pos[1];
+    simxFloat deltax = goal[0] - pos.mat[0][0];
+    simxFloat deltay = goal[1] - pos.mat[1][0];
     simxFloat rho = sqrt(deltax*deltax + deltay*deltay);
  
     simxFloat atg = atan2(deltay, deltax);
@@ -177,14 +187,12 @@ void Robot::UpdatePositionWithAPI()
 	GetAPIPosition();
 
 	//Utiliza a posição de referência realpos[]
-	pos[0] = realpos[0];
-	pos[1] = realpos[1];
-	pos[2] = realpos[2];
+	pos.mat[0][0] = realpos.mat[0][0];
+	pos.mat[1][0] = realpos.mat[1][0];
+	pos.mat[2][0] = realpos.mat[2][0];
 
 	//A incerteza é 0 já que a posição é precisa
-	posVariance[0] = 0.0;
-	posVariance[1] = 0.0;
-	posVariance[2] = 0.0;
+	sigmapos.ResizeAndNulify(3, 3);
 }
 
 void Robot::UpdatePositionWithOdometry()
@@ -200,120 +208,49 @@ void Robot::UpdatePositionWithOdometry()
 	float deltaS = (deltaSl + deltaSr) / 2.0;
 	float deltaTheta = (deltaSr - deltaSl) / b;
 
-	float argumento = pos[2] + (deltaTheta/2); // pos[2] = theta
+	float argumento = pos.mat[2][0] + (deltaTheta/2);
 	
 	float deltaX = deltaS * cos(argumento);
 	float deltaY = deltaS * sin(argumento);
-
-	// Equações da página 67 - Slide 12		
-	float p_linha[3];
-	p_linha[0] = pos[0] + deltaX;
-	p_linha[1] = pos[1] + deltaX;
-	p_linha[2] = pos[2] + deltaTheta;
-
-	// Equações da página 68 - Slide 12	
-	// Lei da propagação dos Erros
-	float kr = 1;
-	float kl = 1;
 	
-	// Somatorio delta = covar(deltaSr,deltaSl);
-	float covar[2][2];
-	covar[0][0] = kr*abs(deltaSr);
-	covar[1][1] = kl*abs(deltaSl);
-	covar[0][1] = covar[1][0] = 0;
+	//Atualiza a média da posição	
+	pos.mat[0][0] += deltaX;
+	pos.mat[1][0] += deltaY;
+	pos.mat[2][0] += deltaTheta;
 	
- 	// fp = fp' segundo slide
-	float fp[3][3];
-	fp[0][0] = 1;
-	fp[0][1] = 0;
-	fp[0][2] = -(deltaY);
-	fp[1][0] = 0;
-	fp[1][1] = 1;
-	fp[1][2] = (deltaX);
-	fp[2][0] = 0;
-	fp[2][1] = 0;
-	fp[2][2] = 1;
-
-	// incertezaPosicaoInterior = fp * CovarianciaAnterior * fp  // [fp = fpt]
-	// Covariancia inicial = {0000000000000000}
-	// Essa matriz de covariancia tem que ser global, inicializada com zeros, e depois atualizadas
-	// em cada passo futuro, vai usar ela pra atualizar
-	float covarianciaAnterior[3][3];
-
-	float incertezaPosicaoAnterior[3][3];
+	//Calcula o sigmaDelta
+	Matrix sigmaDelta(2, 2);
+	sigmaDelta.mat[0][0] = kr * fabs(deltaSr);
+	sigmaDelta.mat[1][1] = kl * fabs(deltaSl);
 	
-	// Calculo da Incerteza da Posicao Anterior  
-	incertezaPosicaoAnterior = matrixMultiplication(3,3,3,3,fp,covarianciaAnterior);
-	incertezaPosicaoAnterior = matrixMultiplication(3,3,3,3,incertezaPosicaoAnterior,fp);
-
-
-	// fDeltaRl
-	float fDeltaRL[3][2];
-	fDeltaRL[0][0] = cos(argumento)/2 - deltaS*sin(argumento)/(2*b);
-	fDeltaRL[0][1] = cos(argumento)/2 + deltaS*sin(argumento)/(2*b);
-	fDeltaRL[1][0] = sin(argumento)/2 + deltaS*cos(argumento)/(2*b);
-	fDeltaRL[1][1] = sin(argumento)/2 - deltaS*cos(argumento)/(2*b);
-	fDeltaRL[2][0] = 1/b;
-	fDeltaRL[2][1] = -1/b;
-
-	// fDeltaRLt - Transposta de fDeltaRl 
-	float fDeltaRLt[2][3];
-	fDeltaRLt = matrixTranspose(3,2,fDeltaRL);
-
-
-	// IncertezaNoMovimento -- fDeltaRL * cover * fDeltaRLt
-	float incertezaMovimento[3][3];
-	incertezaMovimento = matrixMultiplication(3,2,2,2,fDeltaRL,covar);
-	incertezaMovimento = matrixMultiplication(3,2,2,3,incertezaMovimento,fDeltaRLt);
-
-	float P[3][3];
-	P = matrixSum(3,3,3,3,incertezaPosicaoAnterior,incertezaMovimento);
-
-// --------------------- Fim da atualização da ação -------------------------------------------------------------------------
-	/// Partir para atualização na percepção
-
-	float R[3][3]; // Esse R é um chute das correlaçações de x,y,theta
-	R[0][0] = R[1][1] = R[2][2] = 0.2;
-	R[0][1] = R[0][2] = R[1][0] = R[1][2] = R[2][0] = R[2][1] = 0; 
+	//Calcula Fp
+	static Matrix fp(3, 3);
+	fp.mat[0][0] = 1;
+	fp.mat[0][1] = 0;
+	fp.mat[0][2] = -deltaY;
+	fp.mat[1][0] = 0;
+	fp.mat[1][1] = 1;
+	fp.mat[1][2] = deltaX;
+	fp.mat[2][0] = 0;
+	fp.mat[2][1] = 0;
+	fp.mat[2][2] = 1;
 	
-	// Ganho de Kalman = Kt
-	float Kt[3][3];
-	float sumPR[3][3];
-	float inversaSumPR[3][3];
-	sumPR = matrixSum(3,3,3,3,P,R);	
-
-	// Usar o Opencv Pra obter a inversa
-	inversaSumPR = funcaoInversaDoOpenCV(3,3,sumPR);
-
-	Kt = matrixMultiplication(3,3,3,3,P,inversaSumPR);
-
-	// vt = xzt - xt;
-	float vt[3];
-	vt[0] = pos[0] - p_linha[0];
-	vt[1] = pos[1] - p_linha[1];
-	vt[2] = pos[2] - p_linha[2];
-
-	// xt = xtNovo + kt*vt;   // xtNovo = p_linha // xt antigo = pos
- 	// xt = vetor de posições novas
- 	// Uma matriz 3x3 vezes 3x1 dá uma 3x1
- 	
- 	float Kt_Vt[3] = matrixMultiplication(3,3,3,1,Kt,vt)
-	// Atualizacao das Posições com Ganho de Kalman
-	pos[0] = p_linha[0] + Kt_Vt[0];
-	pos[1] = p_linha[1] + Kt_Vt[1];
-	pos[2] = p_linha[2] + Kt_Vt[2];
-
-	// Pt = Pt - Kt*Ev*Ktt
-	// Ev = Pt + Rt 
-	// Atualização da matriz de Predição de Correlação
-	float Ktt[3][3];
-	Ktt = matrixTranspose(3,3,Kt);
+	//Calcula fDeltaRl
+	static Matrix fDeltaRl(3, 2);
+	fDeltaRl.mat[0][0] = cos(argumento)/2.0 - (deltaS*sin(argumento)) / (2.0*b);
+	fDeltaRl.mat[0][1] = cos(argumento)/2.0 + (deltaS*sin(argumento)) / (2.0*b);
+	fDeltaRl.mat[1][0] = sin(argumento)/2.0 + (deltaS*cos(argumento)) / (2.0*b);
+	fDeltaRl.mat[1][1] = sin(argumento)/2.0 - (deltaS*cos(argumento)) / (2.0*b);
+	fDeltaRl.mat[2][0] = 1/b;
+	fDeltaRl.mat[2][1] = -1/b;
 	
-	// sumPR = Ev
-	float Kt_sumPR[3][3] = matrixMultiplication(3,3,3,3,Kt,sumPR);
-	float Kt_Ev_Ktt[3][3] = matrixMultiplication(3,3,3,3,Kt_sumPR,Ktt);
-	covarianciaAnterior = matrixSub(covarianciaAnterior,Kt_Ev_Ktt);
-
+	//Calcula fDeltaRl transposta
+	Matrix fDeltaRlT = Transpose(fDeltaRl);
+	
+	//Atualiza matriz de covariancias da posição estimada
+	Matrix result = ((fp * sigmapos) * fp) + ((fDeltaRl * sigmaDelta) * fDeltaRlT);
+	sigmapos = result;
+	
 	//Por enquanto usando posição da API (remover depois)
 	//UpdatePositionWithAPI();
 }
@@ -322,37 +259,29 @@ void Robot::UpdatePositionWithOdometry()
 
 void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 {
-	/*//Encontrando estimativa segundo sensores e mapa
-	simxFloat zpos[3];
-	simxFloat zVariance[3];
-	
-	//------------------------------------------------------------
-	//TESTE
-	//Assumindo que eu poderia encontrar o zpos e zVariance 
-	//fazendo um teste do melhor caso onde a estimativa Z 
-	//é a posicao real + um errinho aleatório
-	//para ver se kalman funciona
-	zVariance[0] = 0.1 * rand_beetween_0_and_1();
-	zVariance[1] = 0.1 * rand_beetween_0_and_1();
-	zVariance[2] = (1.8*(PI/180.0)) * rand_beetween_0_and_1();
-	
-	//Um ponto proximo da posição real dentro da variancia acima
-	zpos[0] = realpos[0] + zVariance[0] * rand_beetween_0_and_1()*rand_signal();
-	zpos[1] = realpos[1] + zVariance[1] * rand_beetween_0_and_1()*rand_signal();
-	zpos[2] = realpos[2] + zVariance[2] * rand_beetween_0_and_1()*rand_signal();
-	//------------------------------------------------------------
-	
-	//Utilizando filtro de Kalman
-	pos[0] = pos[0] + (posVariance[0] / (posVariance[0] + zVariance[0])) * (zpos[0] - pos[0]);
-	pos[1] = pos[1] + (posVariance[1] / (posVariance[1] + zVariance[1])) * (zpos[1] - pos[1]);
-	pos[2] = pos[2] + (posVariance[2] / (posVariance[2] + zVariance[2])) * (zpos[2] - pos[2]); 
+	//Calcula sigmav
+	Matrix sigmav = sigmapos + R;
 
-	posVariance[0] = posVariance[0] - ((posVariance[0] * posVariance[0]) / (posVariance[0] + zVariance[0])); 
-	posVariance[1] = posVariance[1] - ((posVariance[1] * posVariance[1]) / (posVariance[1] + zVariance[1])); 
-	posVariance[2] = posVariance[2] - ((posVariance[2] * posVariance[2]) / (posVariance[2] + zVariance[2]));*/
+	//Calcula Kt
+	Matrix invSigmav = Invert3x3(sigmav);
+	Matrix K = sigmapos * invSigmav;
+
+	//Calcula xz
+	Matrix xz = realpos; //OBS: ACHAR xz DE ALGUMA FORMA
+
+	//Calcula Vt  
+	Matrix v = xz - pos; 
+
+	//Atualiza posição
+	Matrix result = pos + (K * v);
+	pos = result;
+	
+	//Atualiza modelo de incerteza de posição
+	Matrix result2 = sigmapos - ((K * sigmav) * Transpose(K));
+	sigmapos = result2;
 	
 	//Por enquanto usando API (remover depois)
-	UpdatePositionWithAPI();
+	//UpdatePositionWithAPI();
 }
 
 

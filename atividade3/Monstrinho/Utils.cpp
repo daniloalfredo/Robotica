@@ -127,3 +127,105 @@ double normalDistribution(double x)
 	// return result
 	return sum;
 }
+
+Matrix operator+(Matrix A, Matrix B)
+{
+    Matrix C;
+
+    if(A.Rows() == B.Rows() && A.Cols() == B.Cols())
+    {
+    	C.Resize(A.Rows(), A.Cols());
+    		
+    	for(int i = 0; i < A.Rows(); i++)
+		{
+			for(int j = 0; j < A.Cols(); j++)
+				C.mat[i][j] = A.mat[i][j] + B.mat[i][j];
+		}
+    }
+    else
+		printf("Error on Matrix Sum. Matrices must have same dimensions.\n");
+
+    return C;
+}
+
+Matrix operator-(Matrix A, Matrix B)
+{
+    Matrix C;
+
+    if(A.Rows() == B.Rows() && A.Cols() == B.Cols())
+    {
+    	C.Resize(A.Rows(), A.Cols());
+    		
+    	for(int i = 0; i < A.Rows(); i++)
+		{
+			for(int j = 0; j < A.Cols(); j++)
+				C.mat[i][j] = A.mat[i][j] - B.mat[i][j];
+		}
+    }
+    else
+		printf("Error on Matrix Subtract. Matrices must have same dimensions.\n");
+
+    return C;
+}
+
+Matrix operator*(Matrix A, Matrix B)
+{
+    Matrix C;
+
+    if(A.Cols() == B.Rows())
+    {
+    	C.ResizeAndNulify(A.Rows(), B.Cols());
+    		
+    	for(int i = 0; i < C.Rows(); i++)
+		{
+			for(int j = 0; j < C.Cols(); j++)
+			{
+				for(int k = 0; k < A.Cols(); k++)
+					C.mat[i][j] += A.mat[i][k] * B.mat[k][j];
+			}
+		}
+    }
+    else
+		printf("Error on Matrix Multiply. Cols(A) must be equal to Rows(B).\n");
+
+    return C;
+}
+
+Matrix Transpose(Matrix A)
+{
+	Matrix t(A.Cols(), A.Rows());
+			
+	for(int i = 0; i < t.mat.size(); i++)
+	{ 
+		for(int j = 0; j < t.mat[i].size(); j++) 
+			t.mat[i][j] = A.mat[j][i];
+	}
+			
+	return t;
+}
+
+Matrix Invert3x3(Matrix A)
+{
+	Matrix t;
+	
+	if(A.Rows() == 3 && A.Cols() == 3)
+	{
+		t.Resize(3, 3);
+		t.mat[0][0] = A.mat[1][1]*A.mat[2][2] - A.mat[1][2]*A.mat[2][1];
+		t.mat[0][1] = A.mat[0][2]*A.mat[2][1] - A.mat[0][1]*A.mat[2][2];
+		t.mat[0][2] = A.mat[0][1]*A.mat[1][2] - A.mat[0][2]*A.mat[1][1];
+		t.mat[1][0] = A.mat[1][2]*A.mat[2][0] - A.mat[1][0]*A.mat[2][2];
+		t.mat[1][1] = A.mat[0][0]*A.mat[2][2] - A.mat[0][2]*A.mat[2][0];
+		t.mat[1][2] = A.mat[0][2]*A.mat[1][0] - A.mat[0][0]*A.mat[1][2];
+		t.mat[2][0] = A.mat[1][0]*A.mat[2][1] - A.mat[1][1]*A.mat[2][0];
+		t.mat[2][1] = A.mat[0][1]*A.mat[2][0] - A.mat[0][0]*A.mat[2][1];
+		t.mat[2][2] = A.mat[0][0]*A.mat[1][1] - A.mat[0][1]*A.mat[1][0];
+	
+		float k = (1.0 / (A.mat[0][0]*(A.mat[1][1]*A.mat[2][2] - A.mat[1][2]*A.mat[2][1]) - A.mat[0][1]*(A.mat[1][0]*A.mat[2][2] - A.mat[1][2]*A.mat[2][0]) + A.mat[0][2]*(A.mat[1][0]*A.mat[2][1] - A.mat[1][1]*A.mat[2][0])));
+		t = t*k;
+	}
+	else
+		printf("Error on Invert3x3(). Parameter is not a 3x3 matrix.\n");
+			
+	return t;
+}

@@ -39,9 +39,9 @@ class Robot
 		float WHEEL_L;
 		
 		//Posição do robô
-		simxFloat realpos[3];			//posição verdadeira de referencia da API
-		simxFloat pos[3];				//posição estimada pelo robô
-		simxFloat posVariance[3];		//variâncias em [X, Y, THETA] de posição do robô
+		Matrix realpos;			//posição verdadeira de referencia da API
+		Matrix pos;				//posição estimada pelo robô
+		Matrix sigmapos;		//Matriz de covariância da posição estimada (modelo de incerteza)
 		
 		//Leituras dos sonares e das odometrias
 		simxFloat sonar_reading[3]; 	//[L, R, F]
@@ -56,9 +56,10 @@ class Robot
 		//Variáveis da odometria
 		simxFloat dPhiL;				//Diferenca de ângulo em PhiL desde o último comando de movimento 
 		simxFloat dPhiR;				//Diferenca de ângulo em PhiR desde o último comando de movimento
-		float ERROR_PER_METER_X; 		//Erro adicionado no X por metro andado
-		float ERROR_PER_METER_Y;		//Erro adicionado no Y por metro andado
-		float ERROR_PER_METER_THETA;	//Erro adicionado no THETA por metro andado
+		float kl, kr;
+
+		//Variáveis do Filtro de Kalman
+		Matrix R;
 
 		//Funções auxiliares
 		void GetAPIPosition();			//Lê a posição verdadeira do robô e guarda no vetor realpos[]

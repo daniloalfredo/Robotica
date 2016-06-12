@@ -43,6 +43,17 @@ class Matrix
 	public:
 		std::vector<std::vector<float> > mat;
 		
+		//Cria uma matriz nula (0x0)
+		Matrix() 
+		{
+		}
+		
+		//Cria uma Matriz MxN
+		Matrix(int m, int n)
+		{
+			ResizeAndNulify(m, n);
+		}
+		
 		int Rows()
 		{
 			return (int) mat.size();
@@ -55,17 +66,17 @@ class Matrix
 			return 0;
 		}
 		
-		Matrix() 
-		{
-		}
-		
-		//Cria uma Matriz MxN
-		Matrix(int m, int n)
+		void Resize(int m, int n)
 		{
 			mat.resize(m);
 			
 			for(int i = 0; i < mat.size(); i++)
 		        mat[i].resize(n);
+		}
+		
+		void ResizeAndNulify(int m, int n)
+		{
+			Resize(m, n);
 		
 			for(int i = 0; i < mat.size(); i++)
 		    { 
@@ -74,20 +85,22 @@ class Matrix
 		    }
 		}
 		
-		Matrix Transpose()
+		void Print()
 		{
-			Matrix t(Cols(), Rows());
-			
-			for(int i = 0; i < t.mat.size(); i++)
-		    { 
-		        for(int j = 0; j < t.mat[i].size(); j++) 
-		            t.mat[i][j] = mat[j][i];
-		    }
-			
-			return t;
+			printf("[");
+			for(int i = 0; i < (int) mat.size(); i++)
+			{
+				for(int j = 0; j < (int) mat[i].size(); j++)
+					printf("%.2f ", mat[i][j]);
+				
+				if(i < (int) mat.size()-1)
+					printf("\n");
+			}
+			printf("]\n");
 		}
 		
-		Matrix& operator =(Matrix& o)
+		//Operador de atribuição
+		Matrix& operator=(Matrix& o)
     	{
 		    mat.resize(o.mat.size());
 		    
@@ -103,70 +116,23 @@ class Matrix
 		    return *this;
 		}
 		
-		Matrix& operator *(Matrix& o)
+		//Multiplicar por constante (a constante tem que ficar depois ex: M*5.0)
+		Matrix& operator*(float k)
 		{
-			if(mat[0].size() != o.mat.size())
-				return *this;
-
-			Matrix tm;
-			tm.mat.resize(mat.size());
-        
-			for(int i = 0; i < tm.mat.size(); i++)
-				tm.mat[i].resize(o.mat[0].size());
-
-			for(int i = 0; i < tm.mat.size(); i++)
+			for(int i = 0; i < Rows(); i++)
 			{ 
-				for(int j = 0; j < tm.mat[i].size(); j++) 
-				{
-		            tm.mat[i][j] = 0;
-		            for(int c = 0; c < mat[i].size(); c++) 
-		                tm.mat[i][j] += mat[i][c] * o.mat[c][j];
-				}
+				for(int j = 0; j < Cols(); j++) 
+		            mat[i][j] *= k;
 			}
 			
-			*this = tm;
 			return *this;
-		}
-		
-		void Print()
-		{
-			if(Rows() <= 0 || Cols() <= 0)
-			{	
-				printf("[]\n");
-				return;
-			}
-			
-		
-			printf("[\n");
-			for(int i = 0; i < (int) mat.size(); i++)
-			{
-				for(int j = 0; j < (int) mat[i].size(); j++)
-					printf("%.2f ", mat[i][j]);
-				printf("\n");
-			}
-			printf("]\n");
 		}
 };
 
-/*
-	//---------------------------
-	EXEMPLO DE USO DAS MATRIZES
-
-	Matrix a(2, 2);
-	Matrix b(2, 1);
-	
-	a.mat[0][0] = 1;
-	a.mat[0][1] = 0;
-	a.mat[1][0] = 0;
-	a.mat[1][1] = 1;
-	
-	b.mat[0][0] = 5;
-	b.mat[1][0] = 8;
-	
-	Matrix c = a*b;
-		
-	c.Print();
-	c.Transpose().Print();
-*/
+Matrix operator+(Matrix A, Matrix B);
+Matrix operator-(Matrix A, Matrix B);
+Matrix operator*(Matrix A, Matrix B);
+Matrix Transpose(Matrix A);
+Matrix Invert3x3(Matrix A);
 
 #endif
