@@ -199,33 +199,20 @@ void Robot::UpdatePositionWithOdometry()
 
 	float deltaS = (deltaSl + deltaSr) / 2.0;
 	float deltaTheta = (deltaSr - deltaSl) / b;
+
+	float argumento = pos[2] + (deltaTheta/2); // pos[2] = theta
+	
 	float deltaX = deltaS * cos(argumento);
 	float deltaY = deltaS * sin(argumento);
 
-	//Atualiza incertezas de posição
-	//posVariance[0] += fabs(deltaX * ERROR_PER_METER_X);
-	//posVariance[1] += fabs(deltaY * ERROR_PER_METER_Y);
-	//posVariance[2] += fabs(deltaS * ERROR_PER_METER_THETA);
-
-	//Atualiza estimativa de posição
-	//pos[0] += deltaX;
-	//pos[1] += deltaY;
-	//pos[2] += deltaTheta;
-
-
-	// Heitor here // \/ \/
-	// Equações da página 67 - Slide 12	
-	
+	// Equações da página 67 - Slide 12		
 	float p_linha[3];
-
 	p_linha[0] = pos[0] + deltaX;
 	p_linha[1] = pos[1] + deltaX;
 	p_linha[2] = pos[2] + deltaTheta;
 
-
 	// Equações da página 68 - Slide 12	
 	// Lei da propagação dos Erros
-	
 	float kr = 1;
 	float kl = 1;
 	
@@ -235,10 +222,8 @@ void Robot::UpdatePositionWithOdometry()
 	covar[1][1] = kl*abs(deltaSl);
 	covar[0][1] = covar[1][0] = 0;
 	
-
-	// Fp , fp = fp_transposto // No slide diz que é igual
-	// Mas se vc transpor, não da igual
-	float fp[3][3], fpt[3][3];
+ 	// fp = fp' segundo slide
+	float fp[3][3];
 	fp[0][0] = 1;
 	fp[0][1] = 0;
 	fp[0][2] = -(deltaY);
@@ -249,24 +234,21 @@ void Robot::UpdatePositionWithOdometry()
 	fp[2][1] = 0;
 	fp[2][2] = 1;
 
-	// fpt, considerando fp != fpt
-	/*
-	fpt[0][0] = fp[0][0];
-	fpt[0][1] = fp[1][0];
-	fpt[0][2] = fp[2][0];
-	fpt[1][0] = fp[0][1];
-	fpt[1][1] = fp[1][1];
-	fpt[1][2] = fp[2][1];
-	fpt[2][0] = fp[0][2];
-	fpt[2][1] = fp[1][2];
-	fpt[2][2] = fp[2][2];
-	*/
+	// incertezaPosicaoInterior = fp * CovarianciaAnterior * fp  // [fp = fpt]
+	// Covariancia inicial = {0000000000000000}
+	// Essa matriz de covariancia tem que ser global, inicializada com zeros, e depois atualizadas
+	// em cada passo futuro, vai usar ela pra atualizar
+	float covarianciaAnterior[3][3];
 
-	fpt = matrixTranspose(3,3,fp);
+	float incertezaPosicaoAnterior[3][3];
+	
+	// Calculo da Incerteza da Posicao Anterior  
+	incertezaPosicaoAnterior = matrixMultiplication(3,3,3,3,fp,covarianciaAnterior);
+	incertezaPosicaoAnterior = matrixMultiplication(3,3,3,3,incertezaPosicaoAnterior,fp);
+
 
 	// fDeltaRl
 	float fDeltaRL[3][2];
-	float argumento;  
 	fDeltaRL[0][0] = cos(argumento)/2 - deltaS*sin(argumento)/(2*b);
 	fDeltaRL[0][1] = cos(argumento)/2 + deltaS*sin(argumento)/(2*b);
 	fDeltaRL[1][0] = sin(argumento)/2 + deltaS*cos(argumento)/(2*b);
@@ -274,87 +256,63 @@ void Robot::UpdatePositionWithOdometry()
 	fDeltaRL[2][0] = 1/b;
 	fDeltaRL[2][1] = -1/b;
 
-	// fDeltaRLt 
+	// fDeltaRLt - Transposta de fDeltaRl 
 	float fDeltaRLt[2][3];
-	/*
-	fDeltaRLt[0][0] = fDeltaRL[0][0];
-	fDeltaRLt[0][1] = fDeltaRL[1][0];
-	fDeltaRLt[0][2] = fDeltaRL[2][0];
-	fDeltaRLt[1][0] = fDeltaRL[0][1];
-	fDeltaRLt[1][1] = fDeltaRL[1][1];
-	fDeltaRLt[1][2] = fDeltaRL[2][1];
-	*/
 	fDeltaRLt = matrixTranspose(3,2,fDeltaRL);
 
-	// incertezaPosicaoInterior = fp * CovarianciaAnterior * fpt  
-	// Covariancia inicial = {0000000000000000}
-	// Essa matriz de covariancia tem que ser global, inicializada com zeros, e depois atualizadas
-	// em cada passo futuro, vai usar ela pra atualizar
-	float covarianciaAnterior[3][3];
 
-	float incertezaPosicaoAnterior[3][3];
-	/*
-	// fp * Covaranancia 
-	incertezaPosicaoAnterior[0][0] = fp[0][0]*covarianciaAnterior[0][0]+fp[0][1]*covarianciaAnterior[1][0]+fp[0][2]*covarianciaAnterior[2][0];
-	incertezaPosicaoAnterior[0][1] = fp[0][0]*covarianciaAnterior[0][1]+fp[0][1]*covarianciaAnterior[1][1]+fp[0][2]*covarianciaAnterior[2][1];
-	incertezaPosicaoAnterior[0][2] = fp[0][0]*covarianciaAnterior[0][2]+fp[0][1]*covarianciaAnterior[1][2]+fp[0][2]*covarianciaAnterior[2][2];
-
-	incertezaPosicaoAnterior[1][0] = fp[1][0]*covarianciaAnterior[0][0]+fp[1][1]*covarianciaAnterior[1][0]+fp[1][2]*covarianciaAnterior[2][0];
-	incertezaPosicaoAnterior[1][1] = fp[1][0]*covarianciaAnterior[0][1]+fp[1][1]*covarianciaAnterior[1][1]+fp[1][2]*covarianciaAnterior[2][1];
-	incertezaPosicaoAnterior[1][2] = fp[1][0]*covarianciaAnterior[0][2]+fp[1][1]*covarianciaAnterior[1][2]+fp[1][2]*covarianciaAnterior[2][2];
-	
-	incertezaPosicaoAnterior[2][0] = fp[2][0]*covarianciaAnterior[0][0]+fp[2][1]*covarianciaAnterior[1][0]+fp[2][2]*covarianciaAnterior[2][0];
-	incertezaPosicaoAnterior[2][1] = fp[2][0]*covarianciaAnterior[0][1]+fp[2][1]*covarianciaAnterior[1][1]+fp[2][2]*covarianciaAnterior[2][1];
-	incertezaPosicaoAnterior[2][2] = fp[2][0]*covarianciaAnterior[0][2]+fp[2][1]*covarianciaAnterior[1][2]+fp[2][2]*covarianciaAnterior[2][2];
-
-	// fp * Covaranancia * fDeltaRLt
-	incertezaPosicaoAnterior[0][0] = incertezaPosicaoAnterior[0][0]*fdeltaRlt[0][0] + incertezaPosicaoAnterior[0][1]*fdeltaRlt[1][0] + incertezaPosicaoAnterior[0][2]*fdeltaRlt[2][0]; 
-	incertezaPosicaoAnterior[0][1] = incertezaPosicaoAnterior[0][0]*fdeltaRlt[0][1] + incertezaPosicaoAnterior[0][1]*fdeltaRlt[1][1] + incertezaPosicaoAnterior[0][2]*fdeltaRlt[2][1]; 
-	incertezaPosicaoAnterior[0][2] = incertezaPosicaoAnterior[0][0]*fdeltaRlt[0][2] + incertezaPosicaoAnterior[0][1]*fdeltaRlt[1][2] + incertezaPosicaoAnterior[0][2]*fdeltaRlt[2][2]; 
-
-	incertezaPosicaoAnterior[1][0] = incertezaPosicaoAnterior[1][0]*fdeltaRlt[0][0] + incertezaPosicaoAnterior[1][1]*fdeltaRlt[1][0] + incertezaPosicaoAnterior[1][2]*fdeltaRlt[2][0]; 
-	incertezaPosicaoAnterior[1][1] = incertezaPosicaoAnterior[1][0]*fdeltaRlt[0][1] + incertezaPosicaoAnterior[1][1]*fdeltaRlt[1][1] + incertezaPosicaoAnterior[1][2]*fdeltaRlt[2][1]; 
-	incertezaPosicaoAnterior[1][2] = incertezaPosicaoAnterior[1][0]*fdeltaRlt[0][2] + incertezaPosicaoAnterior[1][1]*fdeltaRlt[1][2] + incertezaPosicaoAnterior[1][2]*fdeltaRlt[2][2];	
-	
-	incertezaPosicaoAnterior[2][0] = incertezaPosicaoAnterior[2][0]*fdeltaRlt[0][0] + incertezaPosicaoAnterior[2][1]*fdeltaRlt[1][0] + incertezaPosicaoAnterior[2][2]*fdeltaRlt[2][0]; 
-	incertezaPosicaoAnterior[2][1] = incertezaPosicaoAnterior[2][0]*fdeltaRlt[0][1] + incertezaPosicaoAnterior[2][1]*fdeltaRlt[1][1] + incertezaPosicaoAnterior[2][2]*fdeltaRlt[2][1]; 
-	incertezaPosicaoAnterior[2][2] = incertezaPosicaoAnterior[2][0]*fdeltaRlt[0][2] + incertezaPosicaoAnterior[2][1]*fdeltaRlt[1][2] + incertezaPosicaoAnterior[2][2]*fdeltaRlt[2][2]; 
-	*/
-
-	incertezaPosicaoAnterior = matrixMultiplication(3,3,3,3,fp,covarianciaAnterior);
-	incertezaPosicaoAnterior = matrixMultiplication(3,3,3,3,incertezaPosicaoAnterior,fpt);
-
-	// IncertezaNoMovimento
+	// IncertezaNoMovimento -- fDeltaRL * cover * fDeltaRLt
 	float incertezaMovimento[3][3];
-
-	float fDeltaRL[3][2];  
-	float fDeltaRLt[2][3];
-
 	incertezaMovimento = matrixMultiplication(3,2,2,2,fDeltaRL,covar);
 	incertezaMovimento = matrixMultiplication(3,2,2,3,incertezaMovimento,fDeltaRLt);
-
-	/// Fim da atualização da ação
-	/// Proximo passo checar todas as equações acima
-	/// Partir para atualização na percepção
 
 	float P[3][3];
 	P = matrixSum(3,3,3,3,incertezaPosicaoAnterior,incertezaMovimento);
 
-	float R[3][3];
+// --------------------- Fim da atualização da ação -------------------------------------------------------------------------
+	/// Partir para atualização na percepção
+
+	float R[3][3]; // Esse R é um chute das correlaçações de x,y,theta
 	R[0][0] = R[1][1] = R[2][2] = 0.2;
 	R[0][1] = R[0][2] = R[1][0] = R[1][2] = R[2][0] = R[2][1] = 0; 
 	
 	// Ganho de Kalman = Kt
 	float Kt[3][3];
 	float sumPR[3][3];
+	float inversaSumPR[3][3];
 	sumPR = matrixSum(3,3,3,3,P,R);	
-	Kt = matrixMultiplication(3,3,3,3,P,sumPR);
+
+	// Usar o Opencv Pra obter a inversa
+	inversaSumPR = funcaoInversaDoOpenCV(3,3,sumPR);
+
+	Kt = matrixMultiplication(3,3,3,3,P,inversaSumPR);
 
 	// vt = xzt - xt;
-	// xt = xt + kt*vt;
+	float vt[3];
+	vt[0] = pos[0] - p_linha[0];
+	vt[1] = pos[1] - p_linha[1];
+	vt[2] = pos[2] - p_linha[2];
+
+	// xt = xtNovo + kt*vt;   // xtNovo = p_linha // xt antigo = pos
+ 	// xt = vetor de posições novas
+ 	// Uma matriz 3x3 vezes 3x1 dá uma 3x1
+ 	
+ 	float Kt_Vt[3] = matrixMultiplication(3,3,3,1,Kt,vt)
+	// Atualizacao das Posições com Ganho de Kalman
+	pos[0] = p_linha[0] + Kt_Vt[0];
+	pos[1] = p_linha[1] + Kt_Vt[1];
+	pos[2] = p_linha[2] + Kt_Vt[2];
+
 	// Pt = Pt - Kt*Ev*Ktt
 	// Ev = Pt + Rt 
-
+	// Atualização da matriz de Predição de Correlação
+	float Ktt[3][3];
+	Ktt = matrixTranspose(3,3,Kt);
+	
+	// sumPR = Ev
+	float Kt_sumPR[3][3] = matrixMultiplication(3,3,3,3,Kt,sumPR);
+	float Kt_Ev_Ktt[3][3] = matrixMultiplication(3,3,3,3,Kt_sumPR,Ktt);
+	covarianciaAnterior = matrixSub(covarianciaAnterior,Kt_Ev_Ktt);
 
 	//Por enquanto usando posição da API (remover depois)
 	//UpdatePositionWithAPI();

@@ -5,6 +5,8 @@
 #include <ctime>
 #include <cmath>
 #include <unistd.h>
+#include <cstdio>
+#include <vector>
  
 extern "C" {
 #include "extApi.h"
