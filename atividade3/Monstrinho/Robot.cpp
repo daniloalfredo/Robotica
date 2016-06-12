@@ -22,8 +22,8 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	WHEEL_L = 0.075;
 	
 	//Inicializa constantes de odometria
-	kl = 0.8;
-	kr = 0.8;
+	kl = 1.0;
+	kr = 1.0;
 	
 	//Variáveis do Filtro de Kalman
 	R.Resize(3, 3);
@@ -57,9 +57,11 @@ void Robot::Stop()
 void Robot::Log(EnvMap envmap)
 {
 	printf("----------------------------------------------------\n");
-	printf("realpos[]:           [%.2f, %.2f, %.2f]  //[X, Y, THETA]\n", realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]);
-	printf("pos[]:               [%.2f, %.2f, %.2f]  //[X, Y, THETA]\n", pos.mat[0][0], pos.mat[1][0], pos.mat[2][0]);
-	printf("Leitura dos Sonares: [%.2f, %.2f, %.2f]  //[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
+	printf("realpos[]:           [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]);
+	printf("pos[]:               [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", pos.mat[0][0], pos.mat[1][0], pos.mat[2][0]);
+	printf("Leitura dos Sonares: [%.4f, %.4f, %.4f]  //[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
+	printf("Map Distance:        [%.4f, %.4f, %.4f]  //[F, L, R]\n", envmap.MapDistance(realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]), envmap.MapDistance(realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]+PI/2.0), envmap.MapDistance(realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0])-PI/2.0);
+	printf("Map Distance 2:      [%.4f, %.4f, %.4f]  //[F, L, R]\n", envmap.MapDistance2(realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]), envmap.MapDistance2(realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]+PI/2.0), envmap.MapDistance2(realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0])-PI/2.0);
 	printf("Numero de voltas:    [%d]\n", num_voltas);
 	
 	float t_time = GetSimulationTimeInSecs(clientID);
@@ -255,8 +257,6 @@ void Robot::UpdatePositionWithOdometry()
 	//UpdatePositionWithAPI();
 }
 
-
-
 void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 {
 	//Calcula sigmav
@@ -267,7 +267,7 @@ void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 	Matrix K = sigmapos * invSigmav;
 
 	//Calcula xz
-	Matrix xz = realpos; //OBS: ACHAR xz DE ALGUMA FORMA
+	Matrix xz = EstimateXz(testmap);
 
 	//Calcula Vt  
 	Matrix v = xz - pos; 
@@ -284,6 +284,68 @@ void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 	//UpdatePositionWithAPI();
 }
 
+Matrix Robot::EstimateXz(EnvMap testmap)
+{
+	Matrix xz = pos;
+	
+	/*if(sonar_reading[2] <= -1.0)
+		return xz;
+	
+	float minX = pos.mat[0][0] - sigmapos.mat[0][0];
+	float maxX = pos.mat[0][0] + sigmapos.mat[0][0];
+	float minY = pos.mat[1][0] - sigmapos.mat[1][1];
+	float maxY = pos.mat[1][0] + sigmapos.mat[1][1];
+	float minTheta = pos.mat[2][0] - sigmapos.mat[2][2];
+	float maxTheta = pos.mat[2][0] + sigmapos.mat[2][2];
+	static float stepX = 0.01;
+	static float stepY = 0.01;
+	static float stepTheta =  0.01 * (PI/180.0);
+	static float sensorDeviation = 0.15;
+	
+	float bestCompat = 0.0;
+	
+	for(float x = minX; x <= maxX; x += stepX)
+	{
+		for(float y = minY; y <= maxY; y += stepY)
+		{
+			for(float theta = minTheta; theta <= maxTheta; theta += stepTheta)
+			{
+				//O que eu deveria estar vendo se estivesse nessa postura
+				//float desiredL = envmap.MapDistance(x, y, theta+PI/2.0);
+				//float desiredR = envmap.MapDistance(x, y, theta-PI/2.0);
+				float desiredF = testmap.MapDistance(x, y, theta);
+				
+				//Calcula compatibilidade com a medição real
+				//float compatL = Compatibiity(desiredL, sonar_reading[0], sensorDeviation);
+				//float compatR = Compatibiity(desiredR, sonar_reading[1], sensorDeviation);
+				float compatF = Compatibility(desiredF, sonar_reading[2], sensorDeviation);
+				
+				if(compatF > bestCompat)
+				{
+					bestCompat = compatF;
+					xz.mat[0][0] = x;
+					xz.mat[1][0] = y;
+					xz.mat[2][0] = theta;
+				}
+			}
+		}
+	}*/
+	
+	//Usando melhor estimativa possível
+	xz = realpos;
+	
+	return xz;
+}
+
+float Robot::Compatibility(float desiredMeasure, float realMeasure, float sensorDeviation)
+{
+	float distance = fabs(desiredMeasure - realMeasure);
+	
+	if(distance > 0.0)
+		return 1.0 / distance;
+	
+	return 0.0;
+}
 
 void Robot::readOdometers()
 {

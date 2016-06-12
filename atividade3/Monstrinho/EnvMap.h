@@ -26,6 +26,7 @@ class EnvMap
 		void PrintMap();
 		void AddWall(float x0, float y0, float x1, float y1);
 		float MapDistance(float x, float y, float theta);
+		float MapDistance2(float x, float y, float theta);
 };
 
 #endif

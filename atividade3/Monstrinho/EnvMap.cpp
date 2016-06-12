@@ -34,6 +34,13 @@ float EnvMap::MapDistance(float x, float y, float theta)
 	return min_dist;
 }
 
+float EnvMap::MapDistance2(float x, float y, float theta)
+{
+	static float sensorOpening = 15.0*(PI/180.0); 
+	
+	return fmin(MapDistance(x, y, theta-sensorOpening), MapDistance(x, y, theta+sensorOpening));
+}
+
 //--------------------------------------------------------------
 //Funções Auxiliares
 //--------------------------------------------------------------

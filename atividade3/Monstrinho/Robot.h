@@ -68,6 +68,8 @@ class Robot
 		void UpdatePositionWithAPI();	//Atualiza pos[] e posVariance[] usando precisão perfeita da API (apenas para testes)
 		void UpdatePositionWithOdometry();	//Atualiza pos[] e posVariance[] após movimento do robô usando a odometria
 		void UpdatePositionWithSensorsAndMap(EnvMap testmap); //Melhora a estimativa de posição do robô com os sensores e o mapa
+		Matrix EstimateXz(EnvMap testmap);
+		float Compatibility(float desiredMeasure, float realMeasure, float sensorDeviation);
 		void readOdometers();	
 		simxFloat readSonar(simxInt &sonar);
 		void SetTargetSpeed(simxFloat phiL, simxFloat phiR);
