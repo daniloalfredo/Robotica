@@ -81,7 +81,7 @@ void Robot::Update(EnvMap testmap)
 	UpdateSonarReadings();
 	
 	//Atualiza a posição atual do robô usando os sensores e o mapa
-	if(acumulated_distance >= 0.1)
+	if(acumulated_distance >= 0.05)
 		UpdatePositionWithSensorsAndMap(testmap);
 	
 	//Executa o controle de movimento
@@ -90,6 +90,8 @@ void Robot::Update(EnvMap testmap)
 	//Verifica se já chegou no objetivo
 	if(reached_goal)
 	{
+		printf("Objetivo alcançado. Erro de posição: [%.4f, %.4f, %.4f] //Ex, Ey, Etheta\n", realpos.mat[0][0]-pos.mat[0][0], realpos.mat[1][0]-pos.mat[1][0], realpos.mat[2][0]-pos.mat[2][0]);
+	
 		current_goal++;
 		
 		if(current_goal >= (int) path.size())
@@ -169,10 +171,7 @@ void Robot::ExecuteMotionControl()
 		
 		//Se chegou ao objetivo
 		else
-		{
 			reached_goal = true;
-			//printf("Objetivo alcançado.\n");
-		}
     }
 
     SetTargetSpeed(phiL, phiR);
