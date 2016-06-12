@@ -57,6 +57,7 @@ class Robot
 		simxFloat dPhiL;				//Diferenca de ângulo em PhiL desde o último comando de movimento 
 		simxFloat dPhiR;				//Diferenca de ângulo em PhiR desde o último comando de movimento
 		float kl, kr;
+		float acumulated_distance;
 
 		//Variáveis do Filtro de Kalman
 		Matrix R;

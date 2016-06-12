@@ -21,9 +21,10 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	WHEEL2_R = 0.0325;
 	WHEEL_L = 0.075;
 	
-	//Inicializa constantes de odometria
+	//Inicializa variáveis de odometria
 	kl = 1.0;
 	kr = 1.0;
+	acumulated_distance = 0.0;
 	
 	//Variáveis do Filtro de Kalman
 	R.Resize(3, 3);
@@ -80,7 +81,8 @@ void Robot::Update(EnvMap testmap)
 	UpdateSonarReadings();
 	
 	//Atualiza a posição atual do robô usando os sensores e o mapa
-	UpdatePositionWithSensorsAndMap(testmap);
+	if(acumulated_distance >= 0.1)
+		UpdatePositionWithSensorsAndMap(testmap);
 	
 	//Executa o controle de movimento
 	ExecuteMotionControl();
@@ -209,6 +211,8 @@ void Robot::UpdatePositionWithOdometry()
 
 	float deltaS = (deltaSl + deltaSr) / 2.0;
 	float deltaTheta = (deltaSr - deltaSl) / b;
+	
+	acumulated_distance += deltaS;
 
 	float argumento = pos.mat[2][0] + (deltaTheta/2);
 	
@@ -259,6 +263,8 @@ void Robot::UpdatePositionWithOdometry()
 
 void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 {
+	Stop();
+
 	//Calcula sigmav
 	Matrix sigmav = sigmapos + R;
 
@@ -279,6 +285,9 @@ void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 	//Atualiza modelo de incerteza de posição
 	Matrix result2 = sigmapos - ((K * sigmav) * Transpose(K));
 	sigmapos = result2;
+	
+	//Reseta a distancia percorrida
+	acumulated_distance = 0.0;
 	
 	//Por enquanto usando API (remover depois)
 	//UpdatePositionWithAPI();
