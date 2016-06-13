@@ -39,9 +39,9 @@ class Robot
 		float WHEEL_L;
 		
 		//Posição do robô
-		Matrix realpos;			//posição verdadeira de referencia da API
-		Matrix pos;				//posição estimada pelo robô
-		Matrix sigmapos;		//Matriz de covariância da posição estimada (modelo de incerteza)
+		Matrix realpos;					//posição verdadeira de referencia da API
+		Matrix pos;						//posição estimada pelo robô
+		Matrix sigmapos;				//Matriz de covariância da posição estimada (modelo de incerteza)
 		
 		//Leituras dos sonares e das odometrias
 		simxFloat sonar_reading[3]; 	//[L, R, F]
@@ -57,7 +57,6 @@ class Robot
 		simxFloat dPhiL;				//Diferenca de ângulo em PhiL desde o último comando de movimento 
 		simxFloat dPhiR;				//Diferenca de ângulo em PhiR desde o último comando de movimento
 		float kl, kr;
-		float acumulated_distance;
 
 		//Variáveis do Filtro de Kalman
 		Matrix R;
@@ -69,7 +68,7 @@ class Robot
 		void UpdatePositionWithAPI();	//Atualiza pos[] e posVariance[] usando precisão perfeita da API (apenas para testes)
 		void UpdatePositionWithOdometry();	//Atualiza pos[] e posVariance[] após movimento do robô usando a odometria
 		void UpdatePositionWithSensorsAndMap(EnvMap testmap); //Melhora a estimativa de posição do robô com os sensores e o mapa
-		Matrix EstimateXz(EnvMap testmap);
+		Matrix EstimateXz(EnvMap testmap); //Faz uma estimativa da posição do robô com base nos sensores
 		float Compatibility(float desiredMeasure, float realMeasure, float sensorDeviation);
 		void readOdometers();	
 		simxFloat readSonar(simxInt &sonar);

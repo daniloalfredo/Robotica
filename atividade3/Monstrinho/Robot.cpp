@@ -24,19 +24,18 @@ void Robot::Init(simxInt clientID, std::vector<simxFloat*> path)
 	//Inicializa variáveis de odometria
 	kl = 1.0;
 	kr = 1.0;
-	acumulated_distance = 0.0;
 	
 	//Variáveis do Filtro de Kalman
 	R.Resize(3, 3);
-	R.mat[0][0] = 0.2;
+	R.mat[0][0] = 0.05;
 	R.mat[0][1] = 0.0;
 	R.mat[0][2] = 0.0;
 	R.mat[1][0] = 0.0;
-	R.mat[1][1] = 0.2;
+	R.mat[1][1] = 0.05;
 	R.mat[1][2] = 0.0;
 	R.mat[2][0] = 0.0;
 	R.mat[2][1] = 0.0;
-	R.mat[2][2] = 0.2; 
+	R.mat[2][2] = 0.01; 
 	
 	//Variáveis do caminho
 	this->path = path;
@@ -58,31 +57,27 @@ void Robot::Stop()
 void Robot::Log(EnvMap envmap)
 {
 	printf("----------------------------------------------------\n");
-	printf("realpos[]:           [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]);
-	printf("pos[]:               [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", pos.mat[0][0], pos.mat[1][0], pos.mat[2][0]);
-	printf("Leitura dos Sonares: [%.4f, %.4f, %.4f]  //[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
-	printf("Map Distance:        [%.4f, %.4f, %.4f]  //[F, L, R]\n", envmap.MapDistance(realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]), envmap.MapDistance(realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]+PI/2.0), envmap.MapDistance(realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0])-PI/2.0);
-	printf("Map Distance 2:      [%.4f, %.4f, %.4f]  //[F, L, R]\n", envmap.MapDistance2(realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]), envmap.MapDistance2(realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]+PI/2.0), envmap.MapDistance2(realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0])-PI/2.0);
+	printf("Posição Real:        [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]);
+	printf("Posição Estimada:    [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", pos.mat[0][0], pos.mat[1][0], pos.mat[2][0]);
+	printf("Leitura dos Sonares: [%f, %f, %f]  //[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
 	printf("Numero de voltas:    [%d]\n", num_voltas);
-	
 	float t_time = GetSimulationTimeInSecs(clientID);
-	printf("Tempo de simulação:  [%.2f, %0d:%0d]              //[Em segundos, Em minutos]\n", t_time,(int) t_time/60,(int) t_time%60);
+	printf("Tempo de simulação:  [%.2dm %.2ds]\n", (int) t_time/60,(int) t_time%60);
 }
 
 void Robot::Update(EnvMap testmap)
 {	
 	//Guarda a posicao real da api para comparação
 	GetAPIPosition();
-
-	//Atualiza a posição usando odometria
-	UpdatePositionWithOdometry();
 	
 	//Faz a leitura dos sonares
 	UpdateSonarReadings();
+
+	//Passo de Atualização de Ação
+	UpdatePositionWithOdometry();
 	
-	//Atualiza a posição atual do robô usando os sensores e o mapa
-	if(acumulated_distance >= 0.05)
-		UpdatePositionWithSensorsAndMap(testmap);
+	//Passo de Atualização de Percepção
+	UpdatePositionWithSensorsAndMap(testmap);
 	
 	//Executa o controle de movimento
 	ExecuteMotionControl();
@@ -155,10 +150,10 @@ void Robot::ExecuteMotionControl()
     simxFloat wL = wR - 2*WHEEL_L*w;
  
  	simxFloat phiL, phiR;
-    phiL = wL/WHEEL1_R; //rad/s
-    phiR = wR/WHEEL2_R; //rad/s
+    phiL = wL/WHEEL1_R;
+    phiR = wR/WHEEL2_R;
 
-    if(rho < 0.08/*0.05*/)
+    if(rho < 0.08)
     {
 		phiR = 2 * dtheta;
 		phiL = -2 * dtheta;
@@ -169,7 +164,6 @@ void Robot::ExecuteMotionControl()
 			phiL = -2 * dtheta;
 		}
 		
-		//Se chegou ao objetivo
 		else
 			reached_goal = true;
     }
@@ -186,10 +180,10 @@ void Robot::UpdateSonarReadings()
 
 void Robot::UpdatePositionWithAPI()
 {
-	//Lê posição real e guarda em realpos[]
+	//Lê posição real e guarda em realpos
 	GetAPIPosition();
 
-	//Utiliza a posição de referência realpos[]
+	//Utiliza a posição de referência com realpos
 	pos.mat[0][0] = realpos.mat[0][0];
 	pos.mat[1][0] = realpos.mat[1][0];
 	pos.mat[2][0] = realpos.mat[2][0];
@@ -210,11 +204,7 @@ void Robot::UpdatePositionWithOdometry()
 
 	float deltaS = (deltaSl + deltaSr) / 2.0;
 	float deltaTheta = (deltaSr - deltaSl) / b;
-	
-	acumulated_distance += deltaS;
-
 	float argumento = pos.mat[2][0] + (deltaTheta/2);
-	
 	float deltaX = deltaS * cos(argumento);
 	float deltaY = deltaS * sin(argumento);
 	
@@ -253,17 +243,12 @@ void Robot::UpdatePositionWithOdometry()
 	Matrix fDeltaRlT = Transpose(fDeltaRl);
 	
 	//Atualiza matriz de covariancias da posição estimada
-	Matrix result = ((fp * sigmapos) * fp) + ((fDeltaRl * sigmaDelta) * fDeltaRlT);
+	Matrix result = (((fp * sigmapos) * fp) + ((fDeltaRl * sigmaDelta) * fDeltaRlT));
 	sigmapos = result;
-	
-	//Por enquanto usando posição da API (remover depois)
-	//UpdatePositionWithAPI();
 }
 
 void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 {
-	Stop();
-
 	//Calcula sigmav
 	Matrix sigmav = sigmapos + R;
 
@@ -284,31 +269,31 @@ void Robot::UpdatePositionWithSensorsAndMap(EnvMap testmap)
 	//Atualiza modelo de incerteza de posição
 	Matrix result2 = sigmapos - ((K * sigmav) * Transpose(K));
 	sigmapos = result2;
-	
-	//Reseta a distancia percorrida
-	acumulated_distance = 0.0;
-	
-	//Por enquanto usando API (remover depois)
-	//UpdatePositionWithAPI();
 }
 
 Matrix Robot::EstimateXz(EnvMap testmap)
 {
 	Matrix xz = pos;
 	
-	/*if(sonar_reading[2] <= -1.0)
-		return xz;
+	/*
+	//---------------------------------------
+	//ALGORITMO PARA ENCONTRAR XZ A PARTIR
+	//DA LEITURA DOS SENSORES E DO MAPA
+	//---------------------------------------
 	
-	float minX = pos.mat[0][0] - sigmapos.mat[0][0];
-	float maxX = pos.mat[0][0] + sigmapos.mat[0][0];
-	float minY = pos.mat[1][0] - sigmapos.mat[1][1];
-	float maxY = pos.mat[1][0] + sigmapos.mat[1][1];
-	float minTheta = pos.mat[2][0] - sigmapos.mat[2][2];
-	float maxTheta = pos.mat[2][0] + sigmapos.mat[2][2];
-	static float stepX = 0.01;
-	static float stepY = 0.01;
-	static float stepTheta =  0.01 * (PI/180.0);
-	static float sensorDeviation = 0.15;
+	float diffX = 0.2;//fabs(sigmapos.mat[0][0]);
+	float diffY = 0.2;//fabs(sigmapos.mat[1][1]);
+	float diffTheta = 1.0*(PI/180.0);//fabs(sigmapos.mat[2][2]);
+	float minX = pos.mat[0][0] - diffX;
+	float maxX = pos.mat[0][0] + diffX;
+	float minY = pos.mat[1][0] - diffY;
+	float maxY = pos.mat[1][0] + diffY;
+	float minTheta = pos.mat[2][0] - diffTheta;
+	float maxTheta = pos.mat[2][0] + diffTheta;
+	float stepX = diffX / 20.0;
+	float stepY = diffY / 20.0;
+	float stepTheta =  diffTheta / 10.0;
+	float sensorDeviation = 0.15;
 	
 	float bestCompat = 0.0;
 	
@@ -319,27 +304,30 @@ Matrix Robot::EstimateXz(EnvMap testmap)
 			for(float theta = minTheta; theta <= maxTheta; theta += stepTheta)
 			{
 				//O que eu deveria estar vendo se estivesse nessa postura
-				//float desiredL = envmap.MapDistance(x, y, theta+PI/2.0);
-				//float desiredR = envmap.MapDistance(x, y, theta-PI/2.0);
-				float desiredF = testmap.MapDistance(x, y, theta);
+				float desiredL = testmap.MapDistance2(x, y, theta+PI/2.0);
+				float desiredR = testmap.MapDistance2(x, y, theta-PI/2.0);
+				float desiredF = testmap.MapDistance2(x, y, theta);
 				
 				//Calcula compatibilidade com a medição real
-				//float compatL = Compatibiity(desiredL, sonar_reading[0], sensorDeviation);
-				//float compatR = Compatibiity(desiredR, sonar_reading[1], sensorDeviation);
+				float compatL = Compatibility(desiredL, sonar_reading[0], sensorDeviation);
+				float compatR = Compatibility(desiredR, sonar_reading[1], sensorDeviation);
 				float compatF = Compatibility(desiredF, sonar_reading[2], sensorDeviation);
 				
-				if(compatF > bestCompat)
+				float compatSum = compatL + compatR + compatF;
+				
+				if(compatSum > bestCompat)
 				{
-					bestCompat = compatF;
+					bestCompat = compatSum;
 					xz.mat[0][0] = x;
 					xz.mat[1][0] = y;
 					xz.mat[2][0] = theta;
 				}
 			}
 		}
-	}*/
+	}
+	*/
 	
-	//Usando melhor estimativa possível
+	//Simula a melhor estimativa possível
 	xz = realpos;
 	
 	return xz;
