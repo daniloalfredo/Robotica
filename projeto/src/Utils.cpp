@@ -118,6 +118,14 @@ double normalDistribution(double x)
 	return sum;
 }
 
+float GaussianCompatibility(float desiredMeasure, float realMeasure, float deviation)
+{	
+	if(realMeasure < 0.0)
+		return 0.0;
+	
+	return 2*normalDistribution((-fabs(realMeasure - desiredMeasure))/deviation);
+}
+
 Matrix operator+(Matrix A, Matrix B)
 {
     Matrix C;
@@ -185,9 +193,9 @@ Matrix Transpose(Matrix A)
 {
 	Matrix t(A.Cols(), A.Rows());
 			
-	for(int i = 0; i < t.mat.size(); i++)
+	for(int i = 0; i < (int) t.mat.size(); i++)
 	{ 
-		for(int j = 0; j < t.mat[i].size(); j++) 
+		for(int j = 0; j < (int) t.mat[i].size(); j++) 
 			t.mat[i][j] = A.mat[j][i];
 	}
 			

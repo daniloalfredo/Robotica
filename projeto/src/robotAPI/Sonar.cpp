@@ -61,7 +61,7 @@ float Sonar::measureDistance() {
 		if (delta > TIMEOUT) return -1;
     } while (digitalRead(pinEcho)==HIGH);
 
-    return delta*divisor;
+    return (delta*divisor) / 100.0;
 }
 
 Sonar::~Sonar() {

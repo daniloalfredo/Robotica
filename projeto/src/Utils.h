@@ -27,6 +27,7 @@ float smallestAngleDiff(float target, float source);
 
 //Distribuição de probabilidade
 double normalDistribution(double x);
+float GaussianCompatibility(float desiredMeasure, float realMeasure, float deviation);
 
 //Matrizes
 class Matrix
@@ -61,7 +62,7 @@ class Matrix
 		{
 			mat.resize(m);
 			
-			for(int i = 0; i < mat.size(); i++)
+			for(int i = 0; i < (int) mat.size(); i++)
 		        mat[i].resize(n);
 		}
 		
@@ -69,9 +70,9 @@ class Matrix
 		{
 			Resize(m, n);
 		
-			for(int i = 0; i < mat.size(); i++)
+			for(int i = 0; i < (int) mat.size(); i++)
 		    { 
-		        for(int j = 0; j < mat[i].size(); j++) 
+		        for(int j = 0; j < (int) mat[i].size(); j++) 
 		            mat[i][j] = 0.0;
 		    }
 		}
@@ -84,7 +85,7 @@ class Matrix
 				for(int j = 0; j < (int) mat[i].size(); j++)
 					printf("%.2f ", mat[i][j]);
 				
-				if(i < (int) mat.size()-1)
+				if(i < ((int) mat.size())-1)
 					printf("\n");
 			}
 			printf("]\n");
@@ -95,12 +96,12 @@ class Matrix
     	{
 		    mat.resize(o.mat.size());
 		    
-		    for(int i = 0; i < mat.size(); i++)
+		    for(int i = 0; i < (int) mat.size(); i++)
 		        mat[i].resize(o.mat[i].size());
 		    
-		    for(int i = 0; i < mat.size(); i++)
+		    for(int i = 0; i < (int) mat.size(); i++)
 		    { 
-		        for(int j = 0; j < mat[i].size(); j++) 
+		        for(int j = 0; j < (int) mat[i].size(); j++) 
 		            mat[i][j] = o.mat[i][j];
 		    }
 		        

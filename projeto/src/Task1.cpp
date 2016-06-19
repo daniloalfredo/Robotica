@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
         	//LOOP DA SIMULAÇÃO
         	//---------------------------------------------------------
 		    while(APISimulationIsRunning())
-		    {      		    
+		    {    		    
 		    	//Atualiza o robô
 		    	monstrinho.Update(testmap);
 		    	

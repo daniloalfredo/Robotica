@@ -8,6 +8,12 @@
     simxInt sonarL;
     simxInt sonarR;
     simxInt sonarF;
+
+#elif USING_VREP == 0
+    Encoder encoderL, encoderR;
+    Motor motorL, motorR;
+    Sonar sonarL, sonarR, sonarF;
+    KBAsync kb;
 #endif
 
 bool APIInitConection()
@@ -30,6 +36,34 @@ bool APIInitConection()
     	}
 
     	return false;
+
+    #elif USING_VREP == 0
+        if (PIN_MODE==PIN_BCM)
+        {
+            printf("Pins in BCM mode.\n");
+            
+            if (wiringPiSetupGpio()<0)
+            {
+                printf("Could not setup GPIO pins\n");
+                exit(1);
+            }
+        } 
+
+        else 
+        {
+            printf("Pins in wiringPi mode.\n");
+            wiringPiSetup();
+        }
+
+        encoderL.setup(ENCODER_LEFT, LEFT_SIDE);
+        encoderR.setup(ENCODER_RIGHT, RIGHT_SIDE);
+        sonarL.setup(SONAR_LEFT_TRIGGER, SONAR_LEFT_ECHO);
+        sonarR.setup(SONAR_RIGHT_TRIGGER, SONAR_RIGHT_ECHO);
+        sonarF.setup(SONAR_FRONT_TRIGGER, SONAR_FRONT_ECHO);
+        motorL.setup(MOTOR_LEFT_A, MOTOR_LEFT_B, MOTOR_LEFT_E, &encoderL);
+        motorR.setup(MOTOR_RIGHT_A, MOTOR_RIGHT_B, MOTOR_RIGHT_E, &encoderR);
+        motorL.pid.setKp(0.1);
+        motorR.pid.setKp(0.1);
     #endif
 }
 
@@ -37,6 +71,8 @@ bool APIStartSimulation()
 {
     #if USING_VREP == 1
 	   return (simxStartSimulation(clientID, simx_opmode_oneshot_wait) != -1);
+    #elif USING_VREP == 0
+       return true;
     #endif
 }
 
@@ -51,6 +87,11 @@ bool APISimulationIsRunning()
     	}
 
     	return true;
+
+    #elif USING_VREP == 0
+        if(kb.getKey() == 'q')
+            return false;
+        return true;
     #endif
 }
 
@@ -59,13 +100,20 @@ void APIFinishSimulation()
     #if USING_VREP == 1
     	simxPauseSimulation(clientID, simx_opmode_oneshot_wait);
     	simxFinish(clientID);
+    #elif USING_VREP == 0
+        motorL.stop();
+        motorR.stop();
     #endif
 }
 
 void APIWaitMsecs(int msecs)
 {
     #if USING_VREP == 1
-	   extApi_sleepMs(msecs);
+        extApi_sleepMs(msecs);
+    #elif USING_VREP == 0
+        motorL.controlSpeed();
+        motorR.controlSpeed();
+        delayMicroseconds(msecs*1000);
     #endif
 }
 
@@ -73,6 +121,7 @@ float APIGetSimulationTimeInSecs()
 {
     #if USING_VREP == 1
 	   return (((float) simxGetLastCmdTime(clientID)) / 1000.0);
+    #elif USING_VREP == 0
     #endif
 }
 
@@ -103,6 +152,12 @@ void APIGetTrueRobotPosition(Matrix* realpos)
     	realpos->mat[0][0] = real[0];
     	realpos->mat[1][0] = real[1];
         realpos->mat[2][0] = orientation[2];
+
+    #elif USING_VREP == 0
+        realpos->mat[0][0] = -1;
+        realpos->mat[1][0] = -1;
+        realpos->mat[2][0] = -1;
+
     #endif
 }
 
@@ -124,6 +179,10 @@ void APIReadOdometers(float* dPhiL, float* dPhiR)
         *dPhiR = smallestAngleDiff(rwcur, rwprev);
         lwprev = lwcur;
         rwprev = rwcur;
+
+    #elif USING_VREP == 0
+        *dPhiL = encoderL.getDeltaAngle();
+        *dPhiR = encoderR.getDeltaAngle();
     #endif
 }
 
@@ -132,6 +191,9 @@ void APISetRobotSpeed(float phiL, float phiR)
     #if USING_VREP == 1
         simxSetJointTargetVelocity(clientID, leftMotorHandle, phiL, simx_opmode_oneshot);
         simxSetJointTargetVelocity(clientID, rightMotorHandle, phiR, simx_opmode_oneshot); 
+    #elif USING_VREP == 0
+        motorL.setTargetSpeed(phiL);
+        motorR.setTargetSpeed(phiR);
     #endif 
 }
 
@@ -143,11 +205,15 @@ float APIReadSonarLeft()
         simxFloat detectedPoint[3];
         simxFloat detectedSurfaceNormalVector[3];
         
-        simxInt errorCode = simxReadProximitySensor(clientID, sonarL, &detectionState, detectedPoint, &detectedObjectHandle, detectedSurfaceNormalVector, simx_opmode_oneshot);
+        simxReadProximitySensor(clientID, sonarL, &detectionState, detectedPoint, &detectedObjectHandle, detectedSurfaceNormalVector, simx_opmode_oneshot);
         if (detectionState != 0)
     		return detectedPoint[2];
         else
             return -1;
+
+    #elif USING_VREP == 0
+        return sonarL.measureDistance();
+
     #endif
 }
 
@@ -159,11 +225,15 @@ float APIReadSonarRight()
         simxFloat detectedPoint[3];
         simxFloat detectedSurfaceNormalVector[3];
         
-        simxInt errorCode = simxReadProximitySensor(clientID, sonarL, &detectionState, detectedPoint, &detectedObjectHandle, detectedSurfaceNormalVector, simx_opmode_oneshot);
+        simxReadProximitySensor(clientID, sonarR, &detectionState, detectedPoint, &detectedObjectHandle, detectedSurfaceNormalVector, simx_opmode_oneshot);
         if (detectionState != 0)
             return detectedPoint[2];
         else
             return -1;
+
+    #elif USING_VREP == 0
+        return sonarR.measureDistance();
+
     #endif
 }
 
@@ -175,10 +245,14 @@ float APIReadSonarFront()
         simxFloat detectedPoint[3];
         simxFloat detectedSurfaceNormalVector[3];
         
-        simxInt errorCode = simxReadProximitySensor(clientID, sonarL, &detectionState, detectedPoint, &detectedObjectHandle, detectedSurfaceNormalVector, simx_opmode_oneshot);
+        simxReadProximitySensor(clientID, sonarF, &detectionState, detectedPoint, &detectedObjectHandle, detectedSurfaceNormalVector, simx_opmode_oneshot);
         if (detectionState != 0)
             return detectedPoint[2];
         else
             return -1;
+
+    #elif USING_VREP == 0
+        return sonarF.measureDistance();    
+
     #endif
 }

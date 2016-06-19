@@ -7,7 +7,7 @@
 //Includes e Variáveis do V-REP
 #if USING_VREP == 1
 	extern "C" {
-		#include "extApi.h"
+		#include "vrepAPI/extApi.h"
 	}
 
 	#define V_REP_IP_ADDRESS "127.0.0.1"
@@ -22,6 +22,20 @@
 	extern simxInt sonarL;
 	extern simxInt sonarR;
 	extern simxInt sonarF;
+
+//Includes e variáveis do robô real
+#elif USING_VREP == 0
+	#include <wiringPi.h>
+	#include "robotAPI/Pins.h"
+	#include "robotAPI/Sonar.h"
+	#include "robotAPI/Motor.h"
+	#include "robotAPI/Encoder.h"
+	#include "robotAPI/KBAsync.h"
+
+	extern Encoder encoderL, encoderR;
+	extern Motor motorL, motorR;
+	extern Sonar sonarL, sonarR, sonarF;
+	extern KBAsync kb;
 #endif
 
 #include "Utils.h" 

@@ -24,12 +24,12 @@ class Robot
 		float WHEEL_L;
 		
 		//Posição do robô
-		Matrix realpos;					//posição verdadeira de referencia da API
+		Matrix realpos;					//posição verdadeira de referencia da API do VREP
 		Matrix pos;						//posição estimada pelo robô
 		Matrix sigmapos;				//Matriz de covariância da posição estimada (modelo de incerteza)
 		
 		//Leituras dos sonares e das odometrias
-		float sonar_reading[3]; 	//[L, R, F]
+		float sonar_reading[3]; 		//[L, R, F]
 		
 		//Caminho do robô
 		std::vector<float*> path;		//Vetor de objetivos do robô
@@ -40,18 +40,18 @@ class Robot
 		
 		//Variáveis da odometria
 		float kl, kr;
+		float acumulatedDistance;
 
 		//Variáveis do Filtro de Kalman
 		Matrix R;
 
 		//Funções auxiliares
-		void ExecuteMotionControl(); 			//Faz o robô andar em direção ao objetivo atual
-		void UpdateSonarReadings(); 			//Atualiza a leitura dos sonares do robô e armazena em sonar_reading[]
-		void UpdatePositionWithAPI();			//Atualiza pos[] e posVariance[] usando precisão perfeita da API (apenas para testes)
-		void UpdatePositionWithOdometry();		//Atualiza pos[] e posVariance[] após movimento do robô usando a odometria
-		void UpdatePositionWithSensorsAndMap(EnvMap envmap); //Melhora a estimativa de posição do robô com os sensores e o mapa
-		Matrix EstimateXz(EnvMap envmap); 		//Faz uma estimativa da posição do robô com base nos sensores
-		float Compatibility(float desiredMeasure, float realMeasure, float sensorDeviation);	
+		void ExecuteMotionControl(); 							//Faz o robô andar em direção ao objetivo atual
+		void UpdateSonarReadings(); 							//Atualiza a leitura dos sonares do robô e armazena em sonar_reading[]
+		void UpdatePositionWithAPI();							//Atualiza pos e sigmapos usando precisão perfeita da API (apenas no VREP)
+		void UpdatePositionWithOdometry();						//Atualiza pos e sigmapos após movimento do robô usando a odometria
+		void UpdatePositionWithSensorsAndMap(EnvMap envmap);	//Melhora a estimativa de posição do robô com os sensores e o mapa
+		Matrix EstimateXz(EnvMap envmap); 						//Faz uma estimativa da posição do robô com base nos sensores
 	
 	public:
 		//Funções principais de interface do robô
