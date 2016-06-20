@@ -250,7 +250,7 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 {
 	Matrix xz = pos;
 	
-	float diffX = 0.03;//fabs(sigmapos.mat[0][0]);
+	/*float diffX = 0.03;//fabs(sigmapos.mat[0][0]);
 	float diffY = 0.03;//fabs(sigmapos.mat[1][1]);
 	float diffTheta = 0.5*(PI/180.0);//fabs(sigmapos.mat[2][2]);
 	float minX = pos.mat[0][0] - diffX;
@@ -293,7 +293,7 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 				}
 			}
 		}
-	}
+	}*/
 	
 	//Simula a melhor estimativa possível
 	xz = realpos;

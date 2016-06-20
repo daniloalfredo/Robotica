@@ -1,5 +1,7 @@
-#include "RobotAPI.h"
-#include "Robot.h"
+#include "projectAPI/RobotAPI.h"
+#include "projectAPI/Robot.h"
+
+#define MAP_FILENAME "../ini/map.ini"
            
 int main(int argc, char* argv[])
 {   
@@ -9,14 +11,7 @@ int main(int argc, char* argv[])
         printf("Conexão efetuada.\n");
         
         //Define o mapa do experimento
-        EnvMap testmap;
-        testmap.AddWall(-2.0, 2.0, 2.0, 2.0); //Parede superior
-        testmap.AddWall(-2.0, -2.0, 2.0, -2.0); //Parede inferior
-        testmap.AddWall(-2.0, 2.0, -2.0, -2.0); //Parede esquerda
-        testmap.AddWall(2.0, 2.0, 2.0, -2.0); //Parede direita
-        testmap.AddWall(-2.0, 0.0, 0.0, 0.0); //Parede central esquerda
-        testmap.AddWall(0.0, 2.0, 0.0, 1.0); //Parede central cima
-        testmap.AddWall(0.0, -1.0, 0.0, -2.0); //Parede central baixo
+        EnvMap testmap(MAP_FILENAME);
         testmap.PrintMap();
         
         //Define caminho para o robô seguir

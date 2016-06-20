@@ -22,8 +22,10 @@ class EnvMap
 		float IntersectionPointToSegment(float x, float y, float theta, Segment seg);
 		
 	public:
-		EnvMap();
-		void PrintMap();
+		EnvMap(); //Cria mapa vazio
+		EnvMap(const char* map_filename); //Carrega um mapa de um arquivo
+		void PrintMap(); //Printa o mapa na tela
+		void LoadFromFile(const char* map_filename);
 		void AddWall(float x0, float y0, float x1, float y1);
 		float MapDistance(float x, float y, float theta);
 		float MapDistance2(float x, float y, float theta);
