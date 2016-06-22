@@ -1,8 +1,11 @@
 #ifndef _ODOMETRY_
 #define _ODOMETRY_
 
-#include "Encoder.h"
+#include <iostream>
 #include <vector>
+#include <cmath>
+
+#include "Encoder.h"
 
 class Odometry {
 

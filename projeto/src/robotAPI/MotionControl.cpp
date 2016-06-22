@@ -1,6 +1,4 @@
-#include <iostream>
 #include "MotionControl.h"	
-#include <math.h>
 
 MotionControl::MotionControl(Motor *motorL, Motor *motorR, Odometry *odometry) {
 	this->motorL = motorL;

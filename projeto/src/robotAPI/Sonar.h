@@ -8,8 +8,16 @@
 #ifndef SONAR_H
 #define	SONAR_H
 
-#include "Pins.h"
+#include <cstdlib>
+#include <sstream>
+#include <iostream>
+#include <errno.h>
 #include <wiringPi.h>
+
+#include "Pins.h"
+#include "RobotTimer.h"
+
+using namespace std;
 
 #define TIMEOUT 30000
 //#define DIVISOR (113.42/2.0) //Should be sound speed/2 but was adjusted for better precision.

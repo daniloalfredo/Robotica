@@ -6,14 +6,6 @@
  */
 
 #include "Sonar.h"
-#include "RobotTimer.h"
-#include <stdlib.h>
-#include <wiringPi.h>
-#include <sstream>
-#include <iostream>
-#include <errno.h>
-
-using namespace std;
 
 Sonar::Sonar() {
    divisor = DIVISOR;

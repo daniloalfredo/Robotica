@@ -5,14 +5,7 @@
  * Created on 4 de Junho de 2015, 21:39
  */
 
-#include <stdlib.h>
 #include "Encoder.h"
-#include "Pins.h"
-#include "RobotTimer.h"
-#include <wiringPi.h>
-#include <math.h>
-#include <sstream>
-#include <iostream>
 
 Encoder *leftEncoder = NULL;
 Encoder *rigthEncoder = NULL;

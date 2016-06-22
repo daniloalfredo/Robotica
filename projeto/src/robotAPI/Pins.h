@@ -8,8 +8,13 @@
 #ifndef PINS_H
 #define	PINS_H
 
-#include <wiringPi.h>
 #include <string>
+#include <sstream>
+#include <cstdlib>
+#include <iostream>
+#include <wiringPi.h>
+
+using namespace std;
 
 #define PIN_BCM 0
 #define PIN_WPI_NUM 1

@@ -2,7 +2,7 @@
 #define ROBOTAPI_H_INCLUDED
 
 //Escolhe entre usar o VREP ou o robô real  
-#define USING_VREP 1
+#define USING_VREP 0
 
 //Includes e Variáveis do V-REP
 #if USING_VREP == 1
@@ -31,11 +31,14 @@
 	#include "../robotAPI/Motor.h"
 	#include "../robotAPI/Encoder.h"
 	#include "../robotAPI/KBAsync.h"
+	#include "../robotAPI/RobotTimer.h"
 
 	extern Encoder encoderL, encoderR;
 	extern Motor motorL, motorR;
 	extern Sonar sonarL, sonarR, sonarF;
 	extern KBAsync kb;
+
+	extern rbtTime simulationBeginTime;
 #endif
 
 #include "Utils.h" 
@@ -44,7 +47,7 @@ bool APIInitConection();
 bool APIStartSimulation();
 bool APISimulationIsRunning();
 void APIFinishSimulation();
-void APIWaitMsecs(int msecs);
+void APIWait();
 
 float APIGetSimulationTimeInSecs();
 void APIGetTrueRobotPosition(Matrix* realpos);

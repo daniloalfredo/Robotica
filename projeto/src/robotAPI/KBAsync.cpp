@@ -1,8 +1,3 @@
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/select.h>
-#include <termios.h>
 #include "KBAsync.h"
 
 struct termios orig_termios;

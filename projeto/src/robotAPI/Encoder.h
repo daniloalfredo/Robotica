@@ -8,6 +8,13 @@
 #ifndef ENCODER_H
 #define	ENCODER_H
 
+#include <wiringPi.h>
+#include <stdlib.h>
+#include <math.h>
+#include <sstream>
+#include <iostream>
+ 
+#include "Pins.h"
 #include "RobotTimer.h"
 
 #define LEFT_SIDE 0

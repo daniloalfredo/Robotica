@@ -63,7 +63,7 @@ void Robot::Update(EnvMap envmap)
 	UpdateSonarReadings();
 
 	//Passo de Atualização de Ação
-	UpdatePositionWithOdometry();
+	/*UpdatePositionWithOdometry();
 	
 	//Passo de Atualização de Percepção
 	//if(acumulatedDistance > 0.4)
@@ -94,7 +94,7 @@ void Robot::Update(EnvMap envmap)
 		goal[1] = path[current_goal][1];
 		goal[2] = path[current_goal][2];
 		reached_goal = false;
-	}
+	}*/
 }
 
 void Robot::ExecuteMotionControl()

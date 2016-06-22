@@ -51,8 +51,8 @@ int main(int argc, char* argv[])
 		    	//Printa o log do robô
 		    	monstrinho.Log(testmap);
 	 
-		        //Espera um tempo para o V-REP
-		        APIWaitMsecs(2);
+		        //Espera um tempo antes da próxima atualização
+		        APIWait();
 		    }
 		    //---------------------------------------------------------
 		   

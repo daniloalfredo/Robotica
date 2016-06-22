@@ -2,11 +2,14 @@
 #define _MOTION_CONTROL_H_
 
 #include <vector>
+#include <cmath>
+#include <iostream>
+
 #include "Odometry.h"
 #include "Motor.h"
 
-
-class MotionControl {
+class MotionControl
+{
 
 	Motor *motorL, *motorR;
 	Odometry *odometry;

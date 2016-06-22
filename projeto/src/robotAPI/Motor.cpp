@@ -6,11 +6,6 @@
  */
 
 #include "Motor.h"
-#include "Pins.h"
-#include "RobotTimer.h"
-#include <wiringPi.h>
-#include <iostream>
-#include <math.h>
 
 #define max(a,b) (a)>(b)?(a):(b)
 #define min(a,b) (a)<(b)?(a):(b)

@@ -1,6 +1,4 @@
 #include "Odometry.h"
-#include <math.h>
-#include <iostream>
 
 Odometry::Odometry(double lR, double lL, double rR, double rL, Encoder *encoderL, Encoder * encoderR) {
 	this->lR = lR;

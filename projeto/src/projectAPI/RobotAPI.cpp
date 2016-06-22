@@ -14,6 +14,7 @@
     Motor motorL, motorR;
     Sonar sonarL, sonarR, sonarF;
     KBAsync kb;
+    rbtTime simulationBeginTime;
 #endif
 
 bool APIInitConection()
@@ -35,8 +36,6 @@ bool APIInitConection()
     		return true;
     	}
 
-    	return false;
-
     #elif USING_VREP == 0
         if (PIN_MODE==PIN_BCM)
         {
@@ -45,7 +44,7 @@ bool APIInitConection()
             if (wiringPiSetupGpio()<0)
             {
                 printf("Could not setup GPIO pins\n");
-                exit(1);
+                return false;
             }
         } 
 
@@ -64,7 +63,10 @@ bool APIInitConection()
         motorR.setup(MOTOR_RIGHT_A, MOTOR_RIGHT_B, MOTOR_RIGHT_E, &encoderR);
         motorL.pid.setKp(0.1);
         motorR.pid.setKp(0.1);
+        return true;
     #endif
+
+    return false;
 }
 
 bool APIStartSimulation()
@@ -72,6 +74,7 @@ bool APIStartSimulation()
     #if USING_VREP == 1
 	   return (simxStartSimulation(clientID, simx_opmode_oneshot_wait) != -1);
     #elif USING_VREP == 0
+       simulationBeginTime = GetTimeMicroSecs();
        return true;
     #endif
 }
@@ -106,29 +109,32 @@ void APIFinishSimulation()
     #endif
 }
 
-void APIWaitMsecs(int msecs)
+void APIWait()
 {
     #if USING_VREP == 1
-        extApi_sleepMs(msecs);
+        extApi_sleepMs(2);
     #elif USING_VREP == 0
         motorL.controlSpeed();
         motorR.controlSpeed();
-        delayMicroseconds(msecs*1000);
+        //delayMicroseconds(msecs*1000);
     #endif
 }
 
 float APIGetSimulationTimeInSecs()
 {
     #if USING_VREP == 1
-	   return (((float) simxGetLastCmdTime(clientID)) / 1000.0);
+        return (((float) simxGetLastCmdTime(clientID)) / 1000.0);
     #elif USING_VREP == 0
+        return (GetTimeMicroSecs() - simulationBeginTime) / 1000000.0;
     #endif
 }
 
 float APIGetTimeSinceLastCommandInSecs(float lastCommandTime)
 {
     #if USING_VREP == 1
-	   return APIGetSimulationTimeInSecs() - lastCommandTime;
+        return APIGetSimulationTimeInSecs() - lastCommandTime;
+    #elif USING_VREP == 0
+        return -1.0; //função não implementada no robô real
     #endif
 }
 

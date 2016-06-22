@@ -8,9 +8,15 @@
 #ifndef MOTOR_H
 #define	MOTOR_H
 
+#include <wiringPi.h>
+#include <iostream>
+#include <cmath>
+
+#include "Pins.h"
 #include "Encoder.h"
 #include "RobotTimer.h"
 #include "PIDController.h"
+
 #define PWM_RANGE 1024
 
 class Motor {

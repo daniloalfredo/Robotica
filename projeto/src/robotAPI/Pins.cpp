@@ -1,9 +1,4 @@
 #include "Pins.h"
-#include <sstream>
-#include <stdlib.h>
-#include <iostream>
-
-using namespace std;
 
 int sysconfgGPIOEdge(int pinBCM, std::string mode) {
     cout << "Configuring pin " << pinBCM << " in mode '" << mode << "'...";
