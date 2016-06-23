@@ -37,6 +37,8 @@ void Robot::Init(std::vector<float*> path)
 	pos.ResizeAndNulify(3, 1);
 	realpos.ResizeAndNulify(3, 1);
 	UpdatePositionWithAPI();
+
+	Stop();
 }
 
 void Robot::Stop()
@@ -63,13 +65,13 @@ void Robot::Update(EnvMap envmap)
 	UpdateSonarReadings();
 
 	//Passo de Atualização de Ação
-	/*UpdatePositionWithOdometry();
+	UpdatePositionWithOdometry();
 	
 	//Passo de Atualização de Percepção
-	//if(acumulatedDistance > 0.4)
+	if(acumulatedDistance > 0.25
+	&& sonar_reading[0] >= 0 && sonar_reading[1] >= 0 && sonar_reading[2] >= 0)
 	{
-		printf("Atualização de Percepção\n");
-		//Stop();
+		Stop();
 		UpdatePositionWithSensorsAndMap(envmap);
 		acumulatedDistance = 0.0;
 	}
@@ -80,8 +82,6 @@ void Robot::Update(EnvMap envmap)
 	//Verifica se já chegou no objetivo
 	if(reached_goal)
 	{
-		printf("Objetivo alcançado. Erro de posição: [%.4f, %.4f, %.4f] //Ex, Ey, Etheta\n", realpos.mat[0][0]-pos.mat[0][0], realpos.mat[1][0]-pos.mat[1][0], realpos.mat[2][0]-pos.mat[2][0]);
-	
 		current_goal++;
 		
 		if(current_goal >= (int) path.size())
@@ -94,7 +94,7 @@ void Robot::Update(EnvMap envmap)
 		goal[1] = path[current_goal][1];
 		goal[2] = path[current_goal][2];
 		reached_goal = false;
-	}*/
+	}
 }
 
 void Robot::ExecuteMotionControl()
@@ -220,6 +220,7 @@ void Robot::UpdatePositionWithOdometry()
 	//Atualiza matriz de covariancias da posição estimada
 	Matrix result = (((fp * sigmapos) * fp) + ((fDeltaRl * sigmaDelta) * fDeltaRlT));
 	sigmapos = result;
+	sigmapos.mat[2][2] = fmin(2*PI, sigmapos.mat[2][2]); //erro máximo no ângulo é 2*PI
 }
 
 void Robot::UpdatePositionWithSensorsAndMap(EnvMap envmap)
@@ -250,19 +251,21 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 {
 	Matrix xz = pos;
 	
-	/*float diffX = 0.03;//fabs(sigmapos.mat[0][0]);
-	float diffY = 0.03;//fabs(sigmapos.mat[1][1]);
-	float diffTheta = 0.5*(PI/180.0);//fabs(sigmapos.mat[2][2]);
+	float diffX = 0.1; //fmax(0.1, sigmapos.mat[0][0]);
+	float diffY = 0.1; //fmax(0.1, sigmapos.mat[1][1]);
+	float diffTheta = 5.0*(PI_DIV_180);
+
+	static float stepX = 0.005;
+	static float stepY = 0.005;
+	static float stepTheta =  0.001;
+	static float sensorDeviation = 0.05;
+
 	float minX = pos.mat[0][0] - diffX;
 	float maxX = pos.mat[0][0] + diffX;
 	float minY = pos.mat[1][0] - diffY;
 	float maxY = pos.mat[1][0] + diffY;
 	float minTheta = pos.mat[2][0] - diffTheta;
 	float maxTheta = pos.mat[2][0] + diffTheta;
-	float stepX = 0.005;
-	float stepY = 0.005;
-	float stepTheta =  0.001;
-	static float sensorDeviation = 0.05;
 	
 	float bestCompat = 0.0;
 	
@@ -273,8 +276,8 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 			for(float theta = minTheta; theta <= maxTheta; theta += stepTheta)
 			{
 				//O que eu deveria estar vendo se estivesse nessa postura
-				float desiredL = envmap.MapDistance2(x, y, theta+PI/2.0);
-				float desiredR = envmap.MapDistance2(x, y, theta-PI/2.0);
+				float desiredL = envmap.MapDistance2(x, y, theta+PI_DIV_2);
+				float desiredR = envmap.MapDistance2(x, y, theta-PI_DIV_2);
 				float desiredF = envmap.MapDistance2(x, y, theta);
 				
 				//Calcula compatibilidade com a medição real
@@ -293,10 +296,12 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 				}
 			}
 		}
-	}*/
+	}
+
+	printf("ERRO ESTIMATIVA: [%.4f, %.4f, %.4f]\n", pos.mat[0][0]-xz.mat[0][0], pos.mat[1][0]-xz.mat[1][0], pos.mat[2][0]-xz.mat[2][0]);
 	
 	//Simula a melhor estimativa possível
-	xz = realpos;
+	//xz = realpos;
 	
 	return xz;
 }

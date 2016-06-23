@@ -26,7 +26,7 @@ real: clean
 
 	#Generate Binaries
 	echo 'Generating binaries...'
-	g++ src/Task1.cpp obj/*.o -o bin/task1.bin $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
+	g++ src/task1.cpp obj/*.o -o bin/task1.bin $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/testSonars.cpp obj/*.o -o bin/testSonars.bin $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	echo 'Done.'
 
