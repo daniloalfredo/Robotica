@@ -71,8 +71,8 @@ void Robot::Update(EnvMap envmap)
 	if(acumulatedDistance > 0.25
 	&& sonar_reading[0] >= 0 && sonar_reading[1] >= 0 && sonar_reading[2] >= 0)
 	{
-		Stop();
-		UpdatePositionWithSensorsAndMap(envmap);
+		//Stop();
+		//UpdatePositionWithSensorsAndMap(envmap);
 		acumulatedDistance = 0.0;
 	}
 
@@ -173,7 +173,7 @@ void Robot::UpdatePositionWithOdometry()
 	//Cálculo de deltaX, deltaY e deltaTheta
 	float deltaSl = WHEEL1_R * dPhiL;
 	float deltaSr = WHEEL1_R * dPhiR;
-	float b = (2*WHEEL_L);
+	static float b = (2*WHEEL_L);
 
 	float deltaS = (deltaSl + deltaSr) / 2.0;
 	float deltaTheta = (deltaSr - deltaSl) / b;
@@ -216,9 +216,10 @@ void Robot::UpdatePositionWithOdometry()
 	
 	//Calcula fDeltaRl transposta
 	Matrix fDeltaRlT = Transpose(fDeltaRl);
+	Matrix fpT = Transpose(fp);
 	
 	//Atualiza matriz de covariancias da posição estimada
-	Matrix result = (((fp * sigmapos) * fp) + ((fDeltaRl * sigmaDelta) * fDeltaRlT));
+	Matrix result = (((fp * sigmapos) * fpT) + ((fDeltaRl * sigmaDelta) * fDeltaRlT));
 	sigmapos = result;
 	sigmapos.mat[2][2] = fmin(2*PI, sigmapos.mat[2][2]); //erro máximo no ângulo é 2*PI
 }

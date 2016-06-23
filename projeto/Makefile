@@ -1,6 +1,6 @@
 #Compiler flags
 CFLAGS       = -O2 -lpthread -fopenmp
-WARNINGFLAGS = -Wall
+WARNINGFLAGS = -Wno-unused-result
 ROBOTFLAGS   = -lwiringPi
 VREPFLAGS    = -DNON_MATLAB_PARSING -DMAX_EXT_API_CONNECTIONS=255
 OPENCVFLAGS  = `pkg-config --cflags --libs opencv`
@@ -38,7 +38,7 @@ sim: clean
 	#Compile vrepAPI
 	echo 'Compiling vrepAPI...'
 	cd src/vrepAPI; \
-	gcc -c *.c $(CFLAGS) $(VREPFLAGS) $(OPENCVFLAGS); \
+	gcc -c *.c $(CFLAGS) $(WARNINGFLAGS) $(VREPFLAGS) $(OPENCVFLAGS); \
 	mv *.o ../../obj/; \
 	cd ../..; \
 

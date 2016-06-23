@@ -31,11 +31,11 @@ float rand_signal()
 
 float to_pi_range(float radians)
 {
-    radians = fmod(radians, 2*PI);
+    radians = fmod(radians, PI_TIMES_2);
     if (radians < -PI)
-        radians += 2*PI;
+        radians += PI_TIMES_2;
     else if (radians > PI)
-        radians -= 2*PI;
+        radians -= PI_TIMES_2;
  
     return radians;
 }
@@ -43,10 +43,10 @@ float to_pi_range(float radians)
 float to_2pi_range(float radians)
 {
     while(radians < 0.0)
-		radians += 2*PI;
+		radians += PI_TIMES_2;
 	
 	if(radians > 2*PI)
-		radians = fmod(radians, 2*PI);
+		radians = fmod(radians, PI_TIMES_2);
 
     return radians;
 }
@@ -56,23 +56,23 @@ float to_rad(float degrees)
 	if(degrees < 0)
 		degrees = 360 - degrees;
 		
-	return (degrees * (PI/180.0));
+	return (degrees * (PI_DIV_180));
 }
 
 float to_deg(float radians)
 {
-    return radians * (180.0 / M_PI);
+    return radians * (180.0 / PI);
 }
 
 float to_pos_deg(float radians)
 {
 	while(radians < 0.0)
-		radians += 2*PI;
+		radians += PI_TIMES_2;
 	
-	if(radians > 2*PI)
-		radians = fmod(radians, 2*PI);
+	if(radians > PI_TIMES_2)
+		radians = fmod(radians, PI_TIMES_2);
 	
-    return to_2pi_range(radians) * (180.0 / M_PI);
+    return to_2pi_range(radians) * (180.0 / PI);
 }
  
 float smallestAngleDiff(float target, float source)
@@ -80,10 +80,10 @@ float smallestAngleDiff(float target, float source)
     float a;
     a = to_2pi_range(target) - to_2pi_range(source);
  
-    if (a > M_PI)
-        a = a - 2 * M_PI;
-    else if (a < -M_PI)
-        a = a + 2 * M_PI;
+    if (a > PI)
+        a = a - PI_TIMES_2;
+    else if (a < -PI)
+        a = a + PI_TIMES_2;
     
     return a;
 }
