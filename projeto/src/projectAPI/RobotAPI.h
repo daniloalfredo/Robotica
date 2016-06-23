@@ -2,7 +2,7 @@
 #define ROBOTAPI_H_INCLUDED
 
 //Escolhe entre usar o VREP ou o robô real  
-#define USING_VREP 0
+#define USING_VREP 1
 
 //Includes e Variáveis do V-REP
 #if USING_VREP == 1

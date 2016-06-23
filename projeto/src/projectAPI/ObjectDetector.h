@@ -35,25 +35,18 @@ class Object
 		vector<KeyPoint> keypoints;
 		Mat descriptors;
 		
-		Mat validation_image;
-		vector<KeyPoint> validation_keypoints;
-		Mat validation_descriptors;
-		
 	public:
 		Object(string name, vector<string> image_filenames, int descriptor_extractor)
 		{ 
 			this->name = name; 
 			this->image_filenames = image_filenames;
 			this->main_image = imread(image_filenames[0], CV_LOAD_IMAGE_GRAYSCALE);
-			this->validation_image = imread(image_filenames[(int)image_filenames.size()-1], CV_LOAD_IMAGE_GRAYSCALE);
 			
 			if(descriptor_extractor == 0)
 			{
 				SiftDescriptorExtractor detector_sift;
 				detector_sift.detect(main_image, keypoints);
 	  			detector_sift.compute(main_image, keypoints, descriptors);
-	  			detector_sift.detect(validation_image, validation_keypoints);
-	  			detector_sift.compute(validation_image, validation_keypoints, validation_descriptors);
 	  		}
   			
   			else
@@ -61,13 +54,10 @@ class Object
   				SurfDescriptorExtractor detector_surf;
 				detector_surf.detect(main_image, keypoints);
 	  			detector_surf.compute(main_image, keypoints, descriptors);
-	  			detector_surf.detect(validation_image, validation_keypoints);
-	  			detector_surf.compute(validation_image, validation_keypoints, validation_descriptors);
   			}
 		}
 		 
 		void InsertImageFilename(string image_filename) { image_filenames.push_back(image_filename); }
-		
 		string GetName() { return name; }
 		vector<string> GetFilenames() { return image_filenames; }
 		string GetFilename(int i) { return image_filenames[i]; }
@@ -75,7 +65,6 @@ class Object
 		Mat GetMainImage() { return main_image; }
 		vector<KeyPoint> GetKeypoints() { return keypoints; }
 		Mat GetDescriptors() { return descriptors; }
-		Mat GetValidationImage() { return validation_image; }
 };
 
 class ObjectDetector
@@ -85,11 +74,7 @@ class ObjectDetector
 		Mat dictionary;
 		Mat labels;
 		CvSVM svm;
-		
 		vector<KeyPoint> keypoints;
-		
-		//Background
-		Mat background_histogram;
 		
 		//Parâmetros de aprendizado
 		double confidence_threshold;
@@ -99,32 +84,16 @@ class ObjectDetector
 		int svm_kernel_type;
 		int svm_degree;
 		int svm_gamma;
-		bool use_advanced_training;
-		int num_svms_for_advanced_training;
 		
 		//Funções auxiliares
-		void Init();
 		void LoadDetectorParams();
 		void LoadObjects();
 		void Train();
-		void TrainAdvanced();
-		void SaveKeypointImageLog(Mat image, vector<KeyPoint>keypoints, unsigned int i, unsigned int j);
 		Mat ComputeHistogram(Mat image);
-		void FindCenter(Mat frame, Point2f* center_pos, int object_class);	
-		
-		vector<string> GetSubsetOfImages(int obj_id);
-		int ValidateSVM();
 
 	public:
 		ObjectDetector();
-		void SetBackground(Mat frame);
-		string Detect(Mat frame, Point2f* center_pos);
-};
-
-class RobotCamera
-{
-	private:
-	public:
+		string Detect(Mat frame);
 };
 
 #endif
