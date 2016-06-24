@@ -28,7 +28,8 @@ real: clean
 	#Generate Binaries
 	echo 'Generating binaries...'
 	g++ src/task1.cpp obj/*.o -o bin/task1.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
-	g++ src/testSonars.cpp obj/*.o -o bin/testSonars.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
+	g++ src/trainDetector.cpp obj/*.o -o bin/trainDetector.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
+	g++ src/testDetector.cpp obj/*.o -o bin/testDetector.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	echo 'Done.'
 
 #Compile to run in V-REP simulation

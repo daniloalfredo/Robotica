@@ -9,8 +9,8 @@
 #include <unistd.h>
 
 #include "RobotAPI.h"
-#include "Utils.h"
 #include "EnvMap.h"
+#include "Utils.h"
 
 class Robot
 {
@@ -32,11 +32,12 @@ class Robot
 		float sonar_reading[3]; 		//[L, R, F]
 		
 		//Caminho do robô
-		std::vector<float*> path;		//Vetor de objetivos do robô
-		float goal[3];					//Objetivo atual
-		int current_goal;				//Índice do objetivo atual no path
-		bool reached_goal;				//Se chegou ao objetivo atual
-		int num_voltas;					//Quantidade de voltas que o robô deu no percurso
+		std::vector< std::vector<float> > path;	//Vetor de objetivos do robô
+		float goal[3];						//Objetivo atual
+		int current_goal;					//Índice do objetivo atual no path
+		bool reached_goal;					//Se chegou ao objetivo atual
+		int num_voltas;						//Quantidade de voltas que o robô deu no percurso
+		bool loop_path;						//Se é pra repetir o caminho quando terminar
 		
 		//Variáveis da odometria
 		float kl, kr;
@@ -55,7 +56,8 @@ class Robot
 	
 	public:
 		//Funções principais de interface do robô
-		void Init(std::vector<float*> path);
+		void Init();
+		bool LoadPath(const char* PATH_FILENAME);
 		void Stop();
 		void Log(EnvMap envmap);
 		void Update(EnvMap envmap);

@@ -1,7 +1,8 @@
 #include "RobotAPI.h"
 #include "Robot.h"
 
-#define MAP_FILENAME "../ini/map.ini"
+#define MAP_FILENAME "ini/envmap.ini"
+#define PATH_FILENAME "ini/path.ini"
            
 int main(int argc, char* argv[])
 {   
@@ -14,26 +15,10 @@ int main(int argc, char* argv[])
         EnvMap testmap(MAP_FILENAME);
         testmap.PrintMap();
         
-        //Define caminho para o robô seguir
-        std::vector<float*> path;        
-       	float goal1[3] = {-1.0, 1.5, PI/2};
-        float goal2[3] = {0.0, 0.5, -PI/4};
-        float goal3[3] = {1.0, -1.5, -PI/2};
-        float goal4[3] = {1.0, 1.5, PI/2};
-        float goal5[3] = {0.0, -0.5, -3*PI/4};
-        float goal6[3] = {-1.0, -1.5, -PI/2};
-        float goal7[3] = {0.25, 0.0, PI/2};
-        path.push_back(goal1);
-        path.push_back(goal2);
-        path.push_back(goal3);
-        path.push_back(goal4);
-        path.push_back(goal5);
-        path.push_back(goal6);
-        path.push_back(goal7);
-        
         //Inicializa o Robô
         Robot monstrinho;
-        monstrinho.Init(path);
+        monstrinho.Init();
+        monstrinho.LoadPath(PATH_FILENAME);
        
        	//Começa a simulação
         if(APIStartSimulation())

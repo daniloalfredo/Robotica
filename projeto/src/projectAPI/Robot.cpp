@@ -1,6 +1,6 @@
 #include "Robot.h"
 
-void Robot::Init(std::vector<float*> path)
+void Robot::Init()
 {
 	//Inicializa as constantes de controle de movimento
 	K_RHO = 0.07;
@@ -11,8 +11,8 @@ void Robot::Init(std::vector<float*> path)
 	WHEEL_L = 0.075;
 	
 	//Inicializa variáveis de odometria
-	kl = 1.0;
-	kr = 1.0;
+	kl = 0.05;
+	kr = 0.05;
 	acumulatedDistance = 0.0;
 	
 	//Variáveis do Filtro de Kalman
@@ -28,17 +28,50 @@ void Robot::Init(std::vector<float*> path)
 	R.mat[2][2] = 0.01; 
 	
 	//Variáveis do caminho
-	this->path = path;
 	current_goal = -1;
 	reached_goal = true;
 	num_voltas = 0;
 	
 	//Inicializa a posição estimada e a incerteza do robô
+	Stop();
 	pos.ResizeAndNulify(3, 1);
 	realpos.ResizeAndNulify(3, 1);
-	UpdatePositionWithAPI();
+	sigmapos.ResizeAndNulify(3, 3);
+}
 
-	Stop();
+bool Robot::LoadPath(const char* PATH_FILENAME)
+{
+	FILE* file_path = fopen(PATH_FILENAME, "r");
+
+	if(file_path != NULL)
+	{
+		float x, y, theta;
+
+		int loop_aux = 0;
+		fscanf(file_path, "%*[^:] %*c %d", &loop_aux);
+		loop_path = (loop_aux > 0);
+		fscanf(file_path, "%*[^:] %*c %f %f %f", &x, &y, &theta);
+		pos.mat[0][0] = x; pos.mat[1][0] = y; pos.mat[2][0] = theta*PI_DIV_180;
+
+		while(!feof(file_path))
+		{
+			fscanf(file_path, "%*[^:] %*c %f %f %f", &x, &y, &theta);
+			std::vector<float> path_point;
+			path_point.push_back(x);
+			path_point.push_back(y);
+			path_point.push_back(theta*PI_DIV_180);
+			path.push_back(path_point);
+		}
+
+		fclose(file_path);
+		return true;
+	}
+
+	else
+	{
+		printf("Error. Could not open ´%s´.\n", PATH_FILENAME);
+		return false;
+	}
 }
 
 void Robot::Stop()
@@ -61,6 +94,29 @@ void Robot::Log(EnvMap envmap)
 
 void Robot::Update(EnvMap envmap)
 {		
+	//Verifica se já chegou no objetivo
+	if(reached_goal)
+	{
+		current_goal++;
+		
+		if(current_goal >= (int) path.size())
+		{
+			if(loop_path)
+			{
+				current_goal = 0;
+				num_voltas++;
+			}
+
+			else
+				current_goal--;	
+		}
+			
+		goal[0] = path[current_goal][0];
+		goal[1] = path[current_goal][1];
+		goal[2] = path[current_goal][2];
+		reached_goal = false;
+	}
+
 	//Faz a leitura dos sonares
 	UpdateSonarReadings();
 
@@ -69,32 +125,17 @@ void Robot::Update(EnvMap envmap)
 	
 	//Passo de Atualização de Percepção
 	if(acumulatedDistance > 0.25
-	&& sonar_reading[0] >= 0 && sonar_reading[1] >= 0 && sonar_reading[2] >= 0)
+	&& (sonar_reading[0] >= 0 && sonar_reading[1] >= 0 && sonar_reading[2] >= 0)
+	//&& (sigmapos.mat[0][0] >= 0.1 || sigmapos.mat[1][1] >= 0.1 || sigmapos.mat[2][2] >= 0.1)
+	)
 	{
-		//Stop();
-		//UpdatePositionWithSensorsAndMap(envmap);
+		Stop();
+		UpdatePositionWithSensorsAndMap(envmap);
 		acumulatedDistance = 0.0;
 	}
 
 	//Executa o controle de movimento
 	ExecuteMotionControl();
-	
-	//Verifica se já chegou no objetivo
-	if(reached_goal)
-	{
-		current_goal++;
-		
-		if(current_goal >= (int) path.size())
-		{
-			current_goal = 0;
-			num_voltas++;
-		}
-			
-		goal[0] = path[current_goal][0];
-		goal[1] = path[current_goal][1];
-		goal[2] = path[current_goal][2];
-		reached_goal = false;
-	}
 }
 
 void Robot::ExecuteMotionControl()
@@ -173,16 +214,16 @@ void Robot::UpdatePositionWithOdometry()
 	//Cálculo de deltaX, deltaY e deltaTheta
 	float deltaSl = WHEEL1_R * dPhiL;
 	float deltaSr = WHEEL1_R * dPhiR;
-	static float b = (2*WHEEL_L);
+	static float b = (2.0*WHEEL_L);
 
 	float deltaS = (deltaSl + deltaSr) / 2.0;
 	float deltaTheta = (deltaSr - deltaSl) / b;
-	float argumento = pos.mat[2][0] + (deltaTheta/2);
+	float argumento = pos.mat[2][0] + (deltaTheta/2.0);
 	float deltaX = deltaS * cos(argumento);
 	float deltaY = deltaS * sin(argumento);
 
 	acumulatedDistance += deltaS;
-	
+
 	//Atualiza a média da posição	
 	pos.mat[0][0] += deltaX;
 	pos.mat[1][0] += deltaY;
@@ -191,16 +232,18 @@ void Robot::UpdatePositionWithOdometry()
 	//Calcula o sigmaDelta
 	Matrix sigmaDelta(2, 2);
 	sigmaDelta.mat[0][0] = kr * fabs(deltaSr);
+	sigmaDelta.mat[0][1] = 0.0;
+	sigmaDelta.mat[1][0] = 0.0;
 	sigmaDelta.mat[1][1] = kl * fabs(deltaSl);
 	
 	//Calcula Fp
 	static Matrix fp(3, 3);
 	fp.mat[0][0] = 1;
 	fp.mat[0][1] = 0;
-	fp.mat[0][2] = -deltaY;
+	fp.mat[0][2] = fabs(deltaY);//-deltaY;
 	fp.mat[1][0] = 0;
 	fp.mat[1][1] = 1;
-	fp.mat[1][2] = deltaX;
+	fp.mat[1][2] = fabs(deltaX);//deltaX;
 	fp.mat[2][0] = 0;
 	fp.mat[2][1] = 0;
 	fp.mat[2][2] = 1;
@@ -211,17 +254,23 @@ void Robot::UpdatePositionWithOdometry()
 	fDeltaRl.mat[0][1] = cos(argumento)/2.0 + (deltaS*sin(argumento)) / (2.0*b);
 	fDeltaRl.mat[1][0] = sin(argumento)/2.0 + (deltaS*cos(argumento)) / (2.0*b);
 	fDeltaRl.mat[1][1] = sin(argumento)/2.0 - (deltaS*cos(argumento)) / (2.0*b);
-	fDeltaRl.mat[2][0] = 1/b;
-	fDeltaRl.mat[2][1] = -1/b;
+	fDeltaRl.mat[2][0] = 1.0/b;
+	fDeltaRl.mat[2][1] = -1.0/b;
 	
 	//Calcula fDeltaRl transposta
 	Matrix fDeltaRlT = Transpose(fDeltaRl);
+
+	//Calcula a transposta de fp
 	Matrix fpT = Transpose(fp);
 	
 	//Atualiza matriz de covariancias da posição estimada
-	Matrix result = (((fp * sigmapos) * fpT) + ((fDeltaRl * sigmaDelta) * fDeltaRlT));
+	Matrix result = ((fp * sigmapos) * fpT) + ((fDeltaRl * sigmaDelta) * fDeltaRlT);
 	sigmapos = result;
-	sigmapos.mat[2][2] = fmin(2*PI, sigmapos.mat[2][2]); //erro máximo no ângulo é 2*PI
+	
+	//Limite máxio para as variâncias
+	sigmapos.mat[0][0] = fmin(4.0, sigmapos.mat[0][0]);
+	sigmapos.mat[1][1] = fmin(4.0, sigmapos.mat[1][1]);
+	sigmapos.mat[2][2] = fmin(2*PI, sigmapos.mat[2][2]);
 }
 
 void Robot::UpdatePositionWithSensorsAndMap(EnvMap envmap)
