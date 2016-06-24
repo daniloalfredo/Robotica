@@ -1,6 +1,6 @@
 #include "Robot.h"
 
-void Robot::Init()
+Robot::Robot()
 {
 	//Inicializa as constantes de controle de movimento
 	K_RHO = 0.07;
@@ -11,21 +11,21 @@ void Robot::Init()
 	WHEEL_L = 0.075;
 	
 	//Inicializa variáveis de odometria
-	kl = 0.01;
-	kr = 0.01;
+	kl = 0.001;
+	kr = 0.001;
 	acumulatedDistance = 0.0;
 	
 	//Variáveis do Filtro de Kalman
 	R.Resize(3, 3);
-	R.mat[0][0] = 0.05;
+	R.mat[0][0] = 0.1;
 	R.mat[0][1] = 0.0;
 	R.mat[0][2] = 0.0;
 	R.mat[1][0] = 0.0;
-	R.mat[1][1] = 0.05;
+	R.mat[1][1] = 0.1;
 	R.mat[1][2] = 0.0;
 	R.mat[2][0] = 0.0;
 	R.mat[2][1] = 0.0;
-	R.mat[2][2] = 0.01; 
+	R.mat[2][2] = 5.0*PI_DIV_180; 
 	
 	//Variáveis do caminho
 	current_goal = -1;
@@ -82,9 +82,9 @@ void Robot::Stop()
 void Robot::Log(EnvMap envmap)
 {
 	printf("----------------------------------------------------\n");
-	APIGetTrueRobotPosition(&realpos);
 	printf("Posição Real:        [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]);
 	printf("Posição Estimada:    [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", pos.mat[0][0], pos.mat[1][0], pos.mat[2][0]);
+	printf("Erro de Posição:     [%.4f, %.4f, %.4f]\n", fabs(realpos.mat[0][0]-pos.mat[0][0]), fabs(realpos.mat[1][0]-pos.mat[1][0]), fabs(realpos.mat[2][0]-pos.mat[2][0]));
 	printf("Variância de Posição:[%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", sigmapos.mat[0][0], sigmapos.mat[1][1], sigmapos.mat[2][2]);
 	printf("Leitura dos Sonares: [%f, %f, %f]  //[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
 	printf("Numero de voltas:    [%d]\n", num_voltas);
@@ -94,6 +94,8 @@ void Robot::Log(EnvMap envmap)
 
 void Robot::Update(EnvMap envmap)
 {		
+	APIGetTrueRobotPosition(&realpos);
+
 	//Verifica se já chegou no objetivo
 	if(reached_goal)
 	{
@@ -124,10 +126,10 @@ void Robot::Update(EnvMap envmap)
 	UpdatePositionWithOdometry();
 	
 	//Passo de Atualização de Percepção
-	if(acumulatedDistance > 0.25
-	&& (sonar_reading[0] >= 0 && sonar_reading[1] >= 0 && sonar_reading[2] >= 0)
-	//&& (sigmapos.mat[0][0] >= 0.1 || sigmapos.mat[1][1] >= 0.1 || sigmapos.mat[2][2] >= 0.1)
-	)
+	if(
+		(sonar_reading[0] >= 0 && sonar_reading[1] >= 0 && sonar_reading[2] >= 0)
+		&& (acumulatedDistance > 0.25 || (sigmapos.mat[0][0] >= 0.25 || sigmapos.mat[1][1] >= 0.25 || sigmapos.mat[2][2] >= 5*PI_DIV_180))
+	  )
 	{
 		Stop();
 		UpdatePositionWithSensorsAndMap(envmap);
@@ -199,7 +201,7 @@ void Robot::UpdatePositionWithAPI()
 	//Utiliza a posição de referência com realpos
 	pos.mat[0][0] = realpos.mat[0][0];
 	pos.mat[1][0] = realpos.mat[1][0];
-	pos.mat[2][0] = realpos.mat[2][0];
+	pos.mat[2][0] = to_2pi_range(realpos.mat[2][0]);
 
 	//A incerteza é 0 já que a posição é precisa
 	sigmapos.ResizeAndNulify(3, 3);
@@ -227,7 +229,7 @@ void Robot::UpdatePositionWithOdometry()
 	//Atualiza a média da posição	
 	pos.mat[0][0] += deltaX;
 	pos.mat[1][0] += deltaY;
-	pos.mat[2][0] += deltaTheta;
+	pos.mat[2][0] = to_2pi_range(pos.mat[2][0] + deltaTheta);
 	
 	//Calcula o sigmaDelta
 	Matrix sigmaDelta(2, 2);
@@ -301,13 +303,17 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 {
 	Matrix xz = pos;
 	
-	float diffX = 0.1; //fmax(0.1, sigmapos.mat[0][0]);
-	float diffY = 0.1; //fmax(0.1, sigmapos.mat[1][1]);
-	float diffTheta = 5.0*(PI_DIV_180);
+	float deviationX = 2*sqrt(sigmapos.mat[0][0]);
+	float deviationY = 2*sqrt(sigmapos.mat[1][1]);
+	float deviationTheta = 2*sqrt(sigmapos.mat[2][2]);
 
-	static float stepX = 0.01;
-	static float stepY = 0.01;
-	static float stepTheta =  0.01;
+	float diffX = deviationX;
+	float diffY = deviationY;
+	float diffTheta = deviationTheta;
+
+	static float stepX = diffX / 5.0;
+	static float stepY = diffY / 5.0;
+	static float stepTheta =  diffTheta / 5.0;
 	static float sensorDeviation = 0.05;
 
 	float minX = pos.mat[0][0] - diffX;
@@ -348,10 +354,10 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 		}
 	}
 
-	printf("ERRO ESTIMATIVA: [%.4f, %.4f, %.4f]\n", pos.mat[0][0]-xz.mat[0][0], pos.mat[1][0]-xz.mat[1][0], pos.mat[2][0]-xz.mat[2][0]);
+	printf("ERRO ESTIMATIVA: [%.4f, %.4f, %.4f]\n", fabs(realpos.mat[0][0]-xz.mat[0][0]), fabs(realpos.mat[1][0]-xz.mat[1][0]), fabs(realpos.mat[2][0]-xz.mat[2][0]));
 	
 	//Simula a melhor estimativa possível
-	//xz = realpos;
+	xz = realpos;
 	
 	return xz;
 }

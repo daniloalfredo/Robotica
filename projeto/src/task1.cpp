@@ -17,7 +17,6 @@ int main(int argc, char* argv[])
         
         //Inicializa o Robô
         Robot monstrinho;
-        monstrinho.Init();
         monstrinho.LoadPath(PATH_FILENAME);
        
        	//Começa a simulação

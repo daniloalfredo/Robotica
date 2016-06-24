@@ -157,7 +157,7 @@ void APIGetTrueRobotPosition(Matrix* realpos)
 
     	realpos->mat[0][0] = real[0];
     	realpos->mat[1][0] = real[1];
-        realpos->mat[2][0] = orientation[2];
+        realpos->mat[2][0] = to_2pi_range(orientation[2]); //orientation[2];
 
     #elif USING_VREP == 0
         realpos->mat[0][0] = -1;

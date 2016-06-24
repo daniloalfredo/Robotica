@@ -48,7 +48,7 @@ class Robot
 
 		//Funções auxiliares
 		void ExecuteMotionControl(); 							//Faz o robô andar em direção ao objetivo atual
-		void UpdateSonarReadings(); 						//Atualiza a leitura dos sonares do robô e armazena em sonar_reading[]
+		void UpdateSonarReadings(); 							//Atualiza a leitura dos sonares do robô e armazena em sonar_reading[]
 		void UpdatePositionWithAPI();							//Atualiza pos e sigmapos usando precisão perfeita da API (apenas no VREP)
 		void UpdatePositionWithOdometry();						//Atualiza pos e sigmapos após movimento do robô usando a odometria
 		void UpdatePositionWithSensorsAndMap(EnvMap envmap);	//Melhora a estimativa de posição do robô com os sensores e o mapa
@@ -56,7 +56,7 @@ class Robot
 	
 	public:
 		//Funções principais de interface do robô
-		void Init();
+		Robot();
 		bool LoadPath(const char* PATH_FILENAME);
 		void Stop();
 		void Log(EnvMap envmap);

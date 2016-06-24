@@ -224,7 +224,12 @@ Matrix Invert3x3(Matrix A)
 		t.mat[2][1] = A.mat[0][1]*A.mat[2][0] - A.mat[0][0]*A.mat[2][1];
 		t.mat[2][2] = A.mat[0][0]*A.mat[1][1] - A.mat[0][1]*A.mat[1][0];
 	
-		float k = (1.0 / (A.mat[0][0]*(A.mat[1][1]*A.mat[2][2] - A.mat[1][2]*A.mat[2][1]) - A.mat[0][1]*(A.mat[1][0]*A.mat[2][2] - A.mat[1][2]*A.mat[2][0]) + A.mat[0][2]*(A.mat[1][0]*A.mat[2][1] - A.mat[1][1]*A.mat[2][0])));
+		float denominator = (A.mat[0][0]*(A.mat[1][1]*A.mat[2][2] - A.mat[1][2]*A.mat[2][1]) - A.mat[0][1]*(A.mat[1][0]*A.mat[2][2] - A.mat[1][2]*A.mat[2][0]) + A.mat[0][2]*(A.mat[1][0]*A.mat[2][1] - A.mat[1][1]*A.mat[2][0]));
+		
+		if(denominator == 0.0)
+			printf("Error on Invert3x3(). Not invertible matrix.\n");
+
+		float k = 1.0 / denominator;
 		t = t*k;
 	}
 	else
