@@ -11,8 +11,8 @@ void Robot::Init()
 	WHEEL_L = 0.075;
 	
 	//Inicializa variáveis de odometria
-	kl = 0.05;
-	kr = 0.05;
+	kl = 0.01;
+	kr = 0.01;
 	acumulatedDistance = 0.0;
 	
 	//Variáveis do Filtro de Kalman
@@ -129,8 +129,8 @@ void Robot::Update(EnvMap envmap)
 	//&& (sigmapos.mat[0][0] >= 0.1 || sigmapos.mat[1][1] >= 0.1 || sigmapos.mat[2][2] >= 0.1)
 	)
 	{
-		//Stop();
-		//UpdatePositionWithSensorsAndMap(envmap);
+		Stop();
+		UpdatePositionWithSensorsAndMap(envmap);
 		acumulatedDistance = 0.0;
 	}
 
@@ -305,9 +305,9 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 	float diffY = 0.1; //fmax(0.1, sigmapos.mat[1][1]);
 	float diffTheta = 5.0*(PI_DIV_180);
 
-	static float stepX = 0.005;
-	static float stepY = 0.005;
-	static float stepTheta =  0.001;
+	static float stepX = 0.01;
+	static float stepY = 0.01;
+	static float stepTheta =  0.01;
 	static float sensorDeviation = 0.05;
 
 	float minX = pos.mat[0][0] - diffX;
