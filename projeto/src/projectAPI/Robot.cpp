@@ -129,8 +129,8 @@ void Robot::Update(EnvMap envmap)
 	//&& (sigmapos.mat[0][0] >= 0.1 || sigmapos.mat[1][1] >= 0.1 || sigmapos.mat[2][2] >= 0.1)
 	)
 	{
-		Stop();
-		UpdatePositionWithSensorsAndMap(envmap);
+		//Stop();
+		//UpdatePositionWithSensorsAndMap(envmap);
 		acumulatedDistance = 0.0;
 	}
 
