@@ -4,14 +4,17 @@
 #include <cstdlib>
 #include <ctime>
 #include <cmath>
-#include <unistd.h>
 #include <cstdio>
 #include <vector>
+#include <unistd.h>
 
 #define PI 3.141593
 #define PI_DIV_2 1.570796
 #define PI_DIV_180 0.017453
 #define PI_TIMES_2 6.283185
+
+//Arquivos
+bool file_exists(const char* fname);
 
 //Obter sinal do número
 float fsignal(float v);

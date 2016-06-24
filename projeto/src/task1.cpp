@@ -1,5 +1,5 @@
-#include "projectAPI/RobotAPI.h"
-#include "projectAPI/Robot.h"
+#include "RobotAPI.h"
+#include "Robot.h"
 
 #define MAP_FILENAME "../ini/map.ini"
            

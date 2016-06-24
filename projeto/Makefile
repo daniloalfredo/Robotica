@@ -4,6 +4,7 @@ WARNINGFLAGS = -Wno-unused-result
 ROBOTFLAGS   = -lwiringPi
 VREPFLAGS    = -DNON_MATLAB_PARSING -DMAX_EXT_API_CONNECTIONS=255
 OPENCVFLAGS  = `pkg-config --cflags --libs opencv`
+INCLUDEPATHS  = -I ./src -I ./src/robotAPI -I ./src/vrepAPI -I ./src/projectAPI
 
 #Compile to run in the real robot
 real: clean
@@ -13,21 +14,21 @@ real: clean
 	#Compile robotAPI
 	echo 'Compiling robotAPI...'
 	cd src/robotAPI; \
-	g++ -c *.cpp $(CFLAGS) $(WARNINGFLAGS) $(ROBOTFLAGS) $(OPENCVFLAGS); \
+	g++ -c *.cpp $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(ROBOTFLAGS) $(OPENCVFLAGS); \
 	mv *.o ../../obj/; \
 	cd ../..; \
 
 	#Compile projectAPI
 	echo 'Compiling projectAPI...'
 	cd src/projectAPI; \
-	g++ -c *.cpp $(CFLAGS) $(WARNINGFLAGS) $(ROBOTFLAGS) $(OPENCVFLAGS);\
+	g++ -c *.cpp $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(ROBOTFLAGS) $(OPENCVFLAGS);\
 	mv *.o ../../obj/; \
 	cd ../..; \
 
 	#Generate Binaries
 	echo 'Generating binaries...'
-	g++ src/task1.cpp obj/*.o -o bin/task1.bin $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
-	g++ src/testSonars.cpp obj/*.o -o bin/testSonars.bin $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
+	g++ src/task1.cpp obj/*.o -o bin/task1.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
+	g++ src/testSonars.cpp obj/*.o -o bin/testSonars.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	echo 'Done.'
 
 #Compile to run in V-REP simulation
@@ -38,20 +39,22 @@ sim: clean
 	#Compile vrepAPI
 	echo 'Compiling vrepAPI...'
 	cd src/vrepAPI; \
-	gcc -c *.c $(CFLAGS) $(WARNINGFLAGS) $(VREPFLAGS) $(OPENCVFLAGS); \
+	gcc -c *.c $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(VREPFLAGS) $(OPENCVFLAGS); \
 	mv *.o ../../obj/; \
 	cd ../..; \
 
 	#Compile projectAPI
 	echo 'Compiling projectAPI...'
 	cd src/projectAPI; \
-	g++ -c *.cpp $(CFLAGS) $(WARNINGFLAGS) $(VREPFLAGS) $(OPENCVFLAGS); \
+	g++ -c *.cpp $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(VREPFLAGS) $(OPENCVFLAGS); \
 	mv *.o ../../obj/; \
 	cd ../..; \
 
 	#Generate Binaries
 	echo 'Generating binaries...'
-	g++ src/task1.cpp obj/*.o -o bin/task1.bin $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
+	g++ src/task1.cpp obj/*.o -o bin/task1.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
+	g++ src/trainDetector.cpp obj/*.o -o bin/trainDetector.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
+	g++ src/testDetector.cpp obj/*.o -o bin/testDetector.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	echo 'Done.'
 
 #Clear binary and object files

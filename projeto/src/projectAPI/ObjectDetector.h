@@ -16,14 +16,10 @@
 #include <ctime>
 #include <string>
 
+#include "Utils.h"
+
 using namespace std;
 using namespace cv;
-
-//Arquivos utilizados pelo programa
-#define FILE_DICTIONARY "../ini/detector_dictionary.yml"
-#define FILE_DATABASE "../ini/detector_database.ini"
-#define FILE_PARAMS "../ini/detector_params.ini"
-#define FILE_SVM "../ini/detector_svm.ini" 
 
 class Object
 {
@@ -86,14 +82,18 @@ class ObjectDetector
 		int svm_gamma;
 		
 		//Funções auxiliares
-		void LoadDetectorParams();
-		void LoadObjects();
-		void Train();
 		Mat ComputeHistogram(Mat image);
 
 	public:
 		ObjectDetector();
-		string Detect(Mat frame);
+		bool LoadParams(const char* FILE_PARAMS);
+		bool LoadObjects(const char* FILE_DATABASE);
+		bool LoadDictionary(const char* FILE_DICTIONARY);
+		bool LoadSVM(const char* FILE_SVM);
+		void Train();
+		void SaveDictionary(const char* FILE_DICTIONARY);
+		void SaveSVM(const char* FILE_SVM);
+		void Detect(Mat frame, char* objName);
 };
 
 #endif

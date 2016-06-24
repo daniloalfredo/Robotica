@@ -13,11 +13,11 @@
 #include "opencv2/highgui/highgui.hpp"
 
 #include <wiringPi.h>
-#include "robotAPI/Pins.h"
-#include "robotAPI/Sonar.h"
-#include "robotAPI/Motor.h"
-#include "robotAPI/Encoder.h"
-#include "robotAPI/KBAsync.h"
+#include "Pins.h"
+#include "Sonar.h"
+#include "Motor.h"
+#include "Encoder.h"
+#include "KBAsync.h"
 
 using namespace std;
 using namespace cv;
