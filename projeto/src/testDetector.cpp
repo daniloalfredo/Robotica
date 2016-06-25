@@ -4,6 +4,7 @@
 
 #include "Utils.h"
 #include "ObjectDetector.h"
+#include "KBAsync.h"
 
 //Arquivos utilizados pelo programa
 #define FILE_DICTIONARY "ini/detector_dictionary.yml"
@@ -42,25 +43,24 @@ int main(int argc, char** argv)
 		objectDetector.SaveSVM(FILE_SVM);
 	}
 
+	printf("Press 'q' to exit.\n");
+	KBAsync kb;
+
 	//Captura imagens e detecta objetos
-	for(int i = 0; i < 5 && !exit_program; i++)
+	while(!exit_program)
 	{
+		//Sai do programa se q for pressionado
+		if(kb.getKey() == 'q')
+			exit_program = true;
+
 		//Captura frame
 		cap >> frame;
 
-		//Converte para preto e branco
-		Mat frame_bw;
-		cvtColor(frame, frame_bw, CV_BGR2GRAY);
-
 		//Classifica
-		objectDetector.Detect(frame_bw, objectName);
+		objectDetector.Detect(frame, objectName);
 
 		//Printa objeto encontrado na tela
-		printf("Frame %d: %s\n", i, objectName);
-
-		//Sai do programa se alguma tecla for pressionada
-		if(waitKey(30) >= 0)
-			exit_program = true;
+		printf("Object: %s\n", objectName);
 	}
 
 	return 0;

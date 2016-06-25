@@ -297,8 +297,12 @@ Mat ObjectDetector::ComputeHistogram(Mat image)
     return image_histogram;
 }
 
-void ObjectDetector::Detect(Mat frame, char* objName)
+void ObjectDetector::Detect(Mat image, char* objName)
 {	
+	//Converte para preto e branco
+	Mat frame;
+	cvtColor(image, frame, CV_BGR2GRAY);
+
 	//Passa filtro gaussiano
 	if(blur_size > 0)
 		GaussianBlur(frame, frame, Size(blur_size, blur_size), 0, 0);

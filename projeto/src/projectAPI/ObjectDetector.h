@@ -93,7 +93,7 @@ class ObjectDetector
 		void Train();
 		void SaveDictionary(const char* FILE_DICTIONARY);
 		void SaveSVM(const char* FILE_SVM);
-		void Detect(Mat frame, char* objName);
+		void Detect(Mat image, char* objName);
 };
 
 #endif

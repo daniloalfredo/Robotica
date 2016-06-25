@@ -301,9 +301,9 @@ void Robot::UpdatePositionWithSensorsAndMap(EnvMap envmap)
 
 Matrix Robot::EstimateXz(EnvMap envmap)
 {
-	Matrix xz = pos;
+	static Matrix xz(3, 1);
 	
-	float deviationX = 2*sqrt(sigmapos.mat[0][0]);
+	/*float deviationX = 2*sqrt(sigmapos.mat[0][0]);
 	float deviationY = 2*sqrt(sigmapos.mat[1][1]);
 	float deviationTheta = 2*sqrt(sigmapos.mat[2][2]);
 
@@ -354,8 +354,8 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 		}
 	}
 
-	printf("ERRO ESTIMATIVA: [%.4f, %.4f, %.4f]\n", fabs(realpos.mat[0][0]-xz.mat[0][0]), fabs(realpos.mat[1][0]-xz.mat[1][0]), fabs(realpos.mat[2][0]-xz.mat[2][0]));
-	
+	printf("ERRO DA ESTIMATIVA XZ: [%.4f, %.4f, %.4f]\n", fabs(realpos.mat[0][0]-xz.mat[0][0]), fabs(realpos.mat[1][0]-xz.mat[1][0]), fabs(realpos.mat[2][0]-xz.mat[2][0]));
+	*/
 	//Simula a melhor estimativa possível
 	xz = realpos;
 	

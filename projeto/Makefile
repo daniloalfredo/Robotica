@@ -51,6 +51,12 @@ sim: clean
 	mv *.o ../../obj/; \
 	cd ../..; \
 
+	#Utiliza KBASync
+	cd src/robotAPI; \
+	g++ -c KBAsync.cpp $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS); \
+	mv KBAsync.o ../../obj/
+	cd ../..; \
+
 	#Generate Binaries
 	echo 'Generating binaries...'
 	g++ src/task1.cpp obj/*.o -o bin/task1.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
