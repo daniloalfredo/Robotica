@@ -19,7 +19,7 @@ class EnvMap
 		std::vector< Segment > segments;
 	
 		//Funções Auxiliares
-		float IntersectionPointToSegment(float x, float y, float theta, Segment seg);
+		float IntersectionPostureToSegment(float x, float y, float theta, Segment seg);
 		
 	public:
 		EnvMap(); //Cria mapa vazio

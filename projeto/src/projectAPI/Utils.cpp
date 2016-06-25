@@ -127,7 +127,7 @@ float GaussianCompatibility(float desiredMeasure, float realMeasure, float devia
 {	
 	if(realMeasure < 0.0)
 		return 0.0;
-	
+	//printf("gaussian %f\n", (-fabs(realMeasure - desiredMeasure))/deviation);
 	return 2*normalDistribution((-fabs(realMeasure - desiredMeasure))/deviation);
 }
 

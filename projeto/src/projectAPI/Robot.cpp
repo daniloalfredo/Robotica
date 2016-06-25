@@ -128,7 +128,7 @@ void Robot::Update(EnvMap envmap)
 	//Passo de Atualização de Percepção
 	if(
 		(sonar_reading[0] >= 0 && sonar_reading[1] >= 0 && sonar_reading[2] >= 0)
-		&& (acumulatedDistance > 0.25 || (sigmapos.mat[0][0] >= 0.25 || sigmapos.mat[1][1] >= 0.25 || sigmapos.mat[2][2] >= 5*PI_DIV_180))
+		&& (acumulatedDistance > 0.3 || (sigmapos.mat[0][0] >= 0.25 || sigmapos.mat[1][1] >= 0.25 || sigmapos.mat[2][2] >= 5.0*PI_DIV_180))
 	  )
 	{
 		Stop();
@@ -158,7 +158,7 @@ void Robot::ExecuteMotionControl()
     if(v < 0.2) //velocidade mínima
     	v = 0.2;
     else if(v > 0.8) //velocidade máxima
-    	v = 1.0;
+    	v = 0.8;
 
     float w = (K_ALPHA * alpha + K_BETA * beta);
  
@@ -306,6 +306,96 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 	/*float deviationX = 2*sqrt(sigmapos.mat[0][0]);
 	float deviationY = 2*sqrt(sigmapos.mat[1][1]);
 	float deviationTheta = 2*sqrt(sigmapos.mat[2][2]);
+	float stepX = 0.0;
+	float stepY = 0.0;
+	float stepTheta = 0.0;
+	float diffX = 0.00001;
+	float diffY = 0.00001;
+	float diffTheta = 0.0001;
+	float bestCompat = 0.0;
+	static float stepIncX = 0.001;
+	static float stepIncY = 0.001;
+	static float stepIncTheta = 0.001 * PI_DIV_180;
+	static float sensorDeviation = 0.8;
+
+	while(diffX < deviationX)
+	{
+		while(diffY < deviationY)
+		{
+			while(diffTheta < deviationTheta)
+			{
+				float x = pos.mat[0][0] + diffX;
+				float y = pos.mat[1][0] + diffY;
+				float theta = pos.mat[2][0] + diffTheta;
+
+				//O que eu deveria estar vendo se estivesse nessa postura
+				float desiredL = envmap.MapDistance2(x, y, theta+PI_DIV_2);
+				float desiredR = envmap.MapDistance2(x, y, theta-PI_DIV_2);
+				float desiredF = envmap.MapDistance2(x, y, theta);
+				
+				//Calcula compatibilidade com a medição real
+				float compatL = GaussianCompatibility(desiredL, sonar_reading[0], sensorDeviation);
+				float compatR = GaussianCompatibility(desiredR, sonar_reading[1], sensorDeviation);
+				float compatF = GaussianCompatibility(desiredF, sonar_reading[2], sensorDeviation);
+				
+				float compatSum = compatL + compatR + compatF;
+				
+				if(compatSum > bestCompat)
+				{
+					bestCompat = compatSum;
+					xz.mat[0][0] = x;
+					xz.mat[1][0] = y;
+					xz.mat[2][0] = theta;
+				}
+
+				//Inclrementa o diffY
+				if(diffTheta >= 0)
+					diffTheta *= -1;
+				else
+				{
+					diffTheta *= -1;
+					diffTheta += stepTheta;
+					stepTheta += stepIncTheta;
+				}
+			}
+
+			//Inclrementa o diffY
+			if(diffY >= 0)
+				diffY *= -1;
+			else
+			{
+				diffY *= -1;
+				diffY += stepY;
+				stepY += stepIncY;
+			}
+		}
+
+		//Incrementa o diffX
+		if(diffX >= 0)
+			diffX *= -1;
+		else
+		{
+			diffX *= -1;
+			diffX += stepX;
+			stepX += stepIncX;
+		}
+	}
+
+	printf("ERRO DA ESTIMATIVA XZ: [%.2fcm, %.2fcm, %.2f°]\n", 100.0*fabs(realpos.mat[0][0]-xz.mat[0][0]), 100.0*fabs(realpos.mat[1][0]-xz.mat[1][0]), to_deg(fabs(realpos.mat[2][0]-xz.mat[2][0])));
+	*/
+	//Simula a melhor estimativa possível
+	xz = realpos;
+	
+	return xz;
+}
+
+/*Matrix Robot::EstimateXz(EnvMap envmap)
+{
+	static Matrix xz(3, 1);
+	
+	float deviationX = 2*sqrt(sigmapos.mat[0][0]);
+	float deviationY = 2*sqrt(sigmapos.mat[1][1]);
+	float deviationTheta = 2*sqrt(sigmapos.mat[2][2]);
 
 	float diffX = deviationX;
 	float diffY = deviationY;
@@ -355,9 +445,9 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 	}
 
 	printf("ERRO DA ESTIMATIVA XZ: [%.4f, %.4f, %.4f]\n", fabs(realpos.mat[0][0]-xz.mat[0][0]), fabs(realpos.mat[1][0]-xz.mat[1][0]), fabs(realpos.mat[2][0]-xz.mat[2][0]));
-	*/
+	
 	//Simula a melhor estimativa possível
 	xz = realpos;
 	
 	return xz;
-}
+}*/

@@ -45,7 +45,7 @@ float EnvMap::MapDistance(float x, float y, float theta)
 	float min_dist = INFINITE_DISTANCE;
 	for(int i = 0; i < (int) segments.size(); i++)
 	{
-		float dist = IntersectionPointToSegment(x, y, theta, segments[i]);
+		float dist = IntersectionPostureToSegment(x, y, theta, segments[i]);
 		
 		if(dist < min_dist)
 			min_dist = dist;
@@ -65,7 +65,7 @@ float EnvMap::MapDistance2(float x, float y, float theta)
 //--------------------------------------------------------------
 
 //Retorna a distância do vetor ao segmento de reta (se não houver intersecção retorna distancia infinita)
-float EnvMap::IntersectionPointToSegment(float x, float y, float theta, Segment seg)
+float EnvMap::IntersectionPostureToSegment(float x, float y, float theta, Segment seg)
 {
 	float angle = to_2pi_range(theta);
 
