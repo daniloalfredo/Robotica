@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <vector>
 #include <unistd.h>
+#include <sys/time.h>
 
 #define PI 3.141593
 #define PI_DIV_2 1.570796
@@ -23,6 +24,10 @@ float fsignal(float v);
 float rand_beetween_0_and_1();
 float rand_signal();
 
+//Tempo
+typedef long long TimeStamp;
+TimeStamp GetTimeMicroSecs();
+
 //Funções de Ângulos
 float to_pi_range(float radians);
 float to_2pi_range(float radians);
@@ -33,6 +38,7 @@ float smallestAngleDiff(float target, float source);
 
 //Distribuição de probabilidade
 double normalDistribution(double x);
+double normalDistributionIntegrated(double x); //deprecated
 float GaussianCompatibility(float desiredMeasure, float realMeasure, float deviation);
 
 //Matrizes
@@ -85,16 +91,16 @@ class Matrix
 		
 		void Print()
 		{
-			printf("[");
+			printf("\r[");
 			for(int i = 0; i < (int) mat.size(); i++)
 			{
 				for(int j = 0; j < (int) mat[i].size(); j++)
-					printf("%.2f ", mat[i][j]);
+					printf("\r%.2f ", mat[i][j]);
 				
 				if(i < ((int) mat.size())-1)
-					printf("\n");
+					printf("\r\n");
 			}
-			printf("]\n");
+			printf("\r]\n");
 		}
 		
 		//Operador de atribuição

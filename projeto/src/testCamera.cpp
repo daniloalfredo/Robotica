@@ -1,8 +1,4 @@
 #include "RobotAPI.h"
-#include "Robot.h"
-
-#define MAP_FILENAME "ini/envmap_big.ini"
-#define PATH_FILENAME "ini/path_big.ini"
            
 int main(int argc, char* argv[])
 {   
@@ -10,37 +6,35 @@ int main(int argc, char* argv[])
     if (APIInitConection())
     {
         printf("\rConexão efetuada.\n");
-        
-        //Define o mapa do experimento
-        EnvMap testmap(MAP_FILENAME);
-        testmap.PrintMap();
-        
-        //Inicializa o Robô
-        Robot monstrinho;
-        monstrinho.LoadPath(PATH_FILENAME);
        
        	//Começa a simulação
         if(APIStartSimulation())
         {
         	printf("\rSimulação iniciada.\n");
         	
+            cv::Mat image(1, 1, CV_32FC1);
+
         	//---------------------------------------------------------
         	//LOOP DA SIMULAÇÃO
         	//---------------------------------------------------------
 		    while(APISimulationIsRunning())
-		    {    		    
-		    	//Atualiza o robô
-		    	monstrinho.Update(testmap);
-		    	
-		    	//Printa o log do robô
-		    	monstrinho.Log(testmap);
-	 
+		    {    
+                image = APIReadCamera();
+
+                if(APIGetKey() == 'p')
+                {
+                    printf("\rSaving picture...\n");
+                    APISavePicture(image);
+                }
+
 		        //Espera um tempo antes da próxima atualização
 		        APIWait();
 		    }
 		    //---------------------------------------------------------
 		   
 		   	printf("\rFim da simulação.\n");
+		   
+		    //Para o robô e desconecta;
 		    APIFinishSimulation();
         } 
         

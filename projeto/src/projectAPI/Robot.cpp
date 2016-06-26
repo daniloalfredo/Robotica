@@ -33,7 +33,6 @@ Robot::Robot()
 	num_voltas = 0;
 	
 	//Inicializa a posição estimada e a incerteza do robô
-	Stop();
 	pos.ResizeAndNulify(3, 1);
 	realpos.ResizeAndNulify(3, 1);
 	sigmapos.ResizeAndNulify(3, 3);
@@ -69,27 +68,22 @@ bool Robot::LoadPath(const char* PATH_FILENAME)
 
 	else
 	{
-		printf("Error. Could not open ´%s´.\n", PATH_FILENAME);
+		printf("\rError. Could not open ´%s´.\n", PATH_FILENAME);
 		return false;
 	}
 }
 
-void Robot::Stop()
-{
-	APISetRobotSpeed(0, 0);
-}
-
 void Robot::Log(EnvMap envmap)
 {
-	printf("----------------------------------------------------\n");
-	printf("Posição Real:        [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]);
-	printf("Posição Estimada:    [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", pos.mat[0][0], pos.mat[1][0], pos.mat[2][0]);
-	printf("Erro de Posição:     [%.4f, %.4f, %.4f]\n", fabs(realpos.mat[0][0]-pos.mat[0][0]), fabs(realpos.mat[1][0]-pos.mat[1][0]), fabs(realpos.mat[2][0]-pos.mat[2][0]));
-	printf("Variância de Posição:[%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", sigmapos.mat[0][0], sigmapos.mat[1][1], sigmapos.mat[2][2]);
-	printf("Leitura dos Sonares: [%f, %f, %f]  //[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
-	printf("Numero de voltas:    [%d]\n", num_voltas);
+	printf("\r----------------------------------------------------\n");
+	printf("\rPosição Real:        [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]);
+	printf("\rPosição Estimada:    [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", pos.mat[0][0], pos.mat[1][0], pos.mat[2][0]);
+	printf("\rErro de Posição:     [%.4f, %.4f, %.4f]\n", fabs(realpos.mat[0][0]-pos.mat[0][0]), fabs(realpos.mat[1][0]-pos.mat[1][0]), fabs(realpos.mat[2][0]-pos.mat[2][0]));
+	printf("\rVariância de Posição:[%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", sigmapos.mat[0][0], sigmapos.mat[1][1], sigmapos.mat[2][2]);
+	printf("\rLeitura dos Sonares: [%f, %f, %f]  //[F, L, R]\n", sonar_reading[2], sonar_reading[0], sonar_reading[1]);
+	printf("\rNumero de voltas:    [%d]\n", num_voltas);
 	float t_time = APIGetSimulationTimeInSecs();
-	printf("Tempo de simulação:  [%.2dm %.2ds]\n", (int) t_time/60,(int) t_time%60);
+	printf("\rTempo de simulação:  [%.2dm %.2ds]\n", (int) t_time/60,(int) t_time%60);
 }
 
 void Robot::Update(EnvMap envmap)
@@ -131,7 +125,7 @@ void Robot::Update(EnvMap envmap)
 		&& (acumulatedDistance > 0.3 || (sigmapos.mat[0][0] >= 0.25 || sigmapos.mat[1][1] >= 0.25 || sigmapos.mat[2][2] >= 5.0*PI_DIV_180))
 	  )
 	{
-		Stop();
+		APIStopRobot();
 		UpdatePositionWithSensorsAndMap(envmap);
 		acumulatedDistance = 0.0;
 	}
@@ -303,7 +297,7 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 {
 	static Matrix xz(3, 1);
 	
-	/*float deviationX = 2*sqrt(sigmapos.mat[0][0]);
+	float deviationX = 2*sqrt(sigmapos.mat[0][0]);
 	float deviationY = 2*sqrt(sigmapos.mat[1][1]);
 	float deviationTheta = 2*sqrt(sigmapos.mat[2][2]);
 	float stepX = 0.0;
@@ -381,8 +375,8 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 		}
 	}
 
-	printf("ERRO DA ESTIMATIVA XZ: [%.2fcm, %.2fcm, %.2f°]\n", 100.0*fabs(realpos.mat[0][0]-xz.mat[0][0]), 100.0*fabs(realpos.mat[1][0]-xz.mat[1][0]), to_deg(fabs(realpos.mat[2][0]-xz.mat[2][0])));
-	*/
+	printf("\rERRO DA ESTIMATIVA XZ: [%.2fcm, %.2fcm, %.2f°]\n", 100.0*fabs(realpos.mat[0][0]-xz.mat[0][0]), 100.0*fabs(realpos.mat[1][0]-xz.mat[1][0]), to_deg(fabs(realpos.mat[2][0]-xz.mat[2][0])));
+
 	//Simula a melhor estimativa possível
 	xz = realpos;
 	
@@ -444,7 +438,7 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 		}
 	}
 
-	printf("ERRO DA ESTIMATIVA XZ: [%.4f, %.4f, %.4f]\n", fabs(realpos.mat[0][0]-xz.mat[0][0]), fabs(realpos.mat[1][0]-xz.mat[1][0]), fabs(realpos.mat[2][0]-xz.mat[2][0]));
+	printf("\rERRO DA ESTIMATIVA XZ: [%.4f, %.4f, %.4f]\n", fabs(realpos.mat[0][0]-xz.mat[0][0]), fabs(realpos.mat[1][0]-xz.mat[1][0]), fabs(realpos.mat[2][0]-xz.mat[2][0]));
 	
 	//Simula a melhor estimativa possível
 	xz = realpos;

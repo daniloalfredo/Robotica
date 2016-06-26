@@ -22,6 +22,4 @@ class RobotTimer
 		static void delay_us(rbtTime time);
 };
 
-rbtTime GetTimeMicroSecs();
-
 #endif

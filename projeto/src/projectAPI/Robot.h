@@ -58,7 +58,6 @@ class Robot
 		//Funções principais de interface do robô
 		Robot();
 		bool LoadPath(const char* PATH_FILENAME);
-		void Stop();
 		void Log(EnvMap envmap);
 		void Update(EnvMap envmap);
 };

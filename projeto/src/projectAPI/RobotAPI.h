@@ -26,33 +26,49 @@
 //Includes e variáveis do robô real
 #elif USING_VREP == 0
 	#include <wiringPi.h>
-	#include "../robotAPI/Pins.h"
-	#include "../robotAPI/Sonar.h"
-	#include "../robotAPI/Motor.h"
-	#include "../robotAPI/Encoder.h"
-	#include "../robotAPI/KBAsync.h"
-	#include "../robotAPI/RobotTimer.h"
+	#include "Pins.h"
+	#include "Sonar.h"
+	#include "Motor.h"
+	#include "Encoder.h"
+	#include "RobotTimer.h"
 
 	extern Encoder encoderL, encoderR;
 	extern Motor motorL, motorR;
 	extern Sonar sonarL, sonarR, sonarF;
-	extern KBAsync kb;
-
-	extern rbtTime simulationBeginTime;
 #endif
 
-#include "Utils.h" 
+//Includes e Variáveis gerais
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/ml/ml.hpp>
+#include <cstdio>
+#include <cstdlib>
+	
+#include "KBAsync.h"
+#include "Utils.h"
+
+extern KBAsync kb;
+extern int kb_key;
+extern bool stopped;
+extern cv::VideoCapture cap;
+extern TimeStamp simulationBeginTime;
 
 bool APIInitConection();
 bool APIStartSimulation();
 bool APISimulationIsRunning();
 void APIFinishSimulation();
 void APIWait();
-
+int APIGetKey();
 float APIGetSimulationTimeInSecs();
 void APIGetTrueRobotPosition(Matrix* realpos);
 void APIReadOdometers(float* dPhiL, float* dPhiR);
 void APISetRobotSpeed(float phiL, float phiR);
+void APIStopRobot();
+cv::Mat APIReadCamera();
+void APISavePicture(cv::Mat picture);
 float APIReadSonarLeft();
 float APIReadSonarRight();
 float APIReadSonarFront();

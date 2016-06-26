@@ -9,7 +9,7 @@ bool ObjectDetector::LoadParams(const char* FILE_PARAMS)
 {
 	char aux[50];
 
-	printf("Loading Params...\n");
+	printf("\rLoading Params...\n");
 	FILE* file_params = fopen(FILE_PARAMS, "r");
 
 	if(file_params != NULL)
@@ -39,18 +39,18 @@ bool ObjectDetector::LoadParams(const char* FILE_PARAMS)
 		fscanf(file_params, "%*[^:] %*c %d", &svm_degree);
 		fscanf(file_params, "%*[^:] %*c %d", &svm_gamma);
 		
-		printf("\tCONFIDENCE THRESHOLD: %.2lf\n", confidence_threshold);
+		printf("\r\tCONFIDENCE THRESHOLD: %.2lf\n", confidence_threshold);
 		
 		if(descriptor_extractor == 0)
-			printf("\tDESCRIPTOR EXTRACTOR: SIFT\n");
+			printf("\r\tDESCRIPTOR EXTRACTOR: SIFT\n");
 		else
-			printf("\tDESCRIPTOR EXTRACTOR: SURF\n");
+			printf("\r\tDESCRIPTOR EXTRACTOR: SURF\n");
 		
-		printf("\tDICTIONARY SIZE: %d\n", dictionary_size);
-		printf("\tBLUR WINDOW SIZE: %d\n", blur_size);
-		printf("\tSVM KERNEL TYPE: %s\n", aux);
-		printf("\tSVM DEGREE: %d\n", svm_degree);
-		printf("\tSVM GAMMA: %d\n", svm_gamma);
+		printf("\r\tDICTIONARY SIZE: %d\n", dictionary_size);
+		printf("\r\tBLUR WINDOW SIZE: %d\n", blur_size);
+		printf("\r\tSVM KERNEL TYPE: %s\n", aux);
+		printf("\r\tSVM DEGREE: %d\n", svm_degree);
+		printf("\r\tSVM GAMMA: %d\n", svm_gamma);
 
 		fclose(file_params);
 		return true;
@@ -58,14 +58,14 @@ bool ObjectDetector::LoadParams(const char* FILE_PARAMS)
 
 	else
 	{
-		printf("Error. Could not open ´%s´.\n", FILE_PARAMS);
+		printf("\rError. Could not open ´%s´.\n", FILE_PARAMS);
 		return false;
 	}
 }
 
 bool ObjectDetector::LoadObjects(const char* FILE_DATABASE)
 {
-	printf("Loading Objects...\n");
+	printf("\rLoading Objects...\n");
 
 	//Abre arquivo com informações das imagens dos objetos
 	FILE* file_database = fopen(FILE_DATABASE, "r");
@@ -84,7 +84,7 @@ bool ObjectDetector::LoadObjects(const char* FILE_DATABASE)
 			fscanf(file_database, "%*[^:] %*c %[^\n]", aux);
 			string name(aux);
 			
-			printf("\tObject: %s\n", name.c_str());
+			printf("\r\tObject: %s\n", name.c_str());
 		
 			//Pega o número de imagens do objeto
 			int num_images;
@@ -107,7 +107,7 @@ bool ObjectDetector::LoadObjects(const char* FILE_DATABASE)
 				}
 
 				else 
-					printf("\t\tError. Could not find object image ´%s´.\n", filename.c_str());
+					printf("\r\t\tError. Could not find object image ´%s´.\n", filename.c_str());
 
 			}
 			
@@ -122,7 +122,7 @@ bool ObjectDetector::LoadObjects(const char* FILE_DATABASE)
 
 	else
 	{
-		printf("Error. Could not open ´%s´.\n", FILE_DATABASE);
+		printf("\rError. Could not open ´%s´.\n", FILE_DATABASE);
 		return false;
 	}
 }
@@ -135,7 +135,7 @@ bool ObjectDetector::LoadDictionary(const char* FILE_DICTIONARY)
 	//Se existe o dicionário carrega ele e carrega o svm
 	if(file_dictionary.isOpened())
 	{
-		printf("Loading Dictionary...\n");
+		printf("\rLoading Dictionary...\n");
 		file_dictionary["vocabulary"] >> dictionary;
     	file_dictionary.release();
     	return true;
@@ -143,7 +143,7 @@ bool ObjectDetector::LoadDictionary(const char* FILE_DICTIONARY)
 
 	else
 	{
-		printf("Error. Could not open ´%s´.\n", FILE_DICTIONARY);
+		printf("\rError. Could not open ´%s´.\n", FILE_DICTIONARY);
 		return false;
 	}
 }
@@ -155,27 +155,27 @@ bool ObjectDetector::LoadSVM(const char* FILE_SVM)
 	if(file_svm != NULL)
 	{
 		fclose(file_svm); //só pra checar se o arquivo existe
-		printf("Loading SVM...\n");
+		printf("\rLoading SVM...\n");
     	svm.load(FILE_SVM);
     	return true;
 	}
 
 	else
 	{
-		printf("Error. Could not open ´%s´.\n", FILE_SVM);
+		printf("\rError. Could not open ´%s´.\n", FILE_SVM);
 		return false;
 	}	
 }
 
 void ObjectDetector::Train()
 {   
-	printf("Starting Training...\n");
+	printf("\rStarting Training...\n");
 	
 	SiftDescriptorExtractor detector_sift;
 	SurfDescriptorExtractor detector_surf;
 	Mat featuresUnclustered;
 	
-	printf("\tCreating Dictionary...\n");
+	printf("\r\tCreating Dictionary...\n");
 	
 	//Lê cada imagem do banco para extrair descritores
 	for(unsigned int i = 0; i < objects.size(); i++)
@@ -221,7 +221,7 @@ void ObjectDetector::Train()
 	dictionary = bowTrainer.cluster(featuresUnclustered);
 	
 	//Prepara matriz de treinamento do SVM
-	printf("\tTraining SVM...\n");
+	printf("\r\tTraining SVM...\n");
 	Mat training_matrix;
 	
 	for(unsigned int i = 0; i < objects.size(); i++)
@@ -257,7 +257,7 @@ void ObjectDetector::Train()
 
 void ObjectDetector::SaveDictionary(const char* FILE_DICTIONARY)
 {
-	printf("Saving dictionary to ´%s´...\n", FILE_DICTIONARY);
+	printf("\rSaving dictionary to ´%s´...\n", FILE_DICTIONARY);
 	FileStorage file_dictionary(FILE_DICTIONARY, FileStorage::WRITE);
 	file_dictionary << "vocabulary" << dictionary;
 	file_dictionary.release();
@@ -265,7 +265,7 @@ void ObjectDetector::SaveDictionary(const char* FILE_DICTIONARY)
 
 void ObjectDetector::SaveSVM(const char* FILE_SVM)
 {
-	printf("Saving SVM to ´%s´...\n", FILE_SVM);
+	printf("\rSaving SVM to ´%s´...\n", FILE_SVM);
 	svm.save(FILE_SVM);
 }
 

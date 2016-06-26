@@ -13,14 +13,24 @@
     Encoder encoderL, encoderR;
     Motor motorL, motorR;
     Sonar sonarL, sonarR, sonarF;
-    KBAsync kb;
-    rbtTime simulationBeginTime;
 #endif
+
+KBAsync kb;
+int kb_key;
+bool stopped;
+cv::VideoCapture cap(0);
+TimeStamp simulationBeginTime;
 
 bool APIInitConection()
 {
+	if(!cap.isOpened())
+	{
+		printf("\rError. Could not open VideoCapture\n");
+        return false;
+	}
+
     #if USING_VREP == 1
-    	printf("Iniciando conexão com: %s...\n", V_REP_IP_ADDRESS);
+    	printf("\rIniciando conexão com: %s...\n", V_REP_IP_ADDRESS);
     	clientID = simxStart(V_REP_IP_ADDRESS, V_REP_PORT, true, true, 2000, 5);
 
     	if(clientID != -1)
@@ -39,18 +49,18 @@ bool APIInitConection()
     #elif USING_VREP == 0
         if (PIN_MODE==PIN_BCM)
         {
-            printf("Pins in BCM mode.\n");
+            printf("\rPins in BCM mode.\n");
             
             if (wiringPiSetupGpio()<0)
             {
-                printf("Could not setup GPIO pins\n");
+                printf("\rCould not setup GPIO pins\n");
                 return false;
             }
         } 
 
         else 
         {
-            printf("Pins in wiringPi mode.\n");
+            printf("\rPins in wiringPi mode.\n");
             wiringPiSetup();
         }
 
@@ -71,41 +81,46 @@ bool APIInitConection()
 
 bool APIStartSimulation()
 {
-    #if USING_VREP == 1
+    simulationBeginTime = GetTimeMicroSecs();
+    APIStopRobot();
+
+    #if USING_VREP == 1   
 	   return (simxStartSimulation(clientID, simx_opmode_oneshot_wait) != -1);
     #elif USING_VREP == 0
-       simulationBeginTime = GetTimeMicroSecs();
        return true;
     #endif
 }
 
 bool APISimulationIsRunning()
 {
+    kb_key = kb.getKey();
+
+    if(kb_key == 'q')
+        return false;
+
     #if USING_VREP == 1
     	if(simxGetConnectionId(clientID) == -1
     	|| simxGetLastCmdTime(clientID) == 0)
     	{
-    		printf("Parando a simulação...\n");
+    		printf("\rParando a simulação...\n");
     		return false;
     	}
 
     	return true;
 
-    #elif USING_VREP == 0
-        if(kb.getKey() == 'q')
-            return false;
+    #elif USING_VREP == 0 
         return true;
     #endif
 }
 
 void APIFinishSimulation()
 {
+    APIStopRobot();
+
     #if USING_VREP == 1
     	simxPauseSimulation(clientID, simx_opmode_oneshot_wait);
     	simxFinish(clientID);
     #elif USING_VREP == 0
-        motorL.stop();
-        motorR.stop();
     #endif
 }
 
@@ -114,19 +129,23 @@ void APIWait()
     #if USING_VREP == 1
         extApi_sleepMs(2);
     #elif USING_VREP == 0
-        motorL.controlSpeed();
-        motorR.controlSpeed();
+        if(!stopped)
+        {
+            motorL.controlSpeed();
+            motorR.controlSpeed();
+        }
         //delayMicroseconds(msecs*1000);
     #endif
 }
 
+int APIGetKey()
+{
+    return kb_key;
+}
+
 float APIGetSimulationTimeInSecs()
 {
-    #if USING_VREP == 1
-        return (((float) simxGetLastCmdTime(clientID)) / 1000.0);
-    #elif USING_VREP == 0
-        return (GetTimeMicroSecs() - simulationBeginTime) / 1000000.0;
-    #endif
+    return (GetTimeMicroSecs() - simulationBeginTime) / 1000000.0;
 }
 
 float APIGetTimeSinceLastCommandInSecs(float lastCommandTime)
@@ -144,14 +163,14 @@ void APIGetTrueRobotPosition(Matrix* realpos)
     	static simxFloat real[3];
     	simxInt ret = simxGetObjectPosition(clientID, ddRobotHandle, -1, real, simx_opmode_oneshot_wait);
         if (ret > 0) {
-            printf("Erro ao ler posição do robô.\n");
+            printf("\rErro ao ler posição do robô.\n");
             return;
         }
      
         static simxFloat orientation[3];
         ret = simxGetObjectOrientation(clientID, ddRobotHandle, -1, orientation, simx_opmode_oneshot_wait);
         if (ret > 0) {
-            printf("Erro ao ler orientação do robô.\n");
+            printf("\rErro ao ler orientação do robô.\n");
             return;
         }
 
@@ -194,13 +213,44 @@ void APIReadOdometers(float* dPhiL, float* dPhiR)
 
 void APISetRobotSpeed(float phiL, float phiR)
 {
+    if(phiL < -0.001 || phiL > 0.001 || phiR < -0.001 || phiR > 0.001)
+            stopped = false;
+    
     #if USING_VREP == 1
         simxSetJointTargetVelocity(clientID, leftMotorHandle, phiL, simx_opmode_oneshot);
         simxSetJointTargetVelocity(clientID, rightMotorHandle, phiR, simx_opmode_oneshot); 
     #elif USING_VREP == 0
-        motorL.setTargetSpeed(phiL);
-        motorR.setTargetSpeed(phiR);
+        motorL.setTargetSpeed(phiR); //rodas da esquerda e direita sao trocadas
+        motorR.setTargetSpeed(phiL);
     #endif 
+}
+
+void APIStopRobot()
+{
+    stopped = true;
+    APISetRobotSpeed(0.0, 0.0);
+
+    #if USING_VREP == 1
+    #elif USING_VREP == 0
+        motorL.stop();
+        motorR.stop();
+    #endif
+}
+
+cv::Mat APIReadCamera()
+{
+	cv::Mat image(1, 1, CV_32FC1);
+	cap >> image;
+	return image;
+}
+
+void APISavePicture(cv::Mat picture)
+{
+	static int pic_counter = 0;
+	char pic_path[50];
+	sprintf(pic_path, "img/pics/%d.jpg", pic_counter); 
+	cv::imwrite(pic_path, picture);
+	pic_counter++;
 }
 
 float APIReadSonarLeft()

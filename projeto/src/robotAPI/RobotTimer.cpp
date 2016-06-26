@@ -16,10 +16,3 @@ void RobotTimer::delay_us(rbtTime time_us) {
 	rbtTime start = getTime_us();
 	while ((getTime_us()-start) < time_us);
 }
-
-rbtTime GetTimeMicroSecs()
-{
-	struct timeval nowTimeVal;
-	gettimeofday(&nowTimeVal, 0);
-	return (S_TO_US*(rbtTime)nowTimeVal.tv_sec + nowTimeVal.tv_usec);
-}

@@ -19,9 +19,9 @@ int Sonar::setup(int pinTrigger, int pinEcho) {
     pinMode(pinTrigger, OUTPUT);
     pinMode(pinEcho,INPUT);
     digitalWrite(pinTrigger, LOW);
-    std::cout << "Waiting for sonar sensor to settle... ";
+    std::cout << "\rWaiting for sonar sensor to settle... ";
     delayMicroseconds(2000000);
-    std::cout << "ok" << std::endl;
+    std::cout << "\rok" << std::endl;
 
     return 0;
 }

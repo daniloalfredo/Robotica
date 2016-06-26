@@ -11,9 +11,9 @@ EnvMap::EnvMap(const char* map_filename)
 
 void EnvMap::PrintMap()
 {
-	printf("Mapa do Ambiente:\n");
+	printf("\rMapa do Ambiente:\n");
 	for(int i = 0; i < (int) segments.size(); i++)
-		printf("\tSegmento de (%.2f, %.2f) para (%.2f, %.2f)\n", segments[i].first.first, segments[i].first.second, segments[i].second.first, segments[i].second.second);
+		printf("\r\tSegmento de (%.2f, %.2f) para (%.2f, %.2f)\n", segments[i].first.first, segments[i].first.second, segments[i].second.first, segments[i].second.second);
 }
 
 void EnvMap::LoadFromFile(const char* map_filename)
@@ -28,7 +28,7 @@ void EnvMap::LoadFromFile(const char* map_filename)
 	}
 
 	else
-		printf("Erro ao abrir arquivo de mapa.\n");
+		printf("\rErro ao abrir arquivo de mapa.\n");
 }
 
 void EnvMap::AddWall(float x0, float y0, float x1, float y1)
