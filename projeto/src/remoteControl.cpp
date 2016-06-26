@@ -24,25 +24,25 @@ int main(int argc, char* argv[])
 		    	//Controle de movimentos
 		    	if(APIGetKey() == 'o')
 		    	{
-		    		leftSpeed = 15.0;
-		    		rightSpeed = 15.0;
+		    		leftSpeed = 12.0;
+		    		rightSpeed = 12.0;
 		    	}
 
 		    	else if(APIGetKey() == 'l')
 		    	{
-		    		leftSpeed = -15.0;
-		    		rightSpeed = -15.0;
+		    		leftSpeed = -12.0;
+		    		rightSpeed = -12.0;
 		    	}
 
 		    	else if(APIGetKey() == 'k')
 		    	{
 		    		leftSpeed = 8.0*fsignal(leftSpeed);
-		    		rightSpeed = 15.0*fsignal(rightSpeed);
+		    		rightSpeed = 12.0*fsignal(rightSpeed);
 		    	}
 
 		    	else if(APIGetKey() == ';')
 		    	{
-		    		leftSpeed = 15.0*fsignal(leftSpeed);
+		    		leftSpeed = 12.0*fsignal(leftSpeed);
 		    		rightSpeed = 8.0*fsignal(rightSpeed);
 		    	}
 

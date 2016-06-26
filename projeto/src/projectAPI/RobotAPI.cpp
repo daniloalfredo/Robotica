@@ -148,15 +148,6 @@ float APIGetSimulationTimeInSecs()
     return (GetTimeMicroSecs() - simulationBeginTime) / 1000000.0;
 }
 
-float APIGetTimeSinceLastCommandInSecs(float lastCommandTime)
-{
-    #if USING_VREP == 1
-        return APIGetSimulationTimeInSecs() - lastCommandTime;
-    #elif USING_VREP == 0
-        return -1.0; //função não implementada no robô real
-    #endif
-}
-
 void APIGetTrueRobotPosition(Matrix* realpos)
 {
     #if USING_VREP == 1
