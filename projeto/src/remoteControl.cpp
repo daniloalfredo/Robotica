@@ -36,14 +36,14 @@ int main(int argc, char* argv[])
 
 		    	else if(APIGetKey() == 'k')
 		    	{
-		    		leftSpeed = 10.0*fsignal(leftSpeed);
+		    		leftSpeed = 8.0*fsignal(leftSpeed);
 		    		rightSpeed = 15.0*fsignal(rightSpeed);
 		    	}
 
 		    	else if(APIGetKey() == ';')
 		    	{
 		    		leftSpeed = 15.0*fsignal(leftSpeed);
-		    		rightSpeed = 10.0*fsignal(rightSpeed);
+		    		rightSpeed = 8.0*fsignal(rightSpeed);
 		    	}
 
 		    	//Parar o robô

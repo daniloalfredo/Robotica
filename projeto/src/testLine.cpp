@@ -13,8 +13,8 @@ int main(int argc, char* argv[])
         {
         	printf("\rSimulação iniciada.\n");
 
-        	float leftSpeed = 5.0;
-        	float rightSpeed = 5.0;
+        	float leftSpeed = 15.0;
+        	float rightSpeed = 15.0;
         	float stepSpeed = 0.5;
         	bool startTest = false;
         	

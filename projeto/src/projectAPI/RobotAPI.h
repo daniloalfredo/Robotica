@@ -2,7 +2,7 @@
 #define ROBOTAPI_H_INCLUDED
 
 //Escolhe entre usar o VREP ou o robô real  
-#define USING_VREP 1
+#define USING_VREP 0
 
 //Includes e Variáveis do V-REP
 #if USING_VREP == 1
@@ -26,11 +26,11 @@
 //Includes e variáveis do robô real
 #elif USING_VREP == 0
 	#include <wiringPi.h>
-	#include "Pins.h"
-	#include "Sonar.h"
-	#include "Motor.h"
-	#include "Encoder.h"
-	#include "RobotTimer.h"
+	#include "../robotAPI/Pins.h"
+	#include "../robotAPI/Sonar.h"
+	#include "../robotAPI/Motor.h"
+	#include "../robotAPI/Encoder.h"
+	#include "../robotAPI/RobotTimer.h"
 
 	extern Encoder encoderL, encoderR;
 	extern Motor motorL, motorR;
