@@ -1,8 +1,8 @@
 #include "RobotAPI.h"
 #include "Robot.h"
 
-#define MAP_FILENAME "ini/envmapBig.ini"
-#define PATH_FILENAME "ini/pathBig.ini"
+#define MAP_FILENAME "ini/envmap.ini"
+#define PATH_FILENAME "ini/pathA.ini"
            
 int main(int argc, char* argv[])
 {   

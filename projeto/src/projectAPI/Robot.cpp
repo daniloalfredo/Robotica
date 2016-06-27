@@ -93,20 +93,24 @@ void Robot::Update(EnvMap envmap)
 	//Verifica se já chegou no objetivo
 	if(reached_goal)
 	{
-		current_goal++;
-		
-		if(current_goal >= (int) path.size())
+		if(current_goal >= (int) path.size()-1)
 		{
+			//Se tiver loop volta pro goal inicial
 			if(loop_path)
 			{
-				current_goal = 0;
+				current_goal = -1;
 				num_voltas++;
 			}
 
+			//Se não para o robô
 			else
-				current_goal--;	
+			{
+				APIStopRobot();
+				return;
+			}
 		}
-			
+		
+		current_goal++;	
 		goal[0] = path[current_goal][0];
 		goal[1] = path[current_goal][1];
 		goal[2] = path[current_goal][2];
@@ -176,7 +180,7 @@ void Robot::ExecuteMotionControl()
 		else
 			reached_goal = true;
     }
-
+	//printf("\rWheel Speed: %f \t %f\n", phiL, phiR);
     APISetRobotSpeed(phiL, phiR);
 }
 
@@ -297,7 +301,7 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 {
 	static Matrix xz(3, 1);
 	
-	float deviationX = 2*sqrt(sigmapos.mat[0][0]);
+	/*float deviationX = 2*sqrt(sigmapos.mat[0][0]);
 	float deviationY = 2*sqrt(sigmapos.mat[1][1]);
 	float deviationTheta = 2*sqrt(sigmapos.mat[2][2]);
 	float stepX = 0.0;
@@ -376,7 +380,7 @@ Matrix Robot::EstimateXz(EnvMap envmap)
 	}
 
 	printf("\rERRO DA ESTIMATIVA XZ: [%.2fcm, %.2fcm, %.2f°]\n", 100.0*fabs(realpos.mat[0][0]-xz.mat[0][0]), 100.0*fabs(realpos.mat[1][0]-xz.mat[1][0]), to_deg(fabs(realpos.mat[2][0]-xz.mat[2][0])));
-
+*/
 	//Simula a melhor estimativa possível
 	xz = realpos;
 	
