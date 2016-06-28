@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
         
         //Define o mapa do experimento
         EnvMap testmap(MAP_FILENAME);
-        testmap.PrintMap();
+        testmap.Print();
         
         //Inicializa o Robô
         Robot monstrinho;

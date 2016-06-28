@@ -10,8 +10,8 @@ Robot::Robot()
 	WHEEL_L = 0.075;
 	
 	//Inicializa variáveis de odometria
-	kl = 0.333;//0.001;
-	kr = 0.333;//0.001;
+	kl = 0.01;
+	kr = 0.01;
 	acumulatedDistance = 0.0;
 	
 	//Variáveis do Filtro de Kalman
@@ -133,7 +133,7 @@ void Robot::Update(EnvMap envmap)
 	  )
 	{
 		//APIStopRobot();
-		UpdatePositionWithSensorsAndMap(envmap);
+		//UpdatePositionWithSensorsAndMap(envmap);
 		acumulatedDistance = 0.0;
 	}
 
@@ -244,7 +244,7 @@ void Robot::UpdatePositionWithOdometry()
 	static Matrix fp(3, 3);
 	fp.mat[0][0] = 1;
 	fp.mat[0][1] = 0;
-	fp.mat[0][2] = fabs(-deltaY);
+	fp.mat[0][2] = -fabs(deltaY);
 	fp.mat[1][0] = 0;
 	fp.mat[1][1] = 1;
 	fp.mat[1][2] = fabs(deltaX);
@@ -264,7 +264,7 @@ void Robot::UpdatePositionWithOdometry()
 	//Atualiza matriz de covariancias da posição estimada
 	sigmapos = ((fp * sigmapos) * Transpose(fp)) + ((fDeltaRl * sigmaDelta) * Transpose(fDeltaRl));
 
-//sigmapos.Print();
+sigmapos.Print();
 //printf("\rtheta %f \tdPhiR %f\n", pos.mat[2][0], dPhiR);	
 
 	//Limita as variâncias para um valor máximo

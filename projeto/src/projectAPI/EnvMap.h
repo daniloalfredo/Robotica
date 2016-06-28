@@ -10,25 +10,35 @@
 
 #define INFINITE_DISTANCE 999.9
 
-typedef std::pair<float, float> Point;
-typedef std::pair< Point, Point > Segment;
-
 class EnvMap
 {
 	private:
-		std::vector< Segment > segments;
+		class Segment
+		{
+			public:
+				float x1, y1, x2, y2;
+				Segment(float x1, float y1, float x2, float y2) 
+				{
+					this->x1 = x1; this->y1 = y1; 
+					this->x2 = x2; this->y2 = y2;
+				}
+		};
+
+		std::vector<Segment> segments;
 	
 		//Funções Auxiliares
-		float IntersectionPostureToSegment(float x, float y, float theta, Segment seg);
+		float DistancePointToSegment(float x, float y, Segment seg);
+		float DistancePostureToSegment(float x, float y, float theta, Segment seg);
 		
 	public:
 		EnvMap(); //Cria mapa vazio
 		EnvMap(const char* map_filename); //Carrega um mapa de um arquivo
-		void PrintMap(); //Printa o mapa na tela
+		void Print(); //Printa o mapa na tela
 		void LoadFromFile(const char* map_filename);
-		void AddWall(float x0, float y0, float x1, float y1);
+		void AddWall(float x1, float y1, float x2, float y2);
 		float MapDistance(float x, float y, float theta);
 		float MapDistance2(float x, float y, float theta);
+		float DistanceToNearestWall(float x, float y);
 };
 
 #endif

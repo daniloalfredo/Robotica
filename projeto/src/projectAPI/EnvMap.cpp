@@ -9,11 +9,11 @@ EnvMap::EnvMap(const char* map_filename)
 	LoadFromFile(map_filename);
 }
 
-void EnvMap::PrintMap()
+void EnvMap::Print()
 {
 	printf("\rMapa do Ambiente:\n");
 	for(int i = 0; i < (int) segments.size(); i++)
-		printf("\r\tSegmento de (%.2f, %.2f) para (%.2f, %.2f)\n", segments[i].first.first, segments[i].first.second, segments[i].second.first, segments[i].second.second);
+		printf("\r\tSegmento de (%.2f, %.2f) para (%.2f, %.2f)\n", segments[i].x1, segments[i].y1, segments[i].x2, segments[i].y2);
 }
 
 void EnvMap::LoadFromFile(const char* map_filename)
@@ -31,12 +31,10 @@ void EnvMap::LoadFromFile(const char* map_filename)
 		printf("\rErro ao abrir arquivo de mapa.\n");
 }
 
-void EnvMap::AddWall(float x0, float y0, float x1, float y1)
+void EnvMap::AddWall(float x1, float y1, float x2, float y2)
 {
-	Point a(x0, y0);
-	Point b(x1, y1);
-	Segment s(a, b);
-	segments.push_back(s);
+	Segment seg(x1, y1, x2, y2);
+	segments.push_back(seg);
 }
 
 float EnvMap::MapDistance(float x, float y, float theta)
@@ -44,12 +42,7 @@ float EnvMap::MapDistance(float x, float y, float theta)
 	//Verifica quais segmentos o vetor intersecta e guarda
 	float min_dist = INFINITE_DISTANCE;
 	for(int i = 0; i < (int) segments.size(); i++)
-	{
-		float dist = IntersectionPostureToSegment(x, y, theta, segments[i]);
-		
-		if(dist < min_dist)
-			min_dist = dist;
-	}
+		min_dist = fmin(min_dist, DistancePostureToSegment(x, y, theta, segments[i]));
 	
 	return min_dist;
 }
@@ -60,12 +53,26 @@ float EnvMap::MapDistance2(float x, float y, float theta)
 	return fmin(MapDistance(x, y, theta-sensorOpening), MapDistance(x, y, theta+sensorOpening));
 }
 
+float EnvMap::DistanceToNearestWall(float x, float y)
+{
+	float distance = INFINITE_DISTANCE;
+
+	for(int i = 0; i < (int) segments.size(); i++)
+		distance = fmin(distance, DistancePointToSegment(x, y, segments[i]));
+
+	return distance;
+}
+
 //--------------------------------------------------------------
 //Funções Auxiliares
 //--------------------------------------------------------------
 
-//Retorna a distância do vetor ao segmento de reta (se não houver intersecção retorna distancia infinita)
-float EnvMap::IntersectionPostureToSegment(float x, float y, float theta, Segment seg)
+float EnvMap::DistancePointToSegment(float x, float y, Segment seg)
+{
+	
+}
+
+float EnvMap::DistancePostureToSegment(float x, float y, float theta, Segment seg)
 {
 	float angle = to_2pi_range(theta);
 
@@ -83,10 +90,10 @@ float EnvMap::IntersectionPostureToSegment(float x, float y, float theta, Segmen
 	float p1_x = x + increment;
 	float p1_y = a1*p1_x + b1;
 
-	float p2_x = seg.first.first;
-	float p2_y = seg.first.second;
-	float p3_x = seg.second.first+0.001;
-	float p3_y = seg.second.second;
+	float p2_x = seg.x1;
+	float p2_y = seg.y1;
+	float p3_x = seg.x2+0.001;
+	float p3_y = seg.y2;
 	
 	//-------------------------------------------
 	//Colisão entre 2 segmentos de reta (p0, p1) e (p2, p3)
