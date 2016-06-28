@@ -91,20 +91,19 @@ class Matrix
 		
 		void Print()
 		{
-			printf("\r[");
+			printf("\r[\n");
 			for(int i = 0; i < (int) mat.size(); i++)
 			{
+				printf("\r");
 				for(int j = 0; j < (int) mat[i].size(); j++)
-					printf("\r%.2f ", mat[i][j]);
-				
-				if(i < ((int) mat.size())-1)
-					printf("\r\n");
+					printf("%f ", mat[i][j]);
+				printf("\n");
 			}
 			printf("\r]\n");
 		}
 		
 		//Operador de atribuição
-		Matrix& operator=(Matrix& o)
+		void operator=(const Matrix& o)
     	{
 		    mat.resize(o.mat.size());
 		    
@@ -116,8 +115,6 @@ class Matrix
 		        for(int j = 0; j < (int) mat[i].size(); j++) 
 		            mat[i][j] = o.mat[i][j];
 		    }
-		        
-		    return *this;
 		}
 		
 		//Multiplicar por constante (a constante tem que ficar depois ex: M*5.0)

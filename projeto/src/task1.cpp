@@ -1,8 +1,8 @@
 #include "RobotAPI.h"
 #include "Robot.h"
 
-#define MAP_FILENAME "ini/envmap.ini"
-#define PATH_FILENAME "ini/pathA.ini"
+#define MAP_FILENAME "ini/envmapBig.ini"
+#define PATH_FILENAME "ini/pathBig.ini"
            
 int main(int argc, char* argv[])
 {   
@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
 		    	monstrinho.Update(testmap);
 		    	
 		    	//Printa o log do robô
-		    	monstrinho.Log(testmap);
+		    	//monstrinho.Log(testmap);
 	 
 		        //Espera um tempo antes da próxima atualização
 		        APIWait();

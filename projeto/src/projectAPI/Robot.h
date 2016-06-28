@@ -19,8 +19,7 @@ class Robot
 		float K_RHO;
 		float K_ALPHA;
 		float K_BETA;
-		float WHEEL1_R;
-		float WHEEL2_R;
+		float WHEEL_R;
 		float WHEEL_L;
 		
 		//Posição do robô
