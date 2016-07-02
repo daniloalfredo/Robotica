@@ -8,15 +8,13 @@ int main(int argc, char* argv[])
 {   
 	//Se conseguiu conectar com a API
     if (APIInitConection())
-    {
-        printf("\rConexão efetuada.\n");
-        
+    {   
         //Define o mapa do experimento
-        EnvMap testmap(MAP_FILENAME);
-        testmap.Print();
+        EnvMap envmap(MAP_FILENAME);
+        envmap.Print();
         
         //Inicializa o Robô
-        Robot monstrinho;
+        Robot monstrinho(envmap);
         monstrinho.LoadPath(PATH_FILENAME);
        
        	//Começa a simulação
@@ -27,16 +25,16 @@ int main(int argc, char* argv[])
         	//---------------------------------------------------------
         	//LOOP DA SIMULAÇÃO
         	//---------------------------------------------------------
-		    while(APISimulationIsRunning())
+		    while(APISimulationIsRunning() && !monstrinho.FinishedWork())
 		    {    		    
-		    	//Atualiza o robô
-		    	monstrinho.Update(testmap);
+                //Atualiza o robô
+                monstrinho.Update();
 		    	
-		    	//Printa o log do robô
-		    	//monstrinho.Log(testmap);
+                //Printa o log do robô
+                //monstrinho.Log();
 	 
-		        //Espera um tempo antes da próxima atualização
-		        APIWait();
+                //Espera um tempo antes da próxima atualização
+                APIWait();
 		    }
 		    //---------------------------------------------------------
 		   

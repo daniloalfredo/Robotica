@@ -8,6 +8,9 @@ INCLUDEPATHS  = -I ./src -I ./src/robotAPI -I ./src/vrepAPI -I ./src/projectAPI
 
 #Compile to run in the real robot
 real: clean
+	#Deactivate automatic white balance
+	raspivid -awb off
+
 	#Deactivate V-REP flag in projectAPI/RobotAPI.h
 	sed -i -- 's/#define USING_VREP 1/#define USING_VREP 0/g' src/projectAPI/RobotAPI.h 
 
@@ -34,6 +37,7 @@ real: clean
 	g++ src/testSonar.cpp obj/*.o -o bin/testSonar.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/testCamera.cpp obj/*.o -o bin/testCamera.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/testLine.cpp obj/*.o -o bin/testLine.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
+	g++ src/markov.cpp obj/*.o -o bin/markov.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	echo 'Done.'
 
 #Compile to run in V-REP simulation
@@ -64,6 +68,7 @@ sim: clean
 	g++ src/testSonar.cpp obj/*.o -o bin/testSonar.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	g++ src/testCamera.cpp obj/*.o -o bin/testCamera.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	g++ src/testLine.cpp obj/*.o -o bin/testLine.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
+	g++ src/markov.cpp obj/*.o -o bin/markov.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	echo 'Done.'
 
 #Clear binary and object files

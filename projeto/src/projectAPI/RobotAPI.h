@@ -64,13 +64,14 @@ void APIWait();
 int APIGetKey();
 float APIGetSimulationTimeInSecs();
 void APIGetTrueRobotPosition(Matrix* realpos);
+void APIGetTrueRobotPosition(float* realpos);
 void APIReadOdometers(float* dPhiL, float* dPhiR);
 void APISetRobotSpeed(float phiL, float phiR);
 void APIStopRobot();
 cv::Mat APIReadCamera();
 void APISavePicture(cv::Mat picture);
 float APIReadSonarLeft();
-float APIReadSonarRight();
 float APIReadSonarFront();
+float APIReadSonarRight();
 
 #endif

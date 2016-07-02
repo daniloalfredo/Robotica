@@ -69,7 +69,39 @@ float EnvMap::DistanceToNearestWall(float x, float y)
 
 float EnvMap::DistancePointToSegment(float x, float y, Segment seg)
 {
-	
+	float dx = seg.x2 - seg.x1;
+    float dy = seg.y2 - seg.y1;
+    
+    // It's a point not a line segment.
+    if ((dx == 0) && (dy == 0))
+    {
+        dx = x - seg.x1;
+        dy = y - seg.y1;
+        return sqrt(dx * dx + dy * dy);
+    }
+
+    // Calculate the t that minimizes the distance.
+    float t = ((x - seg.x1) * dx + (y - seg.y1) * dy) / (dx * dx + dy * dy);
+
+    // See if this represents one of the segment's
+    // end points or a point in the middle.
+    if (t < 0)
+    {
+        dx = x - seg.x1;
+        dy = y - seg.y1;
+    }
+    else if (t > 1)
+    {
+        dx = x - seg.x2;
+        dy = y - seg.y2;
+    }
+    else
+    {
+        dx = x - (seg.x1 + t*dx);
+        dy = y - (seg.y1 + t*dy);
+    }
+
+    return sqrt(dx * dx + dy * dy);
 }
 
 float EnvMap::DistancePostureToSegment(float x, float y, float theta, Segment seg)
@@ -115,4 +147,14 @@ float EnvMap::DistancePostureToSegment(float x, float y, float theta, Segment se
     }
         
     return INFINITE_DISTANCE;
+}
+
+float EnvMap::GetSizeX()
+{
+	return 4.0;	//Desenvolver um algoritmo que extrai esse tamanho do vetor de paredes...
+}
+
+float EnvMap::GetSizeY()
+{
+	return 4.0; //Desenvolver um algoritmo que extrai esse tamanho do vetor de paredes...
 }

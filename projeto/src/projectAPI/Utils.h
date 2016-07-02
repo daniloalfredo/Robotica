@@ -17,8 +17,12 @@
 //Arquivos
 bool file_exists(const char* fname);
 
-//Obter sinal do número
+//Obter sinal de um número
 float fsignal(float v);
+
+//Distâncias
+float EuclidianDistance(float x1, float y1, float x2, float y2);
+float SquareDistance(float x1, float y1, float x2, float y2);
 
 //Números aleatórios
 float rand_beetween_0_and_1();

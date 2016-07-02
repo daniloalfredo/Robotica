@@ -25,7 +25,7 @@ bool APIInitConection()
 {
 	if(!cap.isOpened())
 	{
-		printf("\rError. Could not open VideoCapture\n");
+		printf("\rErro. Incapaz de iniciar captura de vídeo.\n");
         return false;
 	}
 
@@ -49,18 +49,18 @@ bool APIInitConection()
     #elif USING_VREP == 0
         if (PIN_MODE==PIN_BCM)
         {
-            printf("\rPins in BCM mode.\n");
+            printf("\rPinos em modo BCM.\n");
             
             if (wiringPiSetupGpio()<0)
             {
-                printf("\rCould not setup GPIO pins\n");
+                printf("\rErro. Incapaz de setar pinos GPIO.\n");
                 return false;
             }
         } 
 
         else 
         {
-            printf("\rPins in wiringPi mode.\n");
+            printf("\rPinos em modo wiringPi.\n");
             wiringPiSetup();
         }
 
@@ -177,6 +177,34 @@ void APIGetTrueRobotPosition(Matrix* realpos)
     #endif
 }
 
+void APIGetTrueRobotPosition(float* realpos)
+{
+    #if USING_VREP == 1
+        static simxFloat real[3];
+        simxInt ret = simxGetObjectPosition(clientID, ddRobotHandle, -1, real, simx_opmode_oneshot_wait);
+        if (ret > 0) {
+            printf("\rErro ao ler posição do robô.\n");
+            return;
+        }
+     
+        static simxFloat orientation[3];
+        ret = simxGetObjectOrientation(clientID, ddRobotHandle, -1, orientation, simx_opmode_oneshot_wait);
+        if (ret > 0) {
+            printf("\rErro ao ler orientação do robô.\n");
+            return;
+        }
+
+        realpos[0] = real[0];
+        realpos[1] = real[1];
+        realpos[2] = to_pi_range(orientation[2]);
+
+    #elif USING_VREP == 0
+        realpos[0] = -1;
+        realpos[1] = -1;
+        realpos[2] = -1;
+    #endif
+}
+
 void APIReadOdometers(float* dPhiL, float* dPhiR)
 {
     #if USING_VREP == 1
@@ -264,26 +292,6 @@ float APIReadSonarLeft()
     #endif
 }
 
-float APIReadSonarRight()
-{
-    #if USING_VREP == 1
-        simxUChar detectionState;
-        simxInt detectedObjectHandle;
-        simxFloat detectedPoint[3];
-        simxFloat detectedSurfaceNormalVector[3];
-        
-        simxReadProximitySensor(clientID, sonarR, &detectionState, detectedPoint, &detectedObjectHandle, detectedSurfaceNormalVector, simx_opmode_oneshot);
-        if (detectionState != 0)
-            return detectedPoint[2];
-        else
-            return -1;
-
-    #elif USING_VREP == 0
-        return sonarR.measureDistance();
-
-    #endif
-}
-
 float APIReadSonarFront()
 {
     #if USING_VREP == 1
@@ -300,6 +308,26 @@ float APIReadSonarFront()
 
     #elif USING_VREP == 0
         return sonarF.measureDistance();    
+
+    #endif
+}
+
+float APIReadSonarRight()
+{
+    #if USING_VREP == 1
+        simxUChar detectionState;
+        simxInt detectedObjectHandle;
+        simxFloat detectedPoint[3];
+        simxFloat detectedSurfaceNormalVector[3];
+        
+        simxReadProximitySensor(clientID, sonarR, &detectionState, detectedPoint, &detectedObjectHandle, detectedSurfaceNormalVector, simx_opmode_oneshot);
+        if (detectionState != 0)
+            return detectedPoint[2];
+        else
+            return -1;
+
+    #elif USING_VREP == 0
+        return sonarR.measureDistance();
 
     #endif
 }

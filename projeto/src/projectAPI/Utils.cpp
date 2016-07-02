@@ -1,9 +1,13 @@
 #include "Utils.h"
 
+//Arquivos
+
 bool file_exists(const char* fname)
 {
     return (access(fname, F_OK) != -1);
 }
+
+//Obter sinal de um número
 
 float fsignal(float v)
 {
@@ -11,6 +15,20 @@ float fsignal(float v)
 		return 1.0;
 	return -1.0;
 }
+
+//Distâncias
+
+float EuclidianDistance(float x1, float y1, float x2, float y2)
+{
+    return sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
+}
+
+float SquareDistance(float x1, float y1, float x2, float y2)
+{
+    return ((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
+}
+
+//Números aleatórios
 
 float rand_beetween_0_and_1()
 {
@@ -34,12 +52,16 @@ float rand_signal()
 	return -1.0;
 }
 
+//Tempo
+
 TimeStamp GetTimeMicroSecs()
 {
 	struct timeval nowTimeVal;
 	gettimeofday(&nowTimeVal, 0);
 	return (1000000 * (TimeStamp)nowTimeVal.tv_sec + nowTimeVal.tv_usec);
 }
+
+//Funções de Ângulos
 
 float to_pi_range(float radians)
 {
@@ -99,6 +121,8 @@ float smallestAngleDiff(float target, float source)
     
     return a;
 }
+
+//Distribuição de probabilidade
 
 double normalDistribution(double x)
 {
@@ -203,6 +227,8 @@ float GaussianCompatibility(float desiredMeasure, float realMeasure, float devia
 	//printf("gaussian %f\n", (-fabs(realMeasure - desiredMeasure))/deviation);
 	return 2*normalDistribution((-fabs(realMeasure - desiredMeasure))/deviation);
 }
+
+//Matrizes
 
 Matrix operator+(Matrix A, Matrix B)
 {
