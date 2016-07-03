@@ -680,7 +680,8 @@ int main(int argc, char* argv[])
 	            {
 	                //Do only if action step was successfull and sonar data is good
 	                //printf("\rstart perception update...");fflush(stdout);
-	                perceptionUpdate(bel, distF, distL, distR);
+	                APIStopRobot();
+                    perceptionUpdate(bel, distF, distL, distR);
 	                printf("\rperception update done\n");
 	            }
 

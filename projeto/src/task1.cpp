@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
                 monstrinho.Update();
 		    	
                 //Printa o log do robô
-                //monstrinho.Log();
+                monstrinho.Log();
 	 
                 //Espera um tempo antes da próxima atualização
                 APIWait();

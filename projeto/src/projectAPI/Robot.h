@@ -49,6 +49,7 @@ class Robot
 		//Variáveis do Filtro de Kalman
 		Matrix sigmapos;					//Matriz de covariância da posição estimada (modelo de incerteza)
 		Matrix R;							//Matriz de covariância do sensor
+		float posdeviation[3];				//Desvio padrão da posição do robô
 
 		//Funções auxiliares
 		void UpdateSonarReadings(); 		//Atualiza a leitura dos sonares do robô e armazena em sonarReading[]
@@ -59,6 +60,7 @@ class Robot
 		bool PerceptionUpdateCondition();	//Decide quando fazer atualização de percepção	
 		void PerceptionUpdate();			//Melhora a estimativa de posição do robô com os sensores e o mapa
 		Matrix EstimateXz(); 				//Faz uma estimativa da posição do robô com base nos sensores
+		float RobotToSensorPointDist(float x, float y, float theta, float Sx, float Sy, float Stheta, float sensorDist);
 	
 	public:
 		//Funções principais de interface do robô

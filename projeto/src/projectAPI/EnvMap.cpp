@@ -60,7 +60,7 @@ float EnvMap::DistanceToNearestWall(float x, float y)
 	for(int i = 0; i < (int) segments.size(); i++)
 		distance = fmin(distance, DistancePointToSegment(x, y, segments[i]));
 
-	return distance;
+	return sqrt(distance);
 }
 
 //--------------------------------------------------------------
@@ -77,7 +77,7 @@ float EnvMap::DistancePointToSegment(float x, float y, Segment seg)
     {
         dx = x - seg.x1;
         dy = y - seg.y1;
-        return sqrt(dx * dx + dy * dy);
+        return (dx * dx + dy * dy); //distância quadrática
     }
 
     // Calculate the t that minimizes the distance.
@@ -101,7 +101,7 @@ float EnvMap::DistancePointToSegment(float x, float y, Segment seg)
         dy = y - (seg.y1 + t*dy);
     }
 
-    return sqrt(dx * dx + dy * dy);
+    return (dx * dx + dy * dy); //distância quadratica
 }
 
 float EnvMap::DistancePostureToSegment(float x, float y, float theta, Segment seg)

@@ -41,9 +41,10 @@ float to_pos_deg(float radians);
 float smallestAngleDiff(float target, float source);
 
 //Distribuição de probabilidade
-double normalDistribution(double x);
-double normalDistributionIntegrated(double x); //deprecated
+double NormalDistribution(double x);
+double NormalDistributionIntegrated(double x);
 float GaussianCompatibility(float desiredMeasure, float realMeasure, float deviation);
+float HansGaussian(float dist, float sigma, float step);
 
 //Matrizes
 class Matrix

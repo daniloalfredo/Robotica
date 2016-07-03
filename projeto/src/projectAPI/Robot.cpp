@@ -6,15 +6,15 @@ Robot::Robot(EnvMap envmap)
 	this->envmap = envmap;
 
 	//Inicializa as constantes de controle de movimento
-	K_RHO = 0.2;
+	K_RHO = 0.1;
 	K_ALPHA = 2.0;
-	K_BETA = -0.5;
+	K_BETA = -0.4;
 	WHEEL_R = 0.0325;
 	WHEEL_L = 0.075;
 	
 	//Inicializa variáveis de odometria
-	kl = 0.01;
-	kr = 0.01;
+	kl = 0.1;
+	kr = 0.1;
 	acumulatedDistance = 0.0;
 	
 	//Variáveis do Filtro de Kalman
@@ -39,6 +39,7 @@ Robot::Robot(EnvMap envmap)
 	pos.ResizeAndNulify(3, 1);
 	realpos.ResizeAndNulify(3, 1);
 	sigmapos.ResizeAndNulify(3, 3);
+	posdeviation[0] = 0.0; posdeviation[1] = 0.0; posdeviation[2] = 0.0;
 }
 
 bool Robot::LoadPath(const char* PATH_FILENAME)
@@ -90,7 +91,8 @@ void Robot::Log()
 	printf("\r----------------------------------------------------\n");
 	printf("\rPosição Real:        [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]);
 	printf("\rPosição Estimada:    [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", pos.mat[0][0], pos.mat[1][0], pos.mat[2][0]);
-	printf("\rErro de Posição:     [%.4f, %.4f, %.4f]\n", fabs(realpos.mat[0][0]-pos.mat[0][0]), fabs(realpos.mat[1][0]-pos.mat[1][0]), fabs(smallestAngleDiff(realpos.mat[2][0], pos.mat[2][0])));
+	printf("\rErro de Posição:     [%.4f, %.4f, %.4f°]\n", fabs(realpos.mat[0][0]-pos.mat[0][0]), fabs(realpos.mat[1][0]-pos.mat[1][0]), to_deg(fabs(smallestAngleDiff(realpos.mat[2][0], pos.mat[2][0]))));
+	printf("\rDesvio de Posição:   [%.4f, %.4f, %.4f°]\n", posdeviation[0], posdeviation[1], to_deg(posdeviation[2]));
 	printf("\rVariância de Posição:[%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", sigmapos.mat[0][0], sigmapos.mat[1][1], sigmapos.mat[2][2]);
 	printf("\rLeitura dos Sonares: [%f, %f, %f]  //[L, F, R]\n", sonarReading[LEFT], sonarReading[FRONT], sonarReading[RIGHT]);
 	printf("\rNumero de voltas:    [%d]\n", num_voltas);
@@ -287,21 +289,30 @@ void Robot::ActionUpdate()
 	//Atualiza matriz de covariancias da posição estimada
 	sigmapos = ((fp * sigmapos) * Transpose(fp)) + ((fDeltaRl * sigmaDelta) * Transpose(fDeltaRl));
 
-	//sigmapos.Print();
-	//printf("\rtheta %f \tdPhiR %f\n", pos.mat[2][0], dPhiR);	
+	//Atualiza o desvio padrão da posição do robô	
+	posdeviation[0] = fmin(envmap.GetSizeX(), sqrt(sigmapos.mat[0][0]));
+	posdeviation[1] = fmin(envmap.GetSizeY(), sqrt(sigmapos.mat[1][1]));
+	posdeviation[2] = fmin(PI_TIMES_2, sqrt(sigmapos.mat[2][2]));
 
-	//Limita as variâncias para um valor máximo
-	//sigmapos.mat[0][0] = fmin(4.0, sigmapos.mat[0][0]);
-	//sigmapos.mat[1][1] = fmin(4.0, sigmapos.mat[1][1]);
-	//sigmapos.mat[2][2] = fmin(2*PI, sigmapos.mat[2][2]);
+	//Cheat desvio igual ao erro real
+	posdeviation[0] = fabs(realpos.mat[0][0]-pos.mat[0][0]);//fmin(envmap.GetSizeX(), sqrt(sigmapos.mat[0][0]));
+	posdeviation[1] = fabs(realpos.mat[1][0]-pos.mat[1][0]);//fmin(envmap.GetSizeY(), sqrt(sigmapos.mat[1][1]));
+	posdeviation[2] = fabs(smallestAngleDiff(realpos.mat[2][0], pos.mat[2][0]));//fmin(PI_TIMES_2, sqrt(sigmapos.mat[2][2]));
 }
 
 bool Robot::PerceptionUpdateCondition()
 {
 	return
 	(
+		//Todos os sonares estão com leituras válidas
 		(sonarReading[LEFT] >= 0 && sonarReading[FRONT] >= 0 && sonarReading[RIGHT] >= 0)
-		&& (acumulatedDistance > 1.0 /*|| (sigmapos.mat[0][0] >= 1.0 || sigmapos.mat[1][1] >= 1.0 || sigmapos.mat[2][2] >= 20.0*PI_DIV_180)*/)
+		
+		&& 
+			//O robô andou uma certa distancia ou o desvio em alguma variável passou de um limiar
+			(
+				acumulatedDistance > 0.5
+				|| (posdeviation[0] >= 0.3 || posdeviation[1] >= 0.3 || posdeviation[2] >= 5.0*PI_DIV_180)
+			)
 	);
 }
 
@@ -326,29 +337,52 @@ void Robot::PerceptionUpdate()
 	sigmapos = sigmapos - ((K * sigmav) * Transpose(K));
 }
 
-Matrix Robot::EstimateXz()
+float Robot::RobotToSensorPointDist(float Rx, float Ry, float Rtheta, float Sx, float Sy, float Stheta, float sensorDist)
 {
+	float point[2];
+	float pSR[2];
+
+	//Sensor to robot
+    pSR[0] = Sx + sensorDist * cos(Stheta);
+    pSR[1] = Sy + sensorDist * sin(Stheta);
+    
+    //Robot to world
+    float sintheta = sin(Rtheta);
+    float costheta = cos(Rtheta);
+    point[0] = Rx + (pSR[0] * costheta - pSR[1] * sintheta);
+    point[1] = Ry + (pSR[0] * sintheta + pSR[1] * costheta);
+
+	return envmap.DistanceToNearestWall(point[0], point[1]);
+}
+
+Matrix Robot::EstimateXz()
+{	
+	printf("\rCalculando XZ...\n");
+
+	//Estimativa de posição
 	static Matrix xz(3, 1);
 
 	//Posicionamento dos sensores em relação ao robô
-	float sensorFrontPos[3] = {0.03, 0, 0};
-	float sensorLeftPos[3]  = {0.03, 0, PI/2.0};
-	float sensorRightPos[3] = {0.03, 0, -PI/2.0};
+	static float sensorLeftPos[3]  = {0.03, 0, PI/2.0};
+	static float sensorFrontPos[3] = {0.03, 0, 0};
+	static float sensorRightPos[3] = {0.03, 0, -PI/2.0};
 
-	static float MAP_SIZE_X = 4.0;
-	static float MAP_SIZE_Y = 4.0;
-	static float sensorDeviation = 0.075;
+	static float sensorDeviation = 0.05;
+	static float SONAR_ANGLE = 7.5*PI_DIV_180;
 
-	static float stepX = MAP_SIZE_X / 80.0;
-	static float stepY = MAP_SIZE_Y / 80.0;
-	static float stepTheta = 2.5*PI_DIV_180;
+	static float stepX = envmap.GetSizeX() / 80.0;
+	static float stepY = envmap.GetSizeY() / 80.0;
+	static float stepTheta = 1.0*PI_DIV_180;
+	static float stepDiffAngle = 1.5*PI_DIV_180;
 
-	float minX = pos.mat[0][0] - sigmapos.mat[0][0];
-	float maxX = pos.mat[0][0] + sigmapos.mat[0][0];
-	float minY = pos.mat[1][0] - sigmapos.mat[1][1];
-	float maxY = pos.mat[1][0] + sigmapos.mat[1][1];
-	float minTheta = pos.mat[2][0] - sigmapos.mat[2][2];
-	float maxTheta = pos.mat[2][0] + sigmapos.mat[2][2];
+	float minX = pos.mat[0][0] - posdeviation[0];
+	float maxX = pos.mat[0][0] + posdeviation[0];
+	float minY = pos.mat[1][0] - posdeviation[1];
+	float maxY = pos.mat[1][0] + posdeviation[1];
+	float minTheta = pos.mat[2][0] - posdeviation[2];
+	float maxTheta = pos.mat[2][0] + posdeviation[2];
+
+	float maxCompat = 0.0;
 
 	for(float x = minX; x <= maxX; x += stepX)
 	{
@@ -356,167 +390,44 @@ Matrix Robot::EstimateXz()
 		{
 			for(float theta = minTheta; theta <= maxTheta; theta += stepTheta)
 			{
+				float dL = INFINITE_DISTANCE;
+				float dF = INFINITE_DISTANCE;
+				float dR = INFINITE_DISTANCE;
 
-			}
-		}
-	}
+				float diffAngleMin = sensorLeftPos[2] - SONAR_ANGLE;
+				float diffAngleMax = sensorLeftPos[2] + SONAR_ANGLE;	
+				for(float diffAngle = diffAngleMin; diffAngle <= diffAngleMax; diffAngle += stepDiffAngle)
+					dL = fmin(dL, RobotToSensorPointDist(x, y, theta, sensorLeftPos[0], sensorLeftPos[1], diffAngle, sonarReading[LEFT]));
 
-	printf("\rERRO DA ESTIMATIVA XZ: [%.2fcm, %.2fcm, %.2f°]\n", 100.0*fabs(realpos.mat[0][0]-xz.mat[0][0]), 100.0*fabs(realpos.mat[1][0]-xz.mat[1][0]), to_deg(fabs(smallestAngleDiff(realpos.mat[2][0], xz.mat[2][0]))));
+				diffAngleMin = sensorFrontPos[2] - SONAR_ANGLE;
+				diffAngleMax = sensorFrontPos[2] + SONAR_ANGLE;	
+				for(float diffAngle = diffAngleMin; diffAngle <= diffAngleMax; diffAngle += stepDiffAngle)
+					dF = fmin(dF, RobotToSensorPointDist(x, y, theta, sensorFrontPos[0], sensorFrontPos[1], diffAngle, sonarReading[FRONT]));
 
-	//Simula a melhor estimativa possível
-	xz = realpos;
-	
-	return xz;
-}
+				diffAngleMin = sensorRightPos[2] - SONAR_ANGLE;
+				diffAngleMax = sensorRightPos[2] + SONAR_ANGLE;	
+				for(float diffAngle = diffAngleMin; diffAngle <= diffAngleMax; diffAngle += stepDiffAngle)
+					dR = fmin(dR, RobotToSensorPointDist(x, y, theta, sensorRightPos[0], sensorRightPos[1], diffAngle, sonarReading[RIGHT]));
 
-/*Matrix Robot::EstimateXz()
-{
-	static Matrix xz(3, 1);
-	
-	float deviationX = 2*sqrt(sigmapos.mat[0][0]);
-	float deviationY = 2*sqrt(sigmapos.mat[1][1]);
-	float deviationTheta = 2*sqrt(sigmapos.mat[2][2]);
-	float stepX = 0.0;
-	float stepY = 0.0;
-	float stepTheta = 0.0;
-	float diffX = 0.00001;
-	float diffY = 0.00001;
-	float diffTheta = 0.0001;
-	float bestCompat = 0.0;
-	static float stepIncX = 0.001;
-	static float stepIncY = 0.001;
-	static float stepIncTheta = 0.001 * PI_DIV_180;
-	static float sensorDeviation = 0.8;
+				//float compat = GaussianCompatibility(0.0, dL, sensorDeviation) * GaussianCompatibility(0.0, dF, sensorDeviation) * GaussianCompatibility(0.0, dR, sensorDeviation);
+				//float b = GaussianCompatibility(pos.mat[0][0], x, posdeviation[0])*GaussianCompatibility(pos.mat[1][0], y, posdeviation[1])*GaussianCompatibility(pos.mat[2][0], theta, posdeviation[2]);
+				float compat = HansGaussian(dL, sensorDeviation, stepX)*HansGaussian(dF, sensorDeviation, stepX)*HansGaussian(dR, sensorDeviation, stepX);	
 
-	while(diffX < deviationX)
-	{
-		while(diffY < deviationY)
-		{
-			while(diffTheta < deviationTheta)
-			{
-				float x = pos.mat[0][0] + diffX;
-				float y = pos.mat[1][0] + diffY;
-				float theta = pos.mat[2][0] + diffTheta;
-
-				//O que eu deveria estar vendo se estivesse nessa postura
-				float desiredL = envmap.MapDistance2(x, y, theta+PI_DIV_2);
-				float desiredR = envmap.MapDistance2(x, y, theta-PI_DIV_2);
-				float desiredF = envmap.MapDistance2(x, y, theta);
-				
-				//Calcula compatibilidade com a medição real
-				float compatL = GaussianCompatibility(desiredL, sonarReading[LEFT], sensorDeviation);
-				float compatF = GaussianCompatibility(desiredF, sonarReading[FRONT], sensorDeviation);
-				float compatR = GaussianCompatibility(desiredR, sonarReading[RIGHT], sensorDeviation);
-				
-				float compatSum = compatL + compatR + compatF;
-				
-				if(compatSum > bestCompat)
+				if(compat > maxCompat)
 				{
-					bestCompat = compatSum;
+					maxCompat = compat;
 					xz.mat[0][0] = x;
 					xz.mat[1][0] = y;
-					xz.mat[2][0] = theta;
-				}
-
-				//Inclrementa o diffY
-				if(diffTheta >= 0)
-					diffTheta *= -1;
-				else
-				{
-					diffTheta *= -1;
-					diffTheta += stepTheta;
-					stepTheta += stepIncTheta;
-				}
+					xz.mat[2][0] = to_pi_range(theta);
+				}	
 			}
-
-			//Inclrementa o diffY
-			if(diffY >= 0)
-				diffY *= -1;
-			else
-			{
-				diffY *= -1;
-				diffY += stepY;
-				stepY += stepIncY;
-			}
-		}
-
-		//Incrementa o diffX
-		if(diffX >= 0)
-			diffX *= -1;
-		else
-		{
-			diffX *= -1;
-			diffX += stepX;
-			stepX += stepIncX;
 		}
 	}
 
-	printf("\rERRO DA ESTIMATIVA XZ: [%.2fcm, %.2fcm, %.2f°]\n", 100.0*fabs(realpos.mat[0][0]-xz.mat[0][0]), 100.0*fabs(realpos.mat[1][0]-xz.mat[1][0]), to_deg(fabs(smallestAngleDiff(realpos.mat[2][0], xz.mat[2][0]))));
+	printf("\rERRO DA ESTIMATIVA XZ: [%.2fm, %.2fm, %.2f°]\n", fabs(realpos.mat[0][0]-xz.mat[0][0]), fabs(realpos.mat[1][0]-xz.mat[1][0]), to_deg(fabs(smallestAngleDiff(realpos.mat[2][0], xz.mat[2][0]))));
 
 	//Simula a melhor estimativa possível
 	//xz = realpos;
 	
 	return xz;
-}*/
-
-/*Matrix Robot::EstimateXz()
-{
-	static Matrix xz(3, 1);
-
-	static float MAP_SIZE_X = 4.0;
-	static float MAP_SIZE_Y = 4.0;
-
-	//float diffX = 1.8;
-	//float diffY = 1.8;
-	//float diffTheta = PI;
-
-	static float stepX = 0.025;//diffX / 81.0;
-	static float stepY = 0.025;//diffY / 81.0;
-	static float stepTheta = 2.5*PI_DIV_180;//diffTheta / 81.0;
-	static float sensorDeviation = 0.075;
-
-	float minX = -MAP_SIZE_X/2.0;//pos.mat[0][0] - diffX;
-	float maxX = MAP_SIZE_X/2.0;//pos.mat[0][0] + diffX;
-	float minY = -MAP_SIZE_Y/2.0;//pos.mat[1][0] - diffY;
-	float maxY = MAP_SIZE_Y/2.0;//pos.mat[1][0] + diffY;
-	float minTheta = 0.0;//pos.mat[2][0] - diffTheta;
-	float maxTheta = 359.0*PI_DIV_180;//pos.mat[2][0] + diffTheta;
-	
-	float bestCompat = 0.0;
-	
-	for(float x = minX; x <= maxX; x += stepX)
-	{
-		for(float y = minY; y <= maxY; y += stepY)
-		{
-			for(float theta = minTheta; theta <= maxTheta; theta += stepTheta)
-			{
-				//O que eu deveria estar vendo se estivesse nessa postura
-				float desiredL = envmap.MapDistance2(x, y, theta+PI_DIV_2);
-				float desiredR = envmap.MapDistance2(x, y, theta-PI_DIV_2);
-				float desiredF = envmap.MapDistance2(x, y, theta);
-				
-				//Calcula compatibilidade com a medição real
-				float compatL = GaussianCompatibility(desiredL, sonarReading[LEFT], sensorDeviation);
-				float compatF = GaussianCompatibility(desiredF, sonarReading[FRONT], sensorDeviation);
-				float compatR = GaussianCompatibility(desiredR, sonarReading[RIGHT], sensorDeviation);
-				
-				float compatSum = compatL + compatR + compatF;
-				//printf("\rCompatSum: %f\n", compatSum);
-				if(compatSum > bestCompat)
-				{
-					bestCompat = compatSum;
-					xz.mat[0][0] = x;
-					xz.mat[1][0] = y;
-					xz.mat[2][0] = theta;
-				}
-			}
-		}
-	}
-
-	printf("\rERRO DA ESTIMATIVA XZ: [%.4f, %.4f, %.4f]\n", fabs(realpos.mat[0][0]-xz.mat[0][0]), fabs(realpos.mat[1][0]-xz.mat[1][0]), fabs(smallestAngleDiff(realpos.mat[2][0], xz.mat[2][0])));
-	
-	//Simula a melhor estimativa possível
-	xz = realpos;
-	
-	return xz;
-}*/
+}

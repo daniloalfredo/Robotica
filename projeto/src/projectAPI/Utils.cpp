@@ -124,7 +124,7 @@ float smallestAngleDiff(float target, float source)
 
 //Distribuição de probabilidade
 
-double normalDistribution(double x)
+double NormalDistribution(double x)
 {
 	static float standardNormalCurve[31][10] = 
 	{
@@ -190,34 +190,27 @@ double normalDistribution(double x)
 	return 0.0;
 }
 
-double normalDistributionIntegrated(double x)
+double NormalDistributionIntegrated(double x)
 {
-	if(x < -10.0)return 0.0;
-	if(x > 10.0)return 1.0;
-	// number of steps
-	int N=2000;
-	// range of integration
-	double a=0,b=x;
-	// local variables
-	double s,h,sum=0.;
-	// inialise the variables
-	h=(b-a)/N;
-	// add in the first few terms
-	sum = sum + exp(-a*a/2.) + 4.*exp(-(a+h)*(a+h)/2.);
-	// and the last one
-	sum = sum + exp(-b*b/2.);
-	// loop over terms 2 up to N-1
-	for(int i=1;i<N/2;i++)
-	{
-		s = a + 2*i*h;
-		sum = sum + 2.*exp(-s*s/2.);
-		s = s + h;
-		sum = sum + 4.*exp(-s*s/2.);
-	}
-	// complete the integral
-	sum = 0.5 + h*sum/3./sqrt(8.*atan(1.));
-	// return result
-	return sum;
+    static double a1 =  0.254829592;
+    static double a2 = -0.284496736;
+    static double a3 =  1.421413741;
+    static double a4 = -1.453152027;
+    static double a5 =  1.061405429;
+    static double p  =  0.3275911;
+
+    int sign = 1;
+    
+    if (x < 0)
+        sign = -1;
+
+    x = fabs(x) / 1.414213;//sqrt(2.0);
+
+    // A&S formula 7.1.26
+    double t = 1.0 / (1.0 + p*x);
+    double y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*exp(-x*x);
+
+    return 0.5*(1.0 + sign*y);
 }
 
 float GaussianCompatibility(float desiredMeasure, float realMeasure, float deviation)
@@ -225,7 +218,16 @@ float GaussianCompatibility(float desiredMeasure, float realMeasure, float devia
 	if(realMeasure < 0.0)
 		return 0.0;
 	//printf("gaussian %f\n", (-fabs(realMeasure - desiredMeasure))/deviation);
-	return 2*normalDistribution((-fabs(realMeasure - desiredMeasure))/deviation);
+	return 2*NormalDistribution((-fabs(realMeasure - desiredMeasure))/deviation);
+}
+
+float HansGaussian(float dist, float sigma, float step)
+{
+    float x = fabs(dist);
+    float halfstep = step/2.0;    
+    float zmax = (x+halfstep)/sigma;
+    float zmin = (x-halfstep)/sigma;
+    return NormalDistribution(zmax) - NormalDistribution(zmin);
 }
 
 //Matrizes
