@@ -31,6 +31,7 @@ float rand_signal();
 //Tempo
 typedef long long TimeStamp;
 TimeStamp GetTimeMicroSecs();
+TimeStamp GetTimeMsecs();
 
 //Funções de Ângulos
 float to_pi_range(float radians);

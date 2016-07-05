@@ -138,6 +138,12 @@ void APIWait()
     #endif
 }
 
+void APIWaitMsecs(int msecs)
+{
+    TimeStamp time_begin = GetTimeMsecs();
+    while(GetTimeMsecs() - time_begin < msecs);
+}
+
 int APIGetKey()
 {
     return kb_key;

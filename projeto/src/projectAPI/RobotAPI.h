@@ -61,6 +61,7 @@ bool APIStartSimulation();
 bool APISimulationIsRunning();
 void APIFinishSimulation();
 void APIWait();
+void APIWaitMsecs(int msecs);
 int APIGetKey();
 float APIGetSimulationTimeInSecs();
 void APIGetTrueRobotPosition(Matrix* realpos);

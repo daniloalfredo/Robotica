@@ -1,45 +1,120 @@
 #include "Robot.h"
 
-Robot::Robot(EnvMap envmap)
+Robot::Robot(const char* INIT_FILENAME)
 {
-	//Guarda o mapa do ambiente
-	this->envmap = envmap;
-
-	//Inicializa as constantes de controle de movimento
-	K_RHO = 0.1;
-	K_ALPHA = 2.0;
-	K_BETA = -0.4;
-	WHEEL_R = 0.0325;
-	WHEEL_L = 0.075;
-	
-	//Inicializa variáveis de odometria
-	kl = 0.12;
-	kr = 0.12;
-	acumulatedDistance = 0.0;
-	
-	//Variáveis do Filtro de Kalman
-	R.Resize(3, 3);
-	R.mat[0][0] = 0.1;
-	R.mat[0][1] = 0.0;
-	R.mat[0][2] = 0.0;
-	R.mat[1][0] = 0.0;
-	R.mat[1][1] = 0.1;
-	R.mat[1][2] = 0.0;
-	R.mat[2][0] = 0.0;
-	R.mat[2][1] = 0.0;
-	R.mat[2][2] = 5.0*PI_DIV_180; 
-	
-	//Variáveis do caminho
-	current_goal = -1;
-	reached_goal = true;
-	finishedTask = false;
-	num_voltas = 0;
-	
-	//Inicializa a posição estimada e a incerteza do robô
 	pos.ResizeAndNulify(3, 1);
 	realpos.ResizeAndNulify(3, 1);
 	sigmapos.ResizeAndNulify(3, 3);
 	posdeviation[0] = 0.0; posdeviation[1] = 0.0; posdeviation[2] = 0.0;
+	acumulatedDistance = 0.0;
+	current_goal = -1;
+	reached_goal = true;
+	finishedTask = false;
+	num_voltas = 0;
+
+	this->Init(INIT_FILENAME);
+}
+
+void Robot::Init(const char* INIT_FILENAME)
+{
+	char aux[100];
+
+	FILE* file_init = fopen(INIT_FILENAME, "r");
+
+	if(file_init != NULL)
+	{
+		//Mapa do ambiente
+		fscanf(file_init, "%*[^:] %*c %[^\n]", aux);
+		this->envmap.LoadFromFile(aux);
+		this->envmap.Print();
+
+		//Path
+		fscanf(file_init, "%*[^:] %*c %[^\n]", aux);
+		this->LoadPath(aux);
+
+		//Object Detector
+		fscanf(file_init, "%*[^:] %*c %[^\n]", aux);
+		objectDetector.LoadParams(aux);
+		fscanf(file_init, "%*[^:] %*c %[^\n]", aux);
+		objectDetector.LoadObjects(aux);
+		fscanf(file_init, "%*[^:] %*c %[^\n]", aux);
+		objectDetector.LoadDictionary(aux);
+		fscanf(file_init, "%*[^:] %*c %[^\n]", aux);
+		objectDetector.LoadSVM(aux);		
+
+		printf("\rLoading Robot Params...\n");
+
+		//WHEEL_R e WHEEL_L
+		fscanf(file_init, "%*[^:] %*c %f", &WHEEL_R);
+		fscanf(file_init, "%*[^:] %*c %f", &WHEEL_L);
+		printf("\r\tWHEEL_R: %fm\n", WHEEL_R);
+		printf("\r\tWHEEL_L: %fm\n", WHEEL_L);
+
+		//Sonar params
+		fscanf(file_init, "%*[^:] %*c %f %f %f", &sensorLeftPos[0], &sensorLeftPos[1], &sensorLeftPos[2]);
+		sensorLeftPos[2] = sensorLeftPos[2]*PI_DIV_180;
+		fscanf(file_init, "%*[^:] %*c %f %f %f", &sensorFrontPos[0], &sensorFrontPos[1], &sensorFrontPos[2]);
+		sensorFrontPos[2] = sensorFrontPos[2]*PI_DIV_180;
+		fscanf(file_init, "%*[^:] %*c %f %f %f", &sensorRightPos[0], &sensorRightPos[1], &sensorRightPos[2]);
+		sensorRightPos[2] = sensorRightPos[2]*PI_DIV_180;
+		fscanf(file_init, "%*[^:] %*c %f", &SENSOR_DEVIATION);
+		fscanf(file_init, "%*[^:] %*c %f", &SENSOR_OPENING_ANGLE);
+		SENSOR_OPENING_ANGLE = to_rad(SENSOR_OPENING_ANGLE/2.0);
+		printf("\r\tSONAR_LEFT_RELATIVE_POS: %fm %fm %f°\n", sensorLeftPos[0], sensorLeftPos[1], to_deg(sensorLeftPos[2]));
+		printf("\r\tSONAR_FRONT_RELATIVE_POS: %fm %fm %f°\n", sensorFrontPos[0], sensorFrontPos[1], to_deg(sensorFrontPos[2]));
+		printf("\r\tSONAR_RIGHT_RELATIVE_POS: %fm %fm %f°\n", sensorRightPos[0], sensorRightPos[1], to_deg(sensorRightPos[2]));
+		printf("\r\tSONAR_DEVIATION: %fm\n", SENSOR_DEVIATION);
+		printf("\r\tSONAR_OPENING_ANGLE: %f°\n", to_deg(SENSOR_OPENING_ANGLE));
+
+		//Motion control params
+		fscanf(file_init, "%*[^:] %*c %f", &K_RHO);
+		fscanf(file_init, "%*[^:] %*c %f", &K_ALPHA);
+		fscanf(file_init, "%*[^:] %*c %f", &K_BETA);
+		printf("\r\tK_RHO: %f\n", K_RHO);
+		printf("\r\tK_ALPHA: %f\n", K_ALPHA);
+		printf("\r\tK_BETA: %f\n", K_BETA);
+
+		//Odometry
+		fscanf(file_init, "%*[^:] %*c %f", &ODOMETRY_KL);
+		fscanf(file_init, "%*[^:] %*c %f", &ODOMETRY_KR);
+		printf("\r\tODOMETRY_KL: %f\n", ODOMETRY_KL);
+		printf("\r\tODOMETRY_KR: %f\n", ODOMETRY_KR);
+
+		//Perception update condition
+		fscanf(file_init, "%*[^:] %*c %f", &ACUMULATED_DISTANCE_THRESHOLD);
+		fscanf(file_init, "%*[^:] %*c %f %f %f", &DEVIATION_THRESHOLD_X, &DEVIATION_THRESHOLD_Y, &DEVIATION_THRESHOLD_THETA);
+		DEVIATION_THRESHOLD_THETA = to_rad(DEVIATION_THRESHOLD_THETA);
+		printf("\r\tACUMULATED_DISTANCE_THRESHOLD: %fm\n", ACUMULATED_DISTANCE_THRESHOLD);
+		printf("\r\tDEVIATION_THRESHOLDS: %fm %fm %f°\n", DEVIATION_THRESHOLD_X, DEVIATION_THRESHOLD_Y, to_deg(DEVIATION_THRESHOLD_THETA));
+
+		//Kalman R matrix
+		float matAux[3][3];
+		fscanf(file_init, "%*[^:] %*c %f %f %f %f %f %f %f %f %f",
+		 &matAux[0][0], &matAux[0][1], &matAux[0][2],
+		 &matAux[1][0], &matAux[1][1], &matAux[1][2],
+		 &matAux[2][0], &matAux[2][1], &matAux[2][2]);
+
+		R.Resize(3, 3);
+		R.mat[0][0] = matAux[0][0];
+		R.mat[0][1] = matAux[0][1];
+		R.mat[0][2] = matAux[0][2];
+		R.mat[1][0] = matAux[1][0];
+		R.mat[1][1] = matAux[1][1];
+		R.mat[1][2] = matAux[1][2];
+		R.mat[2][0] = matAux[2][0];
+		R.mat[2][1] = matAux[2][1];
+		R.mat[2][2] = to_rad(matAux[2][2]);
+
+		printf("\r\tR Matrix\n");
+		printf("\r\t\t%f %f %f\n", R.mat[0][0], R.mat[0][1], R.mat[0][2]);
+		printf("\r\t\t%f %f %f\n", R.mat[1][0], R.mat[1][1], R.mat[1][2]);
+		printf("\r\t\t%f %f %f\n", R.mat[2][0], R.mat[2][1], R.mat[2][2]);
+
+		fclose(file_init);
+	}
+
+	else
+		printf("\rError. Could not open ´%s´.\n", INIT_FILENAME);
 }
 
 bool Robot::LoadPath(const char* PATH_FILENAME)
@@ -105,6 +180,21 @@ void Robot::Update()
 	//Gerencia os objetivos do robô
 	ManageObjectives();
 
+	//Se o objetivo for tirar uma foto e detectar objeto
+	if(goal[0] >= 999.0)
+	{
+		APIStopRobot();
+		printf("\n\rDetecting Object...\n");
+		char objectName[100];
+		cv::Mat frame(1, 1, CV_32FC1);
+		frame = APIReadCamera();
+		objectDetector.Detect(frame, objectName);
+		printf("\rObject: %s\n\n", objectName);
+		APIWaitMsecs(1000);
+		reached_goal = true;
+		return;
+	}
+
 	//Olha posição real do robô para comparação
 	APIGetTrueRobotPosition(&realpos);
 
@@ -117,8 +207,8 @@ void Robot::Update()
 	//Passo de Atualização de Percepção
 	if(PerceptionUpdateCondition())
 	{
-		//APIStopRobot();
-		//PerceptionUpdate();
+		APIStopRobot();
+		PerceptionUpdate();
 		acumulatedDistance = 0.0;
 	}
 
@@ -259,10 +349,10 @@ void Robot::ActionUpdate()
 
 	//Calcula o sigmaDelta
 	Matrix sigmaDelta(2, 2);
-	sigmaDelta.mat[0][0] = kr * fabs(deltaSr);
+	sigmaDelta.mat[0][0] = ODOMETRY_KR * fabs(deltaSr);
 	sigmaDelta.mat[0][1] = 0.0;
 	sigmaDelta.mat[1][0] = 0.0;
-	sigmaDelta.mat[1][1] = kl * fabs(deltaSl);
+	sigmaDelta.mat[1][1] = ODOMETRY_KL * fabs(deltaSl);
 
 	//Calcula Fp
 	Matrix fp(3, 3);
@@ -294,9 +384,9 @@ void Robot::ActionUpdate()
 	posdeviation[2] = to_2pi_range(fmin(PI_TIMES_2, sqrt(sigmapos.mat[2][2])));
 
 	//Teste com desvio perfeito
-	//posdeviation[0] = fabs(realpos.mat[0][0]-pos.mat[0][0]);
-	//posdeviation[1] = fabs(realpos.mat[1][0]-pos.mat[1][0]);
-	//posdeviation[2] = angleDiff(realpos.mat[2][0], pos.mat[2][0]);
+	posdeviation[0] = fabs(realpos.mat[0][0]-pos.mat[0][0]);
+	posdeviation[1] = fabs(realpos.mat[1][0]-pos.mat[1][0]);
+	posdeviation[2] = angleDiff(realpos.mat[2][0], pos.mat[2][0]);
 
 	//-----------------------------------------
 	//Modelo simplista
@@ -313,7 +403,7 @@ void Robot::ActionUpdate()
 	posdeviation[2] = sqrt(sigmapos.mat[2][2]);*/
 	//----------------------------------------
 
-	sigmapos.Print(); 
+	//sigmapos.Print(); 
 }
 
 bool Robot::PerceptionUpdateCondition()
@@ -326,8 +416,8 @@ bool Robot::PerceptionUpdateCondition()
 		&& 
 			//O robô andou uma certa distancia ou o desvio em alguma variável passou de um limiar
 			(
-				acumulatedDistance > 0.5
-				|| (posdeviation[0] >= 0.3 || posdeviation[1] >= 0.3 || posdeviation[2] >= 5.0*PI_DIV_180)
+				acumulatedDistance > ACUMULATED_DISTANCE_THRESHOLD
+				|| (posdeviation[0] >= DEVIATION_THRESHOLD_X || posdeviation[1] >= DEVIATION_THRESHOLD_Y || posdeviation[2] >= DEVIATION_THRESHOLD_THETA)
 			)
 	);
 }
@@ -360,14 +450,6 @@ Matrix Robot::EstimateXz()
 	//Estimativa de posição
 	static Matrix xz(3, 1);
 
-	//Posicionamento dos sensores em relação ao robô
-	static float sensorLeftPos[3]  = {0.03, 0, PI/2.0};
-	static float sensorFrontPos[3] = {0.03, 0, 0};
-	static float sensorRightPos[3] = {0.03, 0, -PI/2.0};
-
-	static float sensorDeviation = 0.05;
-	static float SONAR_ANGLE = 7.5*PI_DIV_180;
-
 	static float stepX = envmap.GetSizeX() / 80.0;
 	static float stepY = envmap.GetSizeY() / 80.0;
 	static float stepTheta = 1.0*PI_DIV_180;
@@ -392,24 +474,22 @@ Matrix Robot::EstimateXz()
 				float dF = INFINITE_DISTANCE;
 				float dR = INFINITE_DISTANCE;
 
-				float diffAngleMin = sensorLeftPos[2] - SONAR_ANGLE;
-				float diffAngleMax = sensorLeftPos[2] + SONAR_ANGLE;	
+				float diffAngleMin = sensorLeftPos[2] - SENSOR_OPENING_ANGLE;
+				float diffAngleMax = sensorLeftPos[2] + SENSOR_OPENING_ANGLE;	
 				for(float diffAngle = diffAngleMin; diffAngle <= diffAngleMax; diffAngle += stepDiffAngle)
 					dL = fmin(dL, RobotToSensorPointDist(x, y, theta, sensorLeftPos[0], sensorLeftPos[1], diffAngle, sonarReading[LEFT]));
 
-				diffAngleMin = sensorFrontPos[2] - SONAR_ANGLE;
-				diffAngleMax = sensorFrontPos[2] + SONAR_ANGLE;	
+				diffAngleMin = sensorFrontPos[2] - SENSOR_OPENING_ANGLE;
+				diffAngleMax = sensorFrontPos[2] + SENSOR_OPENING_ANGLE;	
 				for(float diffAngle = diffAngleMin; diffAngle <= diffAngleMax; diffAngle += stepDiffAngle)
 					dF = fmin(dF, RobotToSensorPointDist(x, y, theta, sensorFrontPos[0], sensorFrontPos[1], diffAngle, sonarReading[FRONT]));
 
-				diffAngleMin = sensorRightPos[2] - SONAR_ANGLE;
-				diffAngleMax = sensorRightPos[2] + SONAR_ANGLE;	
+				diffAngleMin = sensorRightPos[2] - SENSOR_OPENING_ANGLE;
+				diffAngleMax = sensorRightPos[2] + SENSOR_OPENING_ANGLE;	
 				for(float diffAngle = diffAngleMin; diffAngle <= diffAngleMax; diffAngle += stepDiffAngle)
 					dR = fmin(dR, RobotToSensorPointDist(x, y, theta, sensorRightPos[0], sensorRightPos[1], diffAngle, sonarReading[RIGHT]));
 
-				//float compat = GaussianCompatibility(0.0, dL, sensorDeviation) * GaussianCompatibility(0.0, dF, sensorDeviation) * GaussianCompatibility(0.0, dR, sensorDeviation);
-				//float b = GaussianCompatibility(pos.mat[0][0], x, posdeviation[0])*GaussianCompatibility(pos.mat[1][0], y, posdeviation[1])*GaussianCompatibility(pos.mat[2][0], theta, posdeviation[2]);
-				float compat = HansGaussian(dL, sensorDeviation, stepX)*HansGaussian(dF, sensorDeviation, stepX)*HansGaussian(dR, sensorDeviation, stepX);	
+				float compat = HansGaussian(dL, SENSOR_DEVIATION, stepX)*HansGaussian(dF, SENSOR_DEVIATION, stepX)*HansGaussian(dR, SENSOR_DEVIATION, stepX);	
 
 				if(compat > maxCompat)
 				{
@@ -423,9 +503,6 @@ Matrix Robot::EstimateXz()
 	}
 
 	printf("\rERRO DA ESTIMATIVA XZ: [%.2fm, %.2fm, %.2f°]\n", fabs(realpos.mat[0][0]-xz.mat[0][0]), fabs(realpos.mat[1][0]-xz.mat[1][0]), to_deg(angleDiff(realpos.mat[2][0], xz.mat[2][0])));
-
-	//Simula a melhor estimativa possível
-	//xz = realpos;
 	
 	return xz;
 }

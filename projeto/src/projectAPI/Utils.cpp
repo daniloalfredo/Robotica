@@ -61,6 +61,13 @@ TimeStamp GetTimeMicroSecs()
 	return (1000000 * (TimeStamp)nowTimeVal.tv_sec + nowTimeVal.tv_usec);
 }
 
+TimeStamp GetTimeMsecs()
+{
+	struct timeval nowTimeVal;
+	gettimeofday(&nowTimeVal, 0);
+	return ((1000000 * (TimeStamp)nowTimeVal.tv_sec + nowTimeVal.tv_usec)) / 1000;
+}
+
 //Funções de Ângulos
 
 float to_pi_range(float radians)

@@ -11,12 +11,16 @@
 #include "RobotAPI.h"
 #include "EnvMap.h"
 #include "Utils.h"
+#include "ObjectDetector.h"
 
 class Robot
 {
 	private:
 		//Mapa do ambiente
-		EnvMap envmap;	
+		EnvMap envmap;
+
+		//Detector de Objetos
+		ObjectDetector objectDetector;	
 
 		//Caminho do robô
 		std::vector< std::vector<float> > path;	//Vetor de objetivos do robô
@@ -33,7 +37,12 @@ class Robot
 
 		//Leituras dos sonares
 		enum SONAR_ID { LEFT = 0, FRONT = 1, RIGHT = 2 };
-		float sonarReading[3];
+		float sonarReading[3];			//Vetor que contem a leitura dos sonares
+		float sensorLeftPos[3];			//Posicionamento do sensor esquerdo em relação ao robô
+		float sensorFrontPos[3];		//Posicionamento do sensor frontal em relação ao robô
+		float sensorRightPos[3];		//Posicionamento do sensor direito em relação ao robô
+		float SENSOR_DEVIATION;			//Desvio padrão da medida de distancia fornecida pelo sonar
+		float SENSOR_OPENING_ANGLE;		//Abertura em radianos do cone do sonar (metade da abertura)
 
 		//Constantes do controle de movimento
 		float K_RHO;
@@ -43,13 +52,18 @@ class Robot
 		float WHEEL_L;				
 		
 		//Variáveis da odometria
-		float kl, kr;
+		float ODOMETRY_KL;
+		float ODOMETRY_KR;
+		float ACUMULATED_DISTANCE_THRESHOLD;
 		float acumulatedDistance;
 
 		//Variáveis do Filtro de Kalman
 		Matrix sigmapos;					//Matriz de covariância da posição estimada (modelo de incerteza)
 		Matrix R;							//Matriz de covariância do sensor
 		float posdeviation[3];				//Desvio padrão da posição do robô
+		float DEVIATION_THRESHOLD_X;		//Limiar em X para chamar atualização de percepção
+		float DEVIATION_THRESHOLD_Y;		//Limiar em Y para chamar atualização de percepção
+		float DEVIATION_THRESHOLD_THETA;	//Limiar em THETA para chamar atualização de percepção
 
 		//Funções auxiliares
 		void UpdateSonarReadings(); 		//Atualiza a leitura dos sonares do robô e armazena em sonarReading[]
@@ -64,7 +78,8 @@ class Robot
 	
 	public:
 		//Funções principais de interface do robô
-		Robot(EnvMap envmap);
+		Robot(const char* INIT_FILENAME);
+		void Init(const char* INIT_FILENAME);
 		bool LoadPath(const char* PATH_FILENAME);
 		bool FinishedWork();
 		void Log();

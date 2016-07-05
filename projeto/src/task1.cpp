@@ -1,21 +1,15 @@
 #include "RobotAPI.h"
 #include "Robot.h"
 
-#define MAP_FILENAME "ini/envmapBig.ini"
-#define PATH_FILENAME "ini/pathBig.ini"
+#define INIT_FILENAME "ini/robot.ini"
            
 int main(int argc, char* argv[])
 {   
 	//Se conseguiu conectar com a API
     if (APIInitConection())
-    {   
-        //Define o mapa do experimento
-        EnvMap envmap(MAP_FILENAME);
-        envmap.Print();
-        
+    {           
         //Inicializa o Robô
-        Robot monstrinho(envmap);
-        monstrinho.LoadPath(PATH_FILENAME);
+        Robot monstrinho(INIT_FILENAME);
        
        	//Começa a simulação
         if(APIStartSimulation())
@@ -38,7 +32,7 @@ int main(int argc, char* argv[])
 		    }
 		    //---------------------------------------------------------
 		   
-		   	printf("\rFim da simulação.\n");
+		   	printf("\rFim da simulação.\n\r");
 		    APIFinishSimulation();
         } 
         

@@ -9,7 +9,7 @@ bool ObjectDetector::LoadParams(const char* FILE_PARAMS)
 {
 	char aux[50];
 
-	printf("\rLoading Params...\n");
+	printf("\rLoading Detector Params...\n");
 	FILE* file_params = fopen(FILE_PARAMS, "r");
 
 	if(file_params != NULL)
@@ -65,7 +65,7 @@ bool ObjectDetector::LoadParams(const char* FILE_PARAMS)
 
 bool ObjectDetector::LoadObjects(const char* FILE_DATABASE)
 {
-	printf("\rLoading Objects...\n");
+	printf("\rLoading Detector Objects...\n");
 
 	//Abre arquivo com informações das imagens dos objetos
 	FILE* file_database = fopen(FILE_DATABASE, "r");
@@ -135,7 +135,7 @@ bool ObjectDetector::LoadDictionary(const char* FILE_DICTIONARY)
 	//Se existe o dicionário carrega ele e carrega o svm
 	if(file_dictionary.isOpened())
 	{
-		printf("\rLoading Dictionary...\n");
+		printf("\rLoading Detector Dictionary...\n");
 		file_dictionary["vocabulary"] >> dictionary;
     	file_dictionary.release();
     	return true;
@@ -155,7 +155,7 @@ bool ObjectDetector::LoadSVM(const char* FILE_SVM)
 	if(file_svm != NULL)
 	{
 		fclose(file_svm); //só pra checar se o arquivo existe
-		printf("\rLoading SVM...\n");
+		printf("\rLoading Detector SVM...\n");
     	svm.load(FILE_SVM);
     	return true;
 	}
@@ -186,7 +186,7 @@ void ObjectDetector::Train()
 		{
 			//Abre a imagem em escala de cinza
 			Mat image = imread(image_filenames[j], CV_LOAD_IMAGE_GRAYSCALE);
-			
+
 			//Passa filtro gaussiano na imagem
 			if(blur_size > 0)
 				GaussianBlur(image, image, Size(blur_size, blur_size), 0, 0);
@@ -211,15 +211,14 @@ void ObjectDetector::Train()
 			featuresUnclustered.push_back(descriptor);   
 		}
 	}
-	
+
 	//Constroi o dicionário para o BoF
 	TermCriteria tc(CV_TERMCRIT_ITER, 100, 0.001);
 	int retries = 1;
 	int flags = KMEANS_PP_CENTERS;
 	BOWKMeansTrainer bowTrainer(dictionary_size, tc, retries, flags);
-	
 	dictionary = bowTrainer.cluster(featuresUnclustered);
-	
+
 	//Prepara matriz de treinamento do SVM
 	printf("\r\tTraining SVM...\n");
 	Mat training_matrix;
@@ -244,7 +243,7 @@ void ObjectDetector::Train()
 			training_matrix.push_back(image_histogram);  
 		}
 	}
-	
+
 	//Treina SVM
 	CvSVMParams params;
 	params.term_crit   = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
