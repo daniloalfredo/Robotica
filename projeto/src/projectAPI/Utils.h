@@ -39,6 +39,7 @@ float to_rad(float degrees);
 float to_deg(float radians);
 float to_pos_deg(float radians);
 float smallestAngleDiff(float target, float source);
+float angleDiff(float a1, float a2);
 
 //Distribuição de probabilidade
 double NormalDistribution(double x);

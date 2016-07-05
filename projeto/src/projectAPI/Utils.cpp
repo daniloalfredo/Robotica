@@ -122,6 +122,16 @@ float smallestAngleDiff(float target, float source)
     return a;
 }
 
+float angleDiff(float a1, float a2)
+{
+	float dif = fmod(fabs(to_2pi_range(a1) - to_2pi_range(a2)), PI_TIMES_2);
+
+	if (dif > PI)
+    	dif = PI_TIMES_2 - dif;
+
+	return dif;
+}
+
 //Distribuição de probabilidade
 
 double NormalDistribution(double x)

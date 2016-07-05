@@ -13,8 +13,8 @@ Robot::Robot(EnvMap envmap)
 	WHEEL_L = 0.075;
 	
 	//Inicializa variáveis de odometria
-	kl = 0.1;
-	kr = 0.1;
+	kl = 0.12;
+	kr = 0.12;
 	acumulatedDistance = 0.0;
 	
 	//Variáveis do Filtro de Kalman
@@ -91,7 +91,7 @@ void Robot::Log()
 	printf("\r----------------------------------------------------\n");
 	printf("\rPosição Real:        [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", realpos.mat[0][0], realpos.mat[1][0], realpos.mat[2][0]);
 	printf("\rPosição Estimada:    [%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", pos.mat[0][0], pos.mat[1][0], pos.mat[2][0]);
-	printf("\rErro de Posição:     [%.4f, %.4f, %.4f°]\n", fabs(realpos.mat[0][0]-pos.mat[0][0]), fabs(realpos.mat[1][0]-pos.mat[1][0]), to_deg(fabs(smallestAngleDiff(realpos.mat[2][0], pos.mat[2][0]))));
+	printf("\rErro de Posição:     [%.4f, %.4f, %.4f°]\n", fabs(realpos.mat[0][0]-pos.mat[0][0]), fabs(realpos.mat[1][0]-pos.mat[1][0]), to_deg(angleDiff(realpos.mat[2][0], pos.mat[2][0])));
 	printf("\rDesvio de Posição:   [%.4f, %.4f, %.4f°]\n", posdeviation[0], posdeviation[1], to_deg(posdeviation[2]));
 	printf("\rVariância de Posição:[%.4f, %.4f, %.4f]  //[X, Y, THETA]\n", sigmapos.mat[0][0], sigmapos.mat[1][1], sigmapos.mat[2][2]);
 	printf("\rLeitura dos Sonares: [%f, %f, %f]  //[L, F, R]\n", sonarReading[LEFT], sonarReading[FRONT], sonarReading[RIGHT]);
@@ -118,7 +118,7 @@ void Robot::Update()
 	if(PerceptionUpdateCondition())
 	{
 		//APIStopRobot();
-		PerceptionUpdate();
+		//PerceptionUpdate();
 		acumulatedDistance = 0.0;
 	}
 
@@ -235,15 +235,14 @@ void Robot::ActionUpdate()
 	float dPhiL, dPhiR;
 	APIReadOdometers(&dPhiL, &dPhiR);
 	
-	//Cálculo de deltaX, deltaY e deltaTheta
+	//Cálculo de deltaTheta, deltaX e deltaY
+	static float b = (2.0*WHEEL_L);
 	float deltaSl = WHEEL_R * dPhiL;
 	float deltaSr = WHEEL_R * dPhiR;
-	static float b = (2.0*WHEEL_L);
-
 	float deltaS = (deltaSl + deltaSr) / 2.0;
 	float deltaTheta = (deltaSr - deltaSl) / b;
 
-	float argumento = pos.mat[2][0] + (deltaTheta/2.0);
+	float argumento = to_pi_range(pos.mat[2][0] + (deltaTheta*0.5));
 	float sinargumento = sin(argumento);
 	float cosargumento = cos(argumento);
 
@@ -266,7 +265,7 @@ void Robot::ActionUpdate()
 	sigmaDelta.mat[1][1] = kl * fabs(deltaSl);
 
 	//Calcula Fp
-	static Matrix fp(3, 3);
+	Matrix fp(3, 3);
 	fp.mat[0][0] = 1;
 	fp.mat[0][1] = 0;
 	fp.mat[0][2] = -deltaY;
@@ -278,26 +277,43 @@ void Robot::ActionUpdate()
 	fp.mat[2][2] = 1;
 
 	//Calcula fDeltaRl
-	static Matrix fDeltaRl(3, 2);
-	fDeltaRl.mat[0][0] = cosargumento/2.0 - (deltaS*sinargumento) / (2.0*b);
-	fDeltaRl.mat[0][1] = cosargumento/2.0 + (deltaS*sinargumento) / (2.0*b);
-	fDeltaRl.mat[1][0] = sinargumento/2.0 + (deltaS*cosargumento) / (2.0*b);
-	fDeltaRl.mat[1][1] = sinargumento/2.0 - (deltaS*cosargumento) / (2.0*b);
+	Matrix fDeltaRl(3, 2);
+	fDeltaRl.mat[0][0] = 0.5*cosargumento - (deltaS*sinargumento)/(2.0*b);
+	fDeltaRl.mat[0][1] = 0.5*cosargumento + (deltaS*sinargumento)/(2.0*b);
+	fDeltaRl.mat[1][0] = 0.5*sinargumento + (deltaS*cosargumento)/(2.0*b);
+	fDeltaRl.mat[1][1] = 0.5*sinargumento - (deltaS*cosargumento)/(2.0*b);
 	fDeltaRl.mat[2][0] = 1.0/b;
 	fDeltaRl.mat[2][1] = -1.0/b;
-	
+
 	//Atualiza matriz de covariancias da posição estimada
 	sigmapos = ((fp * sigmapos) * Transpose(fp)) + ((fDeltaRl * sigmaDelta) * Transpose(fDeltaRl));
 
 	//Atualiza o desvio padrão da posição do robô	
 	posdeviation[0] = fmin(envmap.GetSizeX(), sqrt(sigmapos.mat[0][0]));
 	posdeviation[1] = fmin(envmap.GetSizeY(), sqrt(sigmapos.mat[1][1]));
-	posdeviation[2] = fmin(PI_TIMES_2, sqrt(sigmapos.mat[2][2]));
+	posdeviation[2] = to_2pi_range(fmin(PI_TIMES_2, sqrt(sigmapos.mat[2][2])));
 
-	//Cheat desvio igual ao erro real
-	posdeviation[0] = fabs(realpos.mat[0][0]-pos.mat[0][0]);//fmin(envmap.GetSizeX(), sqrt(sigmapos.mat[0][0]));
-	posdeviation[1] = fabs(realpos.mat[1][0]-pos.mat[1][0]);//fmin(envmap.GetSizeY(), sqrt(sigmapos.mat[1][1]));
-	posdeviation[2] = fabs(smallestAngleDiff(realpos.mat[2][0], pos.mat[2][0]));//fmin(PI_TIMES_2, sqrt(sigmapos.mat[2][2]));
+	//Teste com desvio perfeito
+	//posdeviation[0] = fabs(realpos.mat[0][0]-pos.mat[0][0]);
+	//posdeviation[1] = fabs(realpos.mat[1][0]-pos.mat[1][0]);
+	//posdeviation[2] = angleDiff(realpos.mat[2][0], pos.mat[2][0]);
+
+	//-----------------------------------------
+	//Modelo simplista
+	//-----------------------------------------
+	/*static float ERROR_RATIO_XY = 0.0080;
+	static float ERROR_RATIO_THETA = 0.0080;
+
+	sigmapos.mat[0][0] += ERROR_RATIO_XY*fabs(deltaX);
+	sigmapos.mat[1][1] += ERROR_RATIO_XY*fabs(deltaY);
+	sigmapos.mat[2][2] += ERROR_RATIO_XY*fabs(deltaTheta);
+
+	posdeviation[0] = sqrt(sigmapos.mat[0][0]);
+	posdeviation[1] = sqrt(sigmapos.mat[1][1]);
+	posdeviation[2] = sqrt(sigmapos.mat[2][2]);*/
+	//----------------------------------------
+
+	sigmapos.Print(); 
 }
 
 bool Robot::PerceptionUpdateCondition()
@@ -335,24 +351,6 @@ void Robot::PerceptionUpdate()
 	
 	//Atualiza modelo de incerteza de posição
 	sigmapos = sigmapos - ((K * sigmav) * Transpose(K));
-}
-
-float Robot::RobotToSensorPointDist(float Rx, float Ry, float Rtheta, float Sx, float Sy, float Stheta, float sensorDist)
-{
-	float point[2];
-	float pSR[2];
-
-	//Sensor to robot
-    pSR[0] = Sx + sensorDist * cos(Stheta);
-    pSR[1] = Sy + sensorDist * sin(Stheta);
-    
-    //Robot to world
-    float sintheta = sin(Rtheta);
-    float costheta = cos(Rtheta);
-    point[0] = Rx + (pSR[0] * costheta - pSR[1] * sintheta);
-    point[1] = Ry + (pSR[0] * sintheta + pSR[1] * costheta);
-
-	return envmap.DistanceToNearestWall(point[0], point[1]);
 }
 
 Matrix Robot::EstimateXz()
@@ -424,10 +422,28 @@ Matrix Robot::EstimateXz()
 		}
 	}
 
-	printf("\rERRO DA ESTIMATIVA XZ: [%.2fm, %.2fm, %.2f°]\n", fabs(realpos.mat[0][0]-xz.mat[0][0]), fabs(realpos.mat[1][0]-xz.mat[1][0]), to_deg(fabs(smallestAngleDiff(realpos.mat[2][0], xz.mat[2][0]))));
+	printf("\rERRO DA ESTIMATIVA XZ: [%.2fm, %.2fm, %.2f°]\n", fabs(realpos.mat[0][0]-xz.mat[0][0]), fabs(realpos.mat[1][0]-xz.mat[1][0]), to_deg(angleDiff(realpos.mat[2][0], xz.mat[2][0])));
 
 	//Simula a melhor estimativa possível
 	//xz = realpos;
 	
 	return xz;
+}
+
+float Robot::RobotToSensorPointDist(float Rx, float Ry, float Rtheta, float Sx, float Sy, float Stheta, float sensorDist)
+{
+	float point[2];
+	float pSR[2];
+
+	//Sensor to robot
+    pSR[0] = Sx + sensorDist * cos(Stheta);
+    pSR[1] = Sy + sensorDist * sin(Stheta);
+    
+    //Robot to world
+    float sintheta = sin(Rtheta);
+    float costheta = cos(Rtheta);
+    point[0] = Rx + (pSR[0] * costheta - pSR[1] * sintheta);
+    point[1] = Ry + (pSR[0] * sintheta + pSR[1] * costheta);
+
+	return envmap.DistanceToNearestWall(point[0], point[1]);
 }
