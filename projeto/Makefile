@@ -37,7 +37,7 @@ real: clean
 	g++ src/testSonar.cpp obj/*.o -o bin/testSonar.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/testCamera.cpp obj/*.o -o bin/testCamera.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/testLine.cpp obj/*.o -o bin/testLine.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
-	g++ src/markov.cpp obj/*.o -o bin/markov.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
+	g++ src/testSpeed.cpp obj/*.o -o bin/testSpeed.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	echo 'Done.'
 
 #Compile to run in V-REP simulation
@@ -68,7 +68,7 @@ sim: clean
 	g++ src/testSonar.cpp obj/*.o -o bin/testSonar.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	g++ src/testCamera.cpp obj/*.o -o bin/testCamera.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	g++ src/testLine.cpp obj/*.o -o bin/testLine.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
-	g++ src/markov.cpp obj/*.o -o bin/markov.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
+	g++ src/testSpeed.cpp obj/*.o -o bin/testSpeed.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	echo 'Done.'
 
 #Clear binary and object files

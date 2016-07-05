@@ -29,3 +29,7 @@ e para compilar o robô para o dispositivo real basta utilizar
 ´make real´. O executável resultante estará na pasta bin/
 
 //***************************************************************
+
+Inicialização:
+
+...
