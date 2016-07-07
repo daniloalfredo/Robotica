@@ -15,6 +15,8 @@ int main(int argc, char* argv[])
 
         	float leftSpeed = 0.0;
         	float rightSpeed = 0.0;
+        	float motionSpeed = 11.0;
+        	float speedIncrement = 1.0;
         	
         	//---------------------------------------------------------
         	//LOOP DA SIMULAÇÃO
@@ -24,26 +26,26 @@ int main(int argc, char* argv[])
 		    	//Controle de movimentos
 		    	if(APIGetKey() == 'o')
 		    	{
-		    		leftSpeed = 12.0;
-		    		rightSpeed = 12.0;
+		    		leftSpeed = motionSpeed;
+		    		rightSpeed = motionSpeed;
 		    	}
 
 		    	else if(APIGetKey() == 'l')
 		    	{
-		    		leftSpeed = -12.0;
-		    		rightSpeed = -12.0;
+		    		leftSpeed = -motionSpeed;
+		    		rightSpeed = -motionSpeed;
 		    	}
 
 		    	else if(APIGetKey() == 'k')
 		    	{
-		    		leftSpeed = 8.0*fsignal(leftSpeed);
-		    		rightSpeed = 12.0*fsignal(rightSpeed);
+		    		leftSpeed = -motionSpeed;
+		    		rightSpeed = motionSpeed;
 		    	}
 
 		    	else if(APIGetKey() == ';')
 		    	{
-		    		leftSpeed = 12.0*fsignal(leftSpeed);
-		    		rightSpeed = 8.0*fsignal(rightSpeed);
+		    		leftSpeed = motionSpeed;
+		    		rightSpeed = -motionSpeed;
 		    	}
 
 		    	//Parar o robô
@@ -51,8 +53,14 @@ int main(int argc, char* argv[])
 		    	{
 		    		leftSpeed = 0.0;
 		    		rightSpeed = 0.0;
-		    		APIStopRobot();
 		    	}
+
+		    	//Aumentar / Reduzir velocidade
+		    	else if(APIGetKey() == 'u')
+		    		motionSpeed += speedIncrement;
+
+		    	else if(APIGetKey() == 'j')
+		    		motionSpeed -= speedIncrement;
 
 		    	//Tirar Foto
 		    	else if(APIGetKey() == 'p')
@@ -61,7 +69,7 @@ int main(int argc, char* argv[])
 		    		APISavePicture(APIReadCamera());
 		    	}
 
-		    	printf("\rSonars (L, F, R): [%.4f, %.4f, %.4f]\n", APIReadSonarLeft(), APIReadSonarFront(), APIReadSonarRight());
+		    	printf("\rSpeed: %.1f | Sonars:[%.2f, %.2f, %.2f]\n", motionSpeed, APIReadSonarLeft(), APIReadSonarFront(), APIReadSonarRight());
 
 		    	APISetRobotSpeed(leftSpeed, rightSpeed);
 
@@ -71,7 +79,7 @@ int main(int argc, char* argv[])
 		    //---------------------------------------------------------
 		   
 		   	printf("\rFim da simulação.\n\r");
-		   
+
 		    //Para o robô e desconecta
 		    APIFinishSimulation();
         } 
