@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
 		   
 		   	//Grava arquivo com os commandos
 		   	printf("\rRecording commands...\n");
-		   	FILE* f_log = fopen("ini/command_log.ini", "w");
+		   	FILE* f_log = fopen("ini/commands.ini", "w");
 		   	for(int i = 0; i < (int) commands.size(); i++)
 		   		fprintf(f_log, "%f %f %f\n", commands[i][0], commands[i][1], commands[i][2]);
 		   	fprintf(f_log, "%.1f %.1f %.1f\n", 0.0, 0.0, -1.0);

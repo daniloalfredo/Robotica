@@ -7,14 +7,16 @@
 
 #include "Sonar.h"
 
-Sonar::Sonar() {
+Sonar::Sonar()
+{
    divisor = DIVISOR;
 }
 
-int Sonar::setup(int pinTrigger, int pinEcho) {
+int Sonar::setup(int pinTrigger, int pinEcho)
+{
     //wiringPiISR(pinEcho, INT_EDGE_FALLING, &echo);
-	 this->pinTrigger = pinTrigger;
-	 this->pinEcho = pinEcho;
+	this->pinTrigger = pinTrigger;
+	this->pinEcho = pinEcho;
 
     pinMode(pinTrigger, OUTPUT);
     pinMode(pinEcho,INPUT);
@@ -26,11 +28,13 @@ int Sonar::setup(int pinTrigger, int pinEcho) {
     return 0;
 }
 
-void Sonar::setDivisor(float divisor) {
+void Sonar::setDivisor(float divisor)
+{
   this->divisor = divisor;
 }
 
-float Sonar::measureDistance() {
+float Sonar::measureDistance()
+{
     rbtTime start, pulseTime, delta;
 
     //Send pulse
@@ -42,20 +46,20 @@ float Sonar::measureDistance() {
 
     //wait for pulse:
     start = RobotTimer::getTime_us();
-    do {
+    do
+    {
 		pulseTime = RobotTimer::getTime_us();
-		if (pulseTime-start > TIMEOUT) return -1;
+		if (pulseTime-start > TIMEOUT)
+            return -1.0;
     } while (digitalRead(pinEcho)==LOW);
 
     //wait for echo:
-    do {
+    do
+    {
 		delta = (RobotTimer::getTime_us() - pulseTime);
-		if (delta > TIMEOUT) return -1;
-    } while (digitalRead(pinEcho)==HIGH);
+		if (delta > TIMEOUT)
+            return -1.0;
+    }while (digitalRead(pinEcho)==HIGH);
 
     return (delta*divisor) / 100.0;
 }
-
-Sonar::~Sonar() {
-}
-

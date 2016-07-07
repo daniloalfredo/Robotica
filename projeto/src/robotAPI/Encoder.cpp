@@ -19,9 +19,12 @@ void countLeft()
     rbtTime now = RobotTimer::getTime_us();
     
     rbtTime dt = now - lastTime;
-    if (dt>minDeltaT) { // Filtra pulsos expurios em menos de dt us
+    
+    // Filtra pulsos expurios em menos de dt us
+    if (dt>minDeltaT)
+    {
     	leftEncoder->updateSpeed(now);
-	leftEncoder->count();
+		leftEncoder->count();
         lastTime = now;
     }
 }
@@ -32,19 +35,22 @@ void countRight()
     rbtTime now = RobotTimer::getTime_us();
 
     rbtTime dt = now - lastTime;
-    if (dt>minDeltaT) { // Filtra pulsos expurios em menos de dt us
+
+    // Filtra pulsos expurios em menos de dt us
+    if (dt>minDeltaT)
+    {
     	rigthEncoder->updateSpeed(now);
-	rigthEncoder->count();
+		rigthEncoder->count();
     	lastTime = now;
     }
 }
 
 Encoder::Encoder()
 {
-	for (int i=0; i<NBUF; i++) {
+	for (int i = 0; i < NBUF; i++)
 		buffer[i] = 0;
-	}
-   b = 0;
+
+	b = 0;
 }
 
 void Encoder::updateSpeed(rbtTime now) //On Edge Interrupt
@@ -60,18 +66,15 @@ void Encoder::updateSpeed(rbtTime now) //On Edge Interrupt
 
 float Encoder::filter(float pulseSpeed)
 {	
-	//adiciona ao buffer
+	//Adiciona ao buffer
 	buffer[b] = pulseSpeed;
 	b = (b+1)%NBUF;
 
-	//std::cout << " buffer = ";
-	float sum=0;
-	for (int i=0; i<NBUF; i++) {
-		//std::cout << buffer[i] << " ";
-		sum+=buffer[i];
-	}
+	float sum = 0.0;
+	for (int i = 0; i < NBUF; i++)
+		sum += buffer[i];
 
-	return sum/NBUF;
+	return sum / NBUF;
 }
 
 float Encoder::getSpeed()
@@ -82,7 +85,6 @@ float Encoder::getSpeed()
 	if (dt > maxDeltaT)
 		speed = filter(0);
 
-	//std::cout << "  Speed: " << speed << "\r\n";
 	return speed;
 }
 
@@ -98,12 +100,15 @@ int Encoder::setup(int pin, int side)
 
 	this->pin = pin;
 
-	if (side == RIGHT_SIDE) {
+	if (side == RIGHT_SIDE)
+	{
 		rigthEncoder = this;
 		//if (sysconfgGPIOEdge(pin, "both")!=0) return -1;
 		return wiringPiISR(pin, INT_EDGE_BOTH, &countRight);
 	}
-	else {
+
+	else
+	{
 		leftEncoder = this;
 		//if (sysconfgGPIOEdge(pin, "both")!=0) return -1;
 		return wiringPiISR(pin, INT_EDGE_BOTH, &countLeft);
@@ -131,7 +136,8 @@ long Encoder::getSteps() const {
     return steps;
 }
 
-long Encoder::getDeltaSteps() {
+long Encoder::getDeltaSteps()
+{
     long delta = steps - lastStep;
     lastStep = steps;
     return delta;
@@ -142,11 +148,7 @@ float Encoder::getAngle() const {
     return steps * M_PI / 20.0;
 }
 
-float Encoder::getDeltaAngle() {
+float Encoder::getDeltaAngle()
+{
     return getDeltaSteps() * M_PI / 20.0;
 }
-
-Encoder::~Encoder()
-{
-}
-

@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdio>
 #include <vector>
+#include <list>
 #include <unistd.h>
 #include <sys/time.h>
 
@@ -47,6 +48,46 @@ double NormalDistribution(double x);
 double NormalDistributionIntegrated(double x);
 float GaussianCompatibility(float desiredMeasure, float realMeasure, float deviation);
 float HansGaussian(float dist, float sigma, float step);
+
+//Buffer de medições
+class MeasureBuffer
+{
+	private:
+		int max_itens;
+		std::list<float> buf;
+
+	public:
+		MeasureBuffer() { max_itens = 1; }
+		MeasureBuffer(int max_itens) { this->max_itens = max_itens; }
+
+		void SetBufferSize(int buf_size) { this->max_itens = buf_size; } 
+		
+		void PushMeasure(float measure)
+		{
+			buf.push_back(measure);
+
+			if((int) buf.size() > max_itens)
+				buf.pop_front();
+		}
+
+		float GetMean()
+		{
+			float mean = 0.0;
+
+			for(std::list<float>::iterator iter = buf.begin(); iter != buf.end(); iter++)
+        		mean += (*iter);
+
+        	return mean / ((float) buf.size());
+		}
+
+		void Print()
+		{
+			printf("\r[ ");
+			for(std::list<float>::iterator iter = buf.begin(); iter != buf.end(); iter++)
+        		printf("%f ", (*iter));
+			printf("]\n\r");
+		}
+}; 
 
 //Matrizes
 class Matrix

@@ -19,43 +19,40 @@
 
 #define PWM_RANGE 1024
 
-class Motor {
-    int pinA;
-    int pinB;
-    int pinE;
+class Motor
+{
+	public:
+	    int pinA;
+	    int pinB;
+	    int pinE;
 
-	 float targetSpeed;
-	 float speed;
-	 float power;
+		float targetSpeed;
+		float speed;
+		float power;
 
-	 float minPower;
+		float minPower;
 
-	 rbtTime spdSamplingRate;
-	 rbtTime lastTime;
-	 float lastAngle;
+		rbtTime spdSamplingRate;
+		rbtTime lastTime;
+		float lastAngle;
 
-    int rangePower(float power);
+		Encoder* encoder;
+		PIDController pid;
 
-public:
+	    int rangePower(float power);
 
-    Encoder *encoder;
-	 PIDController pid;
-
-    Motor();
-    virtual ~Motor();
-    int setup(int pinA, int pinB, int pinE, Encoder *encoder);
-	 void setTargetSpeed(float targetSpeed);
-	 float getTargetSpeed();
-	 void setSpdSamplingRate(rbtTime spr);
-	 void setMinPower(float minPower);
-	 void setPower(float power);
-    void writePower();
-	 float getPower();
-	 float getSpeed();
-    void stop();
-	 float controlSpeed();
-private:
-
+	    Motor();
+		int setup(int pinA, int pinB, int pinE, Encoder *encoder);
+		void setTargetSpeed(float targetSpeed);
+		float getTargetSpeed();
+		void setSpdSamplingRate(rbtTime spr);
+		void setMinPower(float minPower);
+		void setPower(float power);
+		void writePower();
+		float getPower();
+		float getSpeed();
+		void stop();
+		float controlSpeed();
 };
 
-#endif	/* MOTOR_H */
+#endif

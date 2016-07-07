@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
         	printf("\rSimulação iniciada.\n");
 
         	//Lê lista de commnados do arquivo
-        	FILE* f = fopen("ini/command_log.ini", "r");
+        	FILE* f = fopen("ini/commands.ini", "r");
         	std::vector< std::vector<float> > commandList;
         	float spdL, spdR, tim;
         	while(fscanf(f, "%f %f %f", &spdL, &spdR, &tim) == 3)

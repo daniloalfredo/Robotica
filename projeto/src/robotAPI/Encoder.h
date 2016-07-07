@@ -36,7 +36,6 @@ class Encoder
 
 	public:
 		Encoder();
-		virtual ~Encoder();
 		int setup(int pin, int side);
 		void setDirection(int direction);
 		void reset();	

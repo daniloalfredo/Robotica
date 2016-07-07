@@ -2,7 +2,26 @@
 #define ROBOTAPI_H_INCLUDED
 
 //Escolhe entre usar o VREP ou o robô real  
-#define USING_VREP 1
+#define USING_VREP 0
+
+//Includes e Variáveis gerais
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/ml/ml.hpp>
+#include <cstdio>
+#include <cstdlib>
+	
+#include "KBAsync.h"
+#include "Utils.h"
+
+extern KBAsync kb;
+extern int kb_key;
+extern bool stopped;
+extern cv::VideoCapture cap;
+extern TimeStamp simulationBeginTime;
 
 //Includes e Variáveis do V-REP
 #if USING_VREP == 1
@@ -35,26 +54,8 @@
 	extern Encoder encoderL, encoderR;
 	extern Motor motorL, motorR;
 	extern Sonar sonarL, sonarR, sonarF;
+	extern MeasureBuffer bufLeft, bufFront, bufRight;
 #endif
-
-//Includes e Variáveis gerais
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/features2d/features2d.hpp>
-#include <opencv2/nonfree/features2d.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/ml/ml.hpp>
-#include <cstdio>
-#include <cstdlib>
-	
-#include "KBAsync.h"
-#include "Utils.h"
-
-extern KBAsync kb;
-extern int kb_key;
-extern bool stopped;
-extern cv::VideoCapture cap;
-extern TimeStamp simulationBeginTime;
 
 bool APIInitConection();
 bool APIStartSimulation();
@@ -68,6 +69,7 @@ void APIGetTrueRobotPosition(Matrix* realpos);
 void APIGetTrueRobotPosition(float* realpos);
 void APIReadOdometers(float* dPhiL, float* dPhiR);
 void APISetRobotSpeed(float phiL, float phiR);
+void APISetMotorPower(float powL, float powR);
 void APIStopRobot();
 cv::Mat APIReadCamera();
 void APISavePicture(cv::Mat picture);

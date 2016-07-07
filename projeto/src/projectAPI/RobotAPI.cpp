@@ -1,5 +1,11 @@
 #include "RobotAPI.h"
 
+KBAsync kb;
+int kb_key;
+bool stopped;
+cv::VideoCapture cap(0);
+TimeStamp simulationBeginTime;
+
 #if USING_VREP == 1
     simxInt clientID;
     simxInt ddRobotHandle;
@@ -13,13 +19,8 @@
     Encoder encoderL, encoderR;
     Motor motorL, motorR;
     Sonar sonarL, sonarR, sonarF;
+    MeasureBuffer bufLeft, bufFront, bufRight;
 #endif
-
-KBAsync kb;
-int kb_key;
-bool stopped;
-cv::VideoCapture cap(0);
-TimeStamp simulationBeginTime;
 
 bool APIInitConection()
 {
@@ -81,17 +82,28 @@ bool APIInitConection()
         FILE* f = fopen("ini/hardware.ini", "r");
         if(f != NULL)
         {
+            //Constantes do PID do motor esquerdo
             fscanf(f, "%*[^:] %*c %f", &kpL);
             fscanf(f, "%*[^:] %*c %f", &kiL);
             fscanf(f, "%*[^:] %*c %f", &kdL);
             fscanf(f, "%*[^:] %*c %f", &spdSampRateL);
             fscanf(f, "%*[^:] %*c %f", &minPowerL);
 
+            //Constantes do PID do motor direito
             fscanf(f, "%*[^:] %*c %f", &kpR);
             fscanf(f, "%*[^:] %*c %f", &kiR);
             fscanf(f, "%*[^:] %*c %f", &kdR);
             fscanf(f, "%*[^:] %*c %f", &spdSampRateR);
             fscanf(f, "%*[^:] %*c %f", &minPowerR);
+
+            //Tamanho do buffer de medições dos sonares
+            int buf_size;
+            fscanf(f, "%*[^:] %*c %d", &buf_size);
+            bufLeft.SetBufferSize(buf_size);
+            fscanf(f, "%*[^:] %*c %d", &buf_size);
+            bufFront.SetBufferSize(buf_size);
+            fscanf(f, "%*[^:] %*c %d", &buf_size);
+            bufRight.SetBufferSize(buf_size);
         }
         else
             printf("Erro ao ler arquivo `hardware.ini`\n");
@@ -111,6 +123,7 @@ bool APIInitConection()
 
 bool APIStartSimulation()
 {
+    srand(time(NULL));
     simulationBeginTime = GetTimeMicroSecs();
     APIStopRobot();
 
@@ -280,6 +293,22 @@ void APISetRobotSpeed(float phiL, float phiR)
     #endif 
 }
 
+void APISetMotorPower(float powL, float powR)
+{
+	if(powL < -0.001 || powL > 0.001 || powR < -0.001 || powR > 0.001)
+        stopped = false;
+    
+    #if USING_VREP == 1
+        simxSetJointTargetVelocity(clientID, leftMotorHandle, powL, simx_opmode_oneshot);
+        simxSetJointTargetVelocity(clientID, rightMotorHandle, powR, simx_opmode_oneshot); 
+    #elif USING_VREP == 0
+        motorL.setPower(powR); //rodas da esquerda e direita sao trocadas
+        motorR.setPower(powL);
+        motorL.writePower();
+        motorR.writePower();
+    #endif 
+}
+
 void APIStopRobot()
 {
     stopped = true;
@@ -323,7 +352,8 @@ float APIReadSonarLeft()
             return -1;
 
     #elif USING_VREP == 0
-        return sonarL.measureDistance();
+        bufLeft.PushMeasure(sonarL.measureDistance());
+        return bufLeft.GetMean();
 
     #endif
 }
@@ -343,7 +373,8 @@ float APIReadSonarFront()
             return -1;
 
     #elif USING_VREP == 0
-        return sonarF.measureDistance();    
+        bufFront.PushMeasure(sonarF.measureDistance());
+        return bufFront.GetMean();
 
     #endif
 }
@@ -363,7 +394,8 @@ float APIReadSonarRight()
             return -1;
 
     #elif USING_VREP == 0
-        return sonarR.measureDistance();
+         bufRight.PushMeasure(sonarR.measureDistance());
+        return bufRight.GetMean();
 
     #endif
 }

@@ -1,8 +1,7 @@
 #include "Odometry.h"
-#include <math.h>
-#include <iostream>
 
-Odometry::Odometry(double lR, double lL, double rR, double rL, Encoder *encoderL, Encoder * encoderR) {
+Odometry::Odometry(double lR, double lL, double rR, double rL, Encoder* encoderL, Encoder* encoderR)
+{
 	this->lR = lR;
 	this->lL = lL;
 	this->rL = rL;
@@ -14,20 +13,21 @@ Odometry::Odometry(double lR, double lL, double rR, double rL, Encoder *encoderL
 	this->position[2] = 0;
 }
 
-void Odometry::setPosition(const float position[]) {
+void Odometry::setPosition(const float position[])
+{
 	this->position[0] = position[0];
 	this->position[1] = position[1];
 	this->position[2] = position[2];
 }
 
-void Odometry::updatePosition(float *pos) {
-
+void Odometry::updatePosition(float* pos)
+{
 	double odom_theta = position[2];
 
 	double odom_phiL = encoderL->getDeltaAngle();
-   double odom_phiR = encoderR->getDeltaAngle();
+	double odom_phiR = encoderR->getDeltaAngle();
 
-	double dodom_x_robot = (rR*odom_phiR/2)+(rL*odom_phiL/2);
+	double dodom_x_robot = (rR*(odom_phiR/2.0))+(rL*(odom_phiL/2.0));
 	double dodom_y_robot = 0;
 	double dodom_theta_robot = (rR*odom_phiR/(2*lR))-(rL*odom_phiL/(2*lL));
 
@@ -39,39 +39,46 @@ void Odometry::updatePosition(float *pos) {
 	position[1] = position[1] + dodom_y;
 	position[2] = position[2] + dodom_theta;
 
-	if (pos!=NULL) {
+	if (pos!=NULL)
+	{
 		pos[0] = position[0];
 		pos[1] = position[1];
 		pos[2] = position[2];
 	}
 }
 
-void Odometry::getPosition(float *pos) {
-	if (pos!=NULL) {
+void Odometry::getPosition(float* pos)
+{
+	if (pos != NULL)
+	{
 		pos[0] = position[0];
 		pos[1] = position[1];
 		pos[2] = position[2];
 	}
 }
 
-double Odometry::getLR() {
+double Odometry::getLR()
+{
 	return lR;
 }
 
-double Odometry::getLL() {
+double Odometry::getLL()
+{
 	return lL;
 }
 
-double Odometry::getRL() {
+double Odometry::getRL()
+{
 	return rL;
 }
 
-double Odometry::getRR() {
+double Odometry::getRR()
+{
 	return rR;
 }
 
-double Odometry::to180range(double angle) {
-
+double Odometry::to180range(double angle)
+{
    angle = fmod(angle, 2*M_PI);
    if (angle<-M_PI)
 		angle = angle + 2*M_PI;

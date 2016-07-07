@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
 
         	float leftSpeed = 0.0;
         	float rightSpeed = 0.0;
-        	float motionSpeed = 11.0;
+        	float motionSpeed = 80.0;
         	float speedIncrement = 1.0;
         	
         	//---------------------------------------------------------
@@ -71,7 +71,8 @@ int main(int argc, char* argv[])
 
 		    	printf("\rSpeed: %.1f | Sonars:[%.2f, %.2f, %.2f]\n", motionSpeed, APIReadSonarLeft(), APIReadSonarFront(), APIReadSonarRight());
 
-		    	APISetRobotSpeed(leftSpeed, rightSpeed);
+		    	//APISetRobotSpeed(leftSpeed, rightSpeed);
+		    	APISetMotorPower(leftSpeed, rightSpeed);
 
 		        //Espera um tempo antes da próxima atualização
 		        APIWait();
