@@ -5,10 +5,10 @@
 #include "ObjectDetector.h"
 
 //Arquivos utilizados pelo programa
-#define FILE_DICTIONARY "ini/detector_dictionary.yml"
-#define FILE_DATABASE "ini/detector_database.ini"
-#define FILE_PARAMS "ini/detector_params.ini"
-#define FILE_SVM "ini/detector_svm.ini" 
+#define FILE_DICTIONARY "ini/dictionary.yml"
+#define FILE_DATABASE "ini/objects.ini"
+#define FILE_PARAMS "ini/detector.ini"
+#define FILE_SVM "ini/svm.ini" 
 
 int main(int argc, char** argv)
 {

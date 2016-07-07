@@ -45,11 +45,15 @@ class Robot
 		float SENSOR_OPENING_ANGLE;		//Abertura em radianos do cone do sonar (metade da abertura)
 
 		//Constantes do controle de movimento
-		float K_RHO;
-		float K_ALPHA;
-		float K_BETA;
 		float WHEEL_R;
-		float WHEEL_L;				
+		float WHEEL_L;	
+		float MOTION_CONTROL_K_RHO;
+		float MOTION_CONTROL_K_ALPHA;
+		float MOTION_CONTROL_K_BETA;
+		float MOTION_CONTROL_MIN_V;	
+		float MOTION_CONTROL_MAX_V;
+		float MOTION_CONTROL_DISTXY_THRESHOLD;
+		float MOTION_CONTROL_DISTTHETA_THRESHOLD;
 		
 		//Variáveis da odometria
 		float ODOMETRY_KL;
@@ -64,10 +68,13 @@ class Robot
 		float DEVIATION_THRESHOLD_X;		//Limiar em X para chamar atualização de percepção
 		float DEVIATION_THRESHOLD_Y;		//Limiar em Y para chamar atualização de percepção
 		float DEVIATION_THRESHOLD_THETA;	//Limiar em THETA para chamar atualização de percepção
+		float PERCETION_UPDATE_STEP_X;
+		float PERCETION_UPDATE_STEP_Y;
+		float PERCETION_UPDATE_STEP_THETA;
+		float PERCETION_UPDATE_STEP_SONAR;
 
 		//Funções auxiliares
 		void UpdateSonarReadings(); 		//Atualiza a leitura dos sonares do robô e armazena em sonarReading[]
-		void UpdatePositionWithAPI();		//Atualiza pos e sigmapos usando precisão perfeita da API (apenas no VREP)
 		void ManageObjectives();			//Gerencia os objetivos do robô
 		void MotionControl();		 		//Faz o robô andar em direção ao objetivo atual
 		void ActionUpdate();				//Atualiza pos e sigmapos após movimento do robô usando a odometria

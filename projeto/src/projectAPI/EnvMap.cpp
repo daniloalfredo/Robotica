@@ -148,13 +148,3 @@ float EnvMap::DistancePostureToSegment(float x, float y, float theta, Segment se
         
     return INFINITE_DISTANCE;
 }
-
-float EnvMap::GetSizeX()
-{
-	return 4.0;	//Desenvolver um algoritmo que extrai esse tamanho do vetor de paredes...
-}
-
-float EnvMap::GetSizeY()
-{
-	return 4.0; //Desenvolver um algoritmo que extrai esse tamanho do vetor de paredes...
-}

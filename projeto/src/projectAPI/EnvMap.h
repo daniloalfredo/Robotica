@@ -39,8 +39,6 @@ class EnvMap
 		float MapDistance(float x, float y, float theta);
 		float MapDistance2(float x, float y, float theta);
 		float DistanceToNearestWall(float x, float y);
-		float GetSizeX();	//Retorna o tamanho do mapa no eixo X
-		float GetSizeY();	//Retorna o tamanho do mapa no eixo Y
 };
 
 #endif

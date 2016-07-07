@@ -68,11 +68,11 @@ int main(int argc, char* argv[])
         } 
         
         else
-        	printf("\rNão foi possível iniciar a simulação.\n");
+        	printf("\rNão foi possível iniciar a simulação.\n\r");
     } 
     
     else
-        printf("\rNão foi possível conectar.\n");
+        printf("\rNão foi possível conectar.\n\r");
    
     return 0;
 }

@@ -67,12 +67,20 @@ void Robot::Init(const char* INIT_FILENAME)
 		printf("\r\tSONAR_OPENING_ANGLE: %f°\n", to_deg(SENSOR_OPENING_ANGLE));
 
 		//Motion control params
-		fscanf(file_init, "%*[^:] %*c %f", &K_RHO);
-		fscanf(file_init, "%*[^:] %*c %f", &K_ALPHA);
-		fscanf(file_init, "%*[^:] %*c %f", &K_BETA);
-		printf("\r\tK_RHO: %f\n", K_RHO);
-		printf("\r\tK_ALPHA: %f\n", K_ALPHA);
-		printf("\r\tK_BETA: %f\n", K_BETA);
+		fscanf(file_init, "%*[^:] %*c %f", &MOTION_CONTROL_K_RHO);
+		fscanf(file_init, "%*[^:] %*c %f", &MOTION_CONTROL_K_ALPHA);
+		fscanf(file_init, "%*[^:] %*c %f", &MOTION_CONTROL_K_BETA);
+		fscanf(file_init, "%*[^:] %*c %f", &MOTION_CONTROL_MIN_V);
+		fscanf(file_init, "%*[^:] %*c %f", &MOTION_CONTROL_MAX_V);
+		fscanf(file_init, "%*[^:] %*c %f", &MOTION_CONTROL_DISTXY_THRESHOLD);
+		fscanf(file_init, "%*[^:] %*c %f", &MOTION_CONTROL_DISTTHETA_THRESHOLD);
+		printf("\r\tMOTION_CONTROL_K_RHO: %f\n", MOTION_CONTROL_K_RHO);
+		printf("\r\tMOTION_CONTROL_K_ALPHA: %f\n", MOTION_CONTROL_K_ALPHA);
+		printf("\r\tMOTION_CONTROL_K_BETA: %f\n", MOTION_CONTROL_K_BETA);
+		printf("\r\tMOTION_CONTROL_MIN_V: %f\n", MOTION_CONTROL_MIN_V);
+		printf("\r\tMOTION_CONTROL_MAX_V: %f\n", MOTION_CONTROL_MAX_V);
+		printf("\r\tMOTION_CONTROL_DISTXY_THRESHOLD: %f\n", MOTION_CONTROL_DISTXY_THRESHOLD);
+		printf("\r\tMOTION_CONTROL_DISTTHETA_THRESHOLD: %f\n", MOTION_CONTROL_DISTTHETA_THRESHOLD);
 
 		//Odometry
 		fscanf(file_init, "%*[^:] %*c %f", &ODOMETRY_KL);
@@ -86,6 +94,18 @@ void Robot::Init(const char* INIT_FILENAME)
 		DEVIATION_THRESHOLD_THETA = to_rad(DEVIATION_THRESHOLD_THETA);
 		printf("\r\tACUMULATED_DISTANCE_THRESHOLD: %fm\n", ACUMULATED_DISTANCE_THRESHOLD);
 		printf("\r\tDEVIATION_THRESHOLDS: %fm %fm %f°\n", DEVIATION_THRESHOLD_X, DEVIATION_THRESHOLD_Y, to_deg(DEVIATION_THRESHOLD_THETA));
+
+		//Perception Update Thresholds
+		fscanf(file_init, "%*[^:] %*c %f", &PERCETION_UPDATE_STEP_X);
+		fscanf(file_init, "%*[^:] %*c %f", &PERCETION_UPDATE_STEP_Y);
+		fscanf(file_init, "%*[^:] %*c %f", &PERCETION_UPDATE_STEP_THETA);
+		PERCETION_UPDATE_STEP_THETA *= PI_DIV_180;
+		fscanf(file_init, "%*[^:] %*c %f", &PERCETION_UPDATE_STEP_SONAR);
+		PERCETION_UPDATE_STEP_SONAR *= PI_DIV_180;
+		printf("\r\tPERCETION_UPDATE_STEP_X: %fm\n", PERCETION_UPDATE_STEP_X);
+		printf("\r\tPERCETION_UPDATE_STEP_Y: %fm\n", PERCETION_UPDATE_STEP_Y);
+		printf("\r\tPERCETION_UPDATE_STEP_THETA: %f°\n", to_deg(PERCETION_UPDATE_STEP_THETA));
+		printf("\r\tPERCETION_UPDATE_STEP_SONAR: %f°\n", to_deg(PERCETION_UPDATE_STEP_SONAR));
 
 		//Kalman R matrix
 		float matAux[3][3];
@@ -223,20 +243,6 @@ void Robot::UpdateSonarReadings()
 	sonarReading[RIGHT] = APIReadSonarRight();
 }
 
-void Robot::UpdatePositionWithAPI()
-{
-	//Lê posição real e guarda em realpos
-	APIGetTrueRobotPosition(&realpos);
-
-	//Utiliza a posição de referência com realpos
-	pos.mat[0][0] = realpos.mat[0][0];
-	pos.mat[1][0] = realpos.mat[1][0];
-	pos.mat[2][0] = realpos.mat[2][0];
-
-	//A incerteza é 0 já que a posição é precisa
-	sigmapos.ResizeAndNulify(3, 3);
-}
-
 void Robot::ManageObjectives()
 {
 	if(reached_goal)
@@ -281,30 +287,27 @@ void Robot::MotionControl()
     float alpha = to_pi_range(smallestAngleDiff(atg, theta));
     float beta = to_pi_range(goal[2] - theta - alpha);
  
-    float v = K_RHO * rho;
-    
-    //printf("\rv: %f", v);
+    float v = MOTION_CONTROL_K_RHO * rho;
 
-    static float MIN_SPEED = 0.07, MAX_SPEED = 0.15;
-    if(v < MIN_SPEED)
-    	v = MIN_SPEED;
-    else if(v > MAX_SPEED)
-    	v = MAX_SPEED;
+    if(v < MOTION_CONTROL_MIN_V)
+    	v = MOTION_CONTROL_MIN_V;
+    else if(v > MOTION_CONTROL_MAX_V)
+    	v = MOTION_CONTROL_MAX_V;
 
-    float w = (K_ALPHA * alpha + K_BETA * beta);
+    float w = (MOTION_CONTROL_K_ALPHA * alpha + MOTION_CONTROL_K_BETA * beta);
  
- 	float wR = v + WHEEL_L*w;	//2*v + WHEEL_L*w;
-    float wL = v - WHEEL_L*w;	//wR - 2*WHEEL_L*w;
+ 	float wR = v + WHEEL_L*w;
+    float wL = v - WHEEL_L*w;
 
     float phiL = wL / WHEEL_R;
     float phiR = wR / WHEEL_R;
 
-    if(rho < 0.08)
+    if(rho < MOTION_CONTROL_DISTXY_THRESHOLD)
     {
 		phiR = 2 * dtheta;
 		phiL = -2 * dtheta;
 		
-		if(fabs(dtheta) >= 0.9)
+		if(fabs(dtheta) >= MOTION_CONTROL_DISTTHETA_THRESHOLD)
 		{
 			phiR = 2 * dtheta;
 			phiL = -2 * dtheta;
@@ -315,8 +318,6 @@ void Robot::MotionControl()
     }
     
     APISetRobotSpeed(phiL, phiR);
-
-    //printf("\tWheel Speed: %f \t %f\n", phiL, phiR);
 }
 
 void Robot::ActionUpdate()
@@ -348,7 +349,7 @@ void Robot::ActionUpdate()
 	pos.mat[2][0] = to_pi_range(pos.mat[2][0] + deltaTheta);
 
 	//Calcula o sigmaDelta
-	/*Matrix sigmaDelta(2, 2);
+	Matrix sigmaDelta(2, 2);
 	sigmaDelta.mat[0][0] = ODOMETRY_KR * fabs(deltaSr);
 	sigmaDelta.mat[0][1] = 0.0;
 	sigmaDelta.mat[1][0] = 0.0;
@@ -358,97 +359,36 @@ void Robot::ActionUpdate()
 	Matrix fp(3, 3);
 	fp.mat[0][0] = 1;
 	fp.mat[0][1] = 0;
-	fp.mat[0][2] = 0;//-deltaY;
+	fp.mat[0][2] = -deltaY; //0.002;
 	fp.mat[1][0] = 0;
 	fp.mat[1][1] = 1;
-	fp.mat[1][2] = 0;//deltaX;
+	fp.mat[1][2] = deltaX; //0.002;
 	fp.mat[2][0] = 0;
 	fp.mat[2][1] = 0;
 	fp.mat[2][2] = 1;
 
 	//Calcula fDeltaRl
 	Matrix fDeltaRl(3, 2);
-	fDeltaRl.mat[0][0] = 0.5*cosargumento - deltaY/(2.0*b);
-	fDeltaRl.mat[0][1] = 0.5*cosargumento + deltaY/(2.0*b);
-	fDeltaRl.mat[1][0] = 0.5*sinargumento + deltaX/(2.0*b);
-	fDeltaRl.mat[1][1] = 0.5*sinargumento - deltaX/(2.0*b);
-	fDeltaRl.mat[2][0] = 1.0/b;
-	fDeltaRl.mat[2][1] = -1.0/b;
+	fDeltaRl.mat[0][0] = 0.5*cosargumento - deltaY/(2.0*b); //1
+	fDeltaRl.mat[0][1] = 0.5*cosargumento + deltaY/(2.0*b); //0
+	fDeltaRl.mat[1][0] = 0.5*sinargumento + deltaX/(2.0*b); //0
+	fDeltaRl.mat[1][1] = 0.5*sinargumento - deltaX/(2.0*b); //1
+	fDeltaRl.mat[2][0] = 1.0/b;								//0
+	fDeltaRl.mat[2][1] = -1.0/b;							//0
 	
 	//Atualiza matriz de covariancias da posição estimada
-float preX = sigmapos.mat[0][0], preY = sigmapos.mat[1][1], preTheta = sigmapos.mat[2][2];
 	sigmapos = ((fp * sigmapos) * Transpose(fp)) + ((fDeltaRl * sigmaDelta) * Transpose(fDeltaRl));
 	
 	//Atualiza o desvio padrão da posição do robô	
 	posdeviation[0] = sqrt(sigmapos.mat[0][0]);
 	posdeviation[1] = sqrt(sigmapos.mat[1][1]);
-	posdeviation[2] = sqrt(sigmapos.mat[2][2]);*/
-	//posdeviation[2] = angleDiff(realpos.mat[2][0], pos.mat[2][0]);
-
-	//Teste com desvio perfeito
-	//posdeviation[0] = fabs(realpos.mat[0][0]-pos.mat[0][0]);
-	//posdeviation[1] = fabs(realpos.mat[1][0]-pos.mat[1][0]);
-	//posdeviation[2] = angleDiff(realpos.mat[2][0], pos.mat[2][0]);
-
-	//-----------------------------------------
-	//Modelo simplista
-	//-----------------------------------------
-	static float ERROR_RATIO_XY = 0.05;
-	static float ERROR_RATIO_THETA = 0.02;
-
-	sigmapos.mat[0][0] = 1.01*sigmapos.mat[0][0] + ERROR_RATIO_XY*fabs(deltaX);
-	sigmapos.mat[1][1] = 1.01*sigmapos.mat[1][1] + ERROR_RATIO_XY*fabs(deltaY);
-	sigmapos.mat[2][2] = 1.01*sigmapos.mat[2][2] + ERROR_RATIO_THETA*fabs(deltaTheta);
-
-	posdeviation[0] = sqrt(sigmapos.mat[0][0]);
-	posdeviation[1] = sqrt(sigmapos.mat[1][1]);
 	posdeviation[2] = sqrt(sigmapos.mat[2][2]);
-	//----------------------------------------
 
-	//if((sigmapos.mat[0][0] < preX) || (sigmapos.mat[1][1] < preY) || (sigmapos.mat[2][2] < preTheta))
-	/*{
-		printf("\n\r>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-		printf("\r>>>>deltaSl: %f\n", deltaSl);
-		printf("\r>>>>deltaSr: %f\n", deltaSr);
-		printf("\r>>>>deltaS: %f\n", deltaS);
-		printf("\r>>>>deltaTheta: %f\n", deltaTheta);
-		printf("\r>>>>argumento: %f\n", argumento);
-		printf("\r>>>>cosargumento: %f\n", cosargumento);
-		printf("\r>>>>sinargumento: %f\n", sinargumento);
-		printf("\r>>>>deltaX: %f\n", deltaX);
-		printf("\r>>>>deltaY: %f\n", deltaY);
-
-		printf("\r>>>>pos\n");
-		pos.Print();
-
-		printf("\r>>>>sigmaDelta\n");
-		sigmaDelta.Print();
-
-		printf("\r>>>>fp\n");
-		fp.Print();
-
-		printf("\r>>>>fDeltaRl\n");
-		fDeltaRl.Print();
-
-		printf("\r>>>>A\n");
-		A.Print();
-
-		printf("\r>>>>B\n");
-		B.Print();
-
-		printf("\r>>>>sigmapos\n");
-		sigmapos.Print(); 
-
-		printf("\r>>>>DEVIATION:  %fm %fm %f°\n", posdeviation[0], posdeviation[1], to_deg(posdeviation[2]));
-		printf("\rPOSITION ERROR: %fm %fm %f°\n", fabs(realpos.mat[0][0]-pos.mat[0][0]), fabs(realpos.mat[1][0]-pos.mat[1][0]), to_deg(angleDiff(realpos.mat[2][0], pos.mat[2][0])));
-
-		if(sigmapos.mat[0][0] < preX)
-			printf("\r>>>>VARIANCE X DOWN\n");
-		if(sigmapos.mat[1][1] < preY)
-			printf("\r>>>>VARIANCE Y DOWN\n");
-		if(sigmapos.mat[2][2] < preTheta)
-			printf("\r>>>>VARIANCE THETA DOWN\n");
-	}*/
+	//-------------------------------------------
+	//Teste com desvio perfeito
+	posdeviation[0] = fabs(realpos.mat[0][0]-pos.mat[0][0]);
+	posdeviation[1] = fabs(realpos.mat[1][0]-pos.mat[1][0]);
+	posdeviation[2] = angleDiff(realpos.mat[2][0], pos.mat[2][0]);
 }
 
 bool Robot::PerceptionUpdateCondition()
@@ -496,10 +436,10 @@ Matrix Robot::EstimateXz()
 	//Estimativa de posição
 	static Matrix xz(3, 1);
 
-	static float stepX = envmap.GetSizeX() / 80.0;
-	static float stepY = envmap.GetSizeY() / 80.0;
-	static float stepTheta = 1.0*PI_DIV_180;
-	static float stepDiffAngle = 1.5*PI_DIV_180;
+	static float stepX = PERCETION_UPDATE_STEP_X;
+	static float stepY = PERCETION_UPDATE_STEP_Y;
+	static float stepTheta = PERCETION_UPDATE_STEP_THETA;
+	static float stepDiffAngle = PERCETION_UPDATE_STEP_SONAR;
 
 	float minX = pos.mat[0][0] - posdeviation[0];
 	float maxX = pos.mat[0][0] + posdeviation[0];
