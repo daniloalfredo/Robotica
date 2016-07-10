@@ -26,8 +26,9 @@ float EuclidianDistance(float x1, float y1, float x2, float y2);
 float SquareDistance(float x1, float y1, float x2, float y2);
 
 //Números aleatórios
-float rand_beetween_0_and_1();
-float rand_signal();
+float RandBeetween0and1();
+float RandSignal();
+float RandomValue(float minValue, float maxValue);
 
 //Tempo
 typedef long long TimeStamp;

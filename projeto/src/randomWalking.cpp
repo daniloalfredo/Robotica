@@ -1,15 +1,10 @@
-#include "ObjectDetector.h"
+#include "ColorDetector.h"
 #include "RobotAPI.h"
 #include "Utils.h"
 
-#define FILE_DICTIONARY "ini/dictionary.yml"
-#define FILE_DATABASE "ini/objects.ini"
-#define FILE_PARAMS "ini/detector.ini"
-#define FILE_SVM "ini/svm.ini" 
-
 #define INFINITE_DISTANCE 2.2
 
-enum STATES { WALKING, STOPPING, DETECTING, TURNING };
+enum STATES { WALKING, STOPPING, DETECTING, TURNING, EMERGENCY_REAR };
 enum SONARS { LEFT = 0, FRONT = 1, RIGHT = 2 };
            
 void UpdateSonarReadings(float* sonarReadings)
@@ -26,11 +21,6 @@ void UpdateSonarReadings(float* sonarReadings)
 		sonarReadings[RIGHT] = INFINITE_DISTANCE;
 }
 
-float RandomTimeSecs(float maxTimeSecs)
-{
-	return fmax(0.3, (rand()%((int)(maxTimeSecs*1000))) / 1000.0);
-}
-
 int main(int argc, char* argv[])
 {   
 	//Se conseguiu conectar com a API
@@ -44,33 +34,24 @@ int main(int argc, char* argv[])
         	printf("\rSimulação iniciada.\n");
 
         	//Inicializa detector de objetos
-        	/*ObjectDetector objectDetector;
-			objectDetector.LoadParams(FILE_PARAMS);
-			objectDetector.LoadObjects(FILE_DATABASE);
+        	ColorDetector objectDetector;
 
-			if(objectDetector.LoadDictionary(FILE_DICTIONARY))
-			{
-				objectDetector.LoadSVM(FILE_SVM);
-			}
-			
-			else
-			{
-				objectDetector.Train();
-				objectDetector.SaveDictionary(FILE_DICTIONARY);
-				objectDetector.SaveSVM(FILE_SVM);
-			}*/
             cv::Mat frame(1, 1, CV_32FC1);
-            char objectName[100];
+            std::string objectName;
 
         	int state = WALKING;
         	float sonarReadings[3] = { -1.0, -1.0, -1.0 };
         	float motionSpeed = 60.0;
         	float leftSpeed = 0.0;
         	float rightSpeed = 0.0;
-        	float timeStamp;
+        	float timeStamp = APIGetSimulationTimeInSecs();
         	float turningDuration;
+        	float turingDirection = 1.0;
+        	float deltaS = 0.0;
 
+        	float WHEEL_R = 0.0375;
         	float PROXIMITY_THRESHOLD = 0.15;
+        	float DELTA_S_THRESHOLD = 0.12;
         	
         	//---------------------------------------------------------
         	//LOOP DA SIMULAÇÃO
@@ -86,9 +67,34 @@ int main(int argc, char* argv[])
 		    		leftSpeed = motionSpeed;
 		    		rightSpeed = motionSpeed;
 
+		    		//Odometria para checar se bateu
+		    		if(APIGetSimulationTimeInSecs() - timeStamp < 3.0)
+		    			deltaS += APIReadOdometers(WHEEL_R);
+		    		else
+		    		{
+		    			if(deltaS < DELTA_S_THRESHOLD)
+		    				state = EMERGENCY_REAR;
+
+		    			deltaS = 0.0;	
+		    			timeStamp = APIGetSimulationTimeInSecs();
+		    		}
+
 		    		if(sonarReadings[LEFT] <= PROXIMITY_THRESHOLD
 		    		|| sonarReadings[FRONT] <= PROXIMITY_THRESHOLD
 		    		|| sonarReadings[RIGHT] <= PROXIMITY_THRESHOLD	)
+		    		{
+		    			deltaS = 0.0;
+		    			state = STOPPING;
+		    			timeStamp = APIGetSimulationTimeInSecs();
+		    		}
+		    	}
+
+		    	else if(state == EMERGENCY_REAR)
+		    	{
+		    		leftSpeed = -motionSpeed;
+		    		rightSpeed = -motionSpeed;
+
+		    		if(APIGetSimulationTimeInSecs() - timeStamp > 0.5)
 		    		{
 		    			state = STOPPING;
 		    			timeStamp = APIGetSimulationTimeInSecs();
@@ -108,19 +114,21 @@ int main(int argc, char* argv[])
 		    	{
 		    		printf("\n\rDetecting object...\n");
                 	frame = APIReadCamera();
-					APIWaitMsecs(2000);
-					//objectDetector.Detect(frame, objectName);
-					printf("\rObject: %s\n\n", objectName);
+					objectName = objectDetector.Detect(frame);
+					printf("\rObject: %s\n\n", objectName.c_str());
+					APISavePicture(frame, objectName);
+					APIWaitMsecs(800);
 
-					turningDuration = RandomTimeSecs(1.1);
+					turningDuration = RandomValue(0.4, 1.2);
 		    		timeStamp = APIGetSimulationTimeInSecs();
 		    		state = TURNING;
+		    		turingDirection = RandSignal();
 		    	}
 
 		    	else if(state == TURNING)
 		    	{
-		    		leftSpeed = motionSpeed;
-		    		rightSpeed = -motionSpeed;
+		    		leftSpeed = motionSpeed*turingDirection;
+		    		rightSpeed = -motionSpeed*turingDirection;
 
 		    		if(APIGetSimulationTimeInSecs() - timeStamp >= turningDuration)
 		    		{
@@ -135,7 +143,7 @@ int main(int argc, char* argv[])
 		    	APISetMotorPower(leftSpeed, rightSpeed);
 
 		    	//Printa Informações
-		    	printf("\rSonars:[%.2f, %.2f, %.2f]\n", sonarReadings[0], sonarReadings[1], sonarReadings[2]);
+		    	printf("\rdeltaS: %f | Sonars:[%.2f, %.2f, %.2f]\n", deltaS, sonarReadings[0], sonarReadings[1], sonarReadings[2]);
 
 		        //Espera um tempo antes da próxima atualização
 		        APIWait();

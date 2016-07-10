@@ -18,6 +18,7 @@ int main(int argc, char** argv)
 	objectDetector.Train();
 	objectDetector.SaveDictionary(FILE_DICTIONARY);
 	objectDetector.SaveSVM(FILE_SVM);
+	printf("\r");
 
 	return 0;
 }

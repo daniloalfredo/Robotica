@@ -2,7 +2,7 @@
 #define ROBOTAPI_H_INCLUDED
 
 //Escolhe entre usar o VREP ou o robô real  
-#define USING_VREP 0
+#define USING_VREP 1
 
 //Includes e Variáveis gerais
 #include <opencv2/core/core.hpp>
@@ -13,6 +13,7 @@
 #include <opencv2/ml/ml.hpp>
 #include <cstdio>
 #include <cstdlib>
+#include <string>
 	
 #include "KBAsync.h"
 #include "Utils.h"
@@ -68,11 +69,14 @@ float APIGetSimulationTimeInSecs();
 void APIGetTrueRobotPosition(Matrix* realpos);
 void APIGetTrueRobotPosition(float* realpos);
 void APIReadOdometers(float* dPhiL, float* dPhiR);
+void APIReadOdometers(float WHEEL_R, float* deltaSl, float* deltaSr); //O quanto andou na roda esquerda e na roda direita
+float APIReadOdometers(float WHEEL_R); //O quanto o robô andou 
 void APISetRobotSpeed(float phiL, float phiR);
 void APISetMotorPower(float powL, float powR);
 void APIStopRobot();
 cv::Mat APIReadCamera();
 void APISavePicture(cv::Mat picture);
+void APISavePicture(cv::Mat picture, std::string name);
 float APIReadSonarLeft();
 float APIReadSonarFront();
 float APIReadSonarRight();

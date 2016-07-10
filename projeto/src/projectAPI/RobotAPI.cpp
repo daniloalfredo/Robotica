@@ -279,6 +279,23 @@ void APIReadOdometers(float* dPhiL, float* dPhiR)
     #endif
 }
 
+void APIReadOdometers(float WHEEL_R, float* deltaSl, float* deltaSr)
+{
+    float dPhiL, dPhiR;
+    APIReadOdometers(&dPhiL, &dPhiR);
+
+    *deltaSl = WHEEL_R * dPhiL;
+    *deltaSr = WHEEL_R * dPhiR;
+}
+
+float APIReadOdometers(float WHEEL_R)
+{
+    float deltaSl, deltaSr;
+    APIReadOdometers(WHEEL_R, &deltaSl, &deltaSr);
+
+    return fabs((deltaSl + deltaSr) / 2.0);
+}
+
 void APISetRobotSpeed(float phiL, float phiR)
 {
     if(phiL < -0.001 || phiL > 0.001 || phiR < -0.001 || phiR > 0.001)
@@ -299,8 +316,8 @@ void APISetMotorPower(float powL, float powR)
         stopped = false;
     
     #if USING_VREP == 1
-        simxSetJointTargetVelocity(clientID, leftMotorHandle, powL, simx_opmode_oneshot);
-        simxSetJointTargetVelocity(clientID, rightMotorHandle, powR, simx_opmode_oneshot); 
+        simxSetJointTargetVelocity(clientID, leftMotorHandle, 6.0*(powL/100.0), simx_opmode_oneshot);
+        simxSetJointTargetVelocity(clientID, rightMotorHandle, 6.0*(powR/100.0), simx_opmode_oneshot); 
     #elif USING_VREP == 0
         motorL.setPower(powR); //rodas da esquerda e direita sao trocadas
         motorR.setPower(powL);
@@ -335,6 +352,15 @@ void APISavePicture(cv::Mat picture)
 	sprintf(pic_path, "img/pics/%d.jpg", pic_counter); 
 	cv::imwrite(pic_path, picture);
 	pic_counter++;
+}
+
+void APISavePicture(cv::Mat picture, std::string name)
+{
+    static int pic_counter = 0;
+    char pic_path[50];
+    sprintf(pic_path, "img/pics/%d_%s.jpg", pic_counter, name.c_str()); 
+    cv::imwrite(pic_path, picture);
+    pic_counter++;
 }
 
 float APIReadSonarLeft()

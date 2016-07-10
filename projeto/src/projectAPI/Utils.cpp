@@ -30,26 +30,21 @@ float SquareDistance(float x1, float y1, float x2, float y2)
 
 //Números aleatórios
 
-float rand_beetween_0_and_1()
+float RandBeetween0and1()
 {
-	static bool seeded = false;
-	
-	if(!seeded)
-		srand(time(NULL));
-		
 	return (rand()%1001) / 1000.0;
 }
 
-float rand_signal()
+float RandSignal()
 {
-	static bool seeded = false;
-	
-	if(!seeded)
-		srand(time(NULL));
-		
 	if(rand()%2 == 0)
 		return 1.0;
 	return -1.0;
+}
+
+float RandomValue(float minValue, float maxValue)
+{
+	return fmax(minValue, (rand()%((int)(maxValue*1000))) / 1000.0);
 }
 
 //Tempo

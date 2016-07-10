@@ -39,6 +39,7 @@ real: clean
 	g++ src/movementRecorder.cpp obj/*.o -o bin/movementRecorder.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/commandSequence.cpp obj/*.o -o bin/commandSequence.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/randomWalking.cpp obj/*.o -o bin/randomWalking.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
+	g++ src/wallRider.cpp obj/*.o -o bin/wallRider.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/kalman.cpp obj/*.o -o bin/kalman.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	echo 'Done.'
 
@@ -72,6 +73,7 @@ sim: clean
 	g++ src/movementRecorder.cpp obj/*.o -o bin/movementRecorder.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	g++ src/commandSequence.cpp obj/*.o -o bin/commandSequence.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	g++ src/randomWalking.cpp obj/*.o -o bin/randomWalking.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
+	g++ src/wallRider.cpp obj/*.o -o bin/wallRider.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	g++ src/kalman.cpp obj/*.o -o bin/kalman.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	echo 'Done.'
 
