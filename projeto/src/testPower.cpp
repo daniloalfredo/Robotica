@@ -13,9 +13,11 @@ int main(int argc, char* argv[])
         {
         	printf("\rSimulação iniciada.\n");
 
-        	float leftSpeed = 15.0;
-        	float rightSpeed = 15.0;
-        	float stepSpeed = 0.5;
+        	float leftSpeed = 60.0;
+        	float rightSpeed = 60.0;
+        	float stepSpeed = 1.0;
+        	float experimentTime = 2.0;
+        	float stepTime = 0.1;
         	bool startTest = false;
         	
         	//---------------------------------------------------------
@@ -23,9 +25,13 @@ int main(int argc, char* argv[])
         	//---------------------------------------------------------
 		    while(APISimulationIsRunning())
 		    {    
-		    	printf("\rSpace to begin; Q to quit. Speed [Left | Right]: [%.2f | %.2f]\n", leftSpeed, rightSpeed);
+		    	printf("\rTime: %.2fs  |  Power: [%.2f | %.2f]\n", experimentTime, leftSpeed, rightSpeed);
 
-		    	if(APIGetKey() == 'i')
+		    	if(APIGetKey() == 'u')
+		    		experimentTime += stepTime;
+		    	else if(APIGetKey() == 'j')
+		    		experimentTime -= stepTime;
+		    	else if(APIGetKey() == 'i')
 		    		leftSpeed += stepSpeed;
 		    	else if(APIGetKey() == 'k')
 		    		leftSpeed -= stepSpeed;
@@ -42,7 +48,7 @@ int main(int argc, char* argv[])
 		    		float WHEEL_R = 0.0375;
 		    		float beginTime = APIGetSimulationTimeInSecs();
 
-		    		while(APISimulationIsRunning() && (APIGetSimulationTimeInSecs() - beginTime < 2.0))
+		    		while(APISimulationIsRunning() && (APIGetSimulationTimeInSecs() - beginTime < experimentTime))
 		    		{
 		    			deltaS += APIReadOdometers(WHEEL_R);
 		    			float dl, dr;
@@ -50,7 +56,7 @@ int main(int argc, char* argv[])
 		    			deltaSl += dl;
 		    			deltaSr += dr;
 
-		    			APISetRobotSpeed(leftSpeed, rightSpeed);
+		    			APISetMotorPower(leftSpeed, rightSpeed);
 		    			APIWait();
 		    		}
 

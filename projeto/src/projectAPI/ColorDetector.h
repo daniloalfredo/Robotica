@@ -21,7 +21,7 @@
 class ColorDetector
 {
     public:
-        std::string Detect(cv::Mat img);
+        std::string Detect(cv::Mat image);
 };
 
 #endif

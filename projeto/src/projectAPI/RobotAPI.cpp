@@ -340,7 +340,7 @@ void APIStopRobot()
 
 cv::Mat APIReadCamera()
 {
-	cv::Mat image(1, 1, CV_32FC1);
+	cv::Mat image(1, 1, CV_32FC3);
 	cap >> image;
 	return image;
 }

@@ -27,14 +27,16 @@ real: clean
 	g++ -c *.cpp $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(ROBOTFLAGS) $(OPENCVFLAGS);\
 	mv *.o ../../obj/; \
 	cd ../..; \
-
+	
 	#Generate Binaries
 	echo 'Generating binaries...'
 	g++ src/trainDetector.cpp obj/*.o -o bin/trainDetector.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/testDetector.cpp obj/*.o -o bin/testDetector.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
+	g++ src/testColorDetector.cpp obj/*.o -o bin/testColorDetector.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/testSonar.cpp obj/*.o -o bin/testSonar.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/testCamera.cpp obj/*.o -o bin/testCamera.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/testSpeed.cpp obj/*.o -o bin/testSpeed.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
+	g++ src/testPower.cpp obj/*.o -o bin/testPower.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/remoteControl.cpp obj/*.o -o bin/remoteControl.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/movementRecorder.cpp obj/*.o -o bin/movementRecorder.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/commandSequence.cpp obj/*.o -o bin/commandSequence.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
@@ -42,6 +44,8 @@ real: clean
 	g++ src/wallRider.cpp obj/*.o -o bin/wallRider.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/kalman.cpp obj/*.o -o bin/kalman.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	echo 'Done.'
+
+	#rm -f img/pics/*.jpg
 
 #Compile to run in V-REP simulation
 sim: clean
@@ -66,9 +70,11 @@ sim: clean
 	echo 'Generating binaries...'
 	g++ src/trainDetector.cpp obj/*.o -o bin/trainDetector.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	g++ src/testDetector.cpp obj/*.o -o bin/testDetector.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
+	g++ src/testColorDetector.cpp obj/*.o -o bin/testColorDetector.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	g++ src/testSonar.cpp obj/*.o -o bin/testSonar.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	g++ src/testCamera.cpp obj/*.o -o bin/testCamera.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	g++ src/testSpeed.cpp obj/*.o -o bin/testSpeed.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
+	g++ src/testPower.cpp obj/*.o -o bin/testPower.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	g++ src/remoteControl.cpp obj/*.o -o bin/remoteControl.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	g++ src/movementRecorder.cpp obj/*.o -o bin/movementRecorder.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)
 	g++ src/commandSequence.cpp obj/*.o -o bin/commandSequence.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(VREPFLAGS)

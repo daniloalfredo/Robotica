@@ -1,11 +1,6 @@
+#include "Utils.h"
 #include "RobotAPI.h"
-#include "ObjectDetector.h"
-           
-//Arquivos utilizados pelo programa
-#define FILE_DICTIONARY "ini/dictionary.yml"
-#define FILE_DATABASE "ini/objects.ini"
-#define FILE_PARAMS "ini/detector.ini"
-#define FILE_SVM "ini/svm.ini" 
+#include "ColorDetector.h"
 
 int main(int argc, char* argv[])
 {   
@@ -20,24 +15,9 @@ int main(int argc, char* argv[])
         	printf("\rSimulação iniciada.\n");
         	
         	//Inicializa o detector de objetos
-			ObjectDetector objectDetector;
-			objectDetector.LoadParams(FILE_PARAMS);
-			objectDetector.LoadObjects(FILE_DATABASE);
-
-			if(objectDetector.LoadDictionary(FILE_DICTIONARY))
-			{
-				objectDetector.LoadSVM(FILE_SVM);
-			}
-			
-			else
-			{
-				objectDetector.Train();
-				objectDetector.SaveDictionary(FILE_DICTIONARY);
-				objectDetector.SaveSVM(FILE_SVM);
-			}
-
-            cv::Mat frame(1, 1, CV_32FC1);
-            char objectName[100];
+			ColorDetector colorDetector;
+            cv::Mat frame(1, 1, CV_32FC3);
+            std::string objectName;
 
         	//---------------------------------------------------------
         	//LOOP DA SIMULAÇÃO
@@ -48,10 +28,11 @@ int main(int argc, char* argv[])
                 frame = APIReadCamera();
 
                 //Classifica
-				objectDetector.Detect(frame, objectName);
+				objectName = colorDetector.Detect(frame);
 
 				//Printa objeto encontrado na tela
-				printf("\rObject: %s\n", objectName);
+				printf("\rObject: %s\n", objectName.c_str());
+				APIWaitMsecs(1000);
 
 		        //Espera um tempo antes da próxima atualização
 		        APIWait();
