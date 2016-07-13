@@ -2,23 +2,29 @@
 #include "RobotAPI.h"
 #include "Utils.h"
 
-#define INFINITE_DISTANCE 2.2
-
 enum STATES { WALKING = 1, STOPPING = 2, DETECTING = 3, TURNING_A = 4, TURNING_B = 5, EMERGENCY_REAR = 6 };
-enum SONARS { LEFT = 0, FRONT = 1, RIGHT = 2 };
            
 void UpdateSonarReadings(float* sonarReadings)
 {
-	sonarReadings[LEFT] = APIReadSonarLeft();
-	sonarReadings[FRONT] = APIReadSonarFront();
-	sonarReadings[RIGHT] = APIReadSonarRight();
+	static MeasureBuffer bufLeft(3);
+	static MeasureBuffer bufFront(3);
+	static MeasureBuffer bufRight(3);
 
-	if(sonarReadings[LEFT] < 0.0)
-		sonarReadings[LEFT] = INFINITE_DISTANCE;
-	if(sonarReadings[FRONT] < 0.0)
-		sonarReadings[FRONT] = INFINITE_DISTANCE;
-	if(sonarReadings[RIGHT] < 0.0)
-		sonarReadings[RIGHT] = INFINITE_DISTANCE;
+	float measure_left = APIReadSonarLeft();
+	if(measure_left > 0.0) 
+		bufLeft.PushMeasure(measure_left);
+	
+	float measure_front = APIReadSonarFront();
+	if(measure_front > 0.0) 
+		bufFront.PushMeasure(measure_front);
+
+	float measure_right = APIReadSonarRight();
+	if(measure_right > 0.0) 
+		bufRight.PushMeasure(measure_right);
+
+	sonarReadings[LEFT] = bufLeft.GetMean();
+	sonarReadings[FRONT] = bufFront.GetMean();
+	sonarReadings[RIGHT] = bufRight.GetMean();
 }
 
 int main(int argc, char* argv[])
@@ -46,7 +52,6 @@ int main(int argc, char* argv[])
 
         	float baseSpeed = 35.0;  
 
-        	float WHEEL_R = 0.0375;
         	float WALL_THRESHOLD_FAR = 0.06;
         	float WALL_THRESHOLD_CLOSE = 0.05;
         	float WALL_THRESHOLD_FRONT = 0.08;
@@ -65,7 +70,7 @@ int main(int argc, char* argv[])
 		    	UpdateSonarReadings(sonarReadings); 
 
 		    	//Atualiza odometria
-		    	deltaS += APIReadOdometers(WHEEL_R);
+		    	deltaS += APIReadOdometers();
 
 		    	//Máquina de estados
 		    	if(state == WALKING)
@@ -160,13 +165,7 @@ int main(int argc, char* argv[])
 					else if(substate == 2)
 					{
 						printf("\n\rDetecting object...\n");
-	                	cv::Mat frame;
-	                	for(int i = 0; i < 15; i++)
-	                	{
-	                	 	frame = APIReadCamera();
-	                	 	APIWaitMsecs(10);
-	                	}
-
+	                	cv::Mat frame = APIReadCamera(15, 10);
 	                	objectName = objectDetector.Detect(frame);
    						char pic_path[50];
     					sprintf(pic_path, "img/pics/%d_%s.jpg", pic_counter, objectName.c_str());

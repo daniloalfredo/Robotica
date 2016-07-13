@@ -45,8 +45,6 @@ class Robot
 		float SENSOR_OPENING_ANGLE;		//Abertura em radianos do cone do sonar (metade da abertura)
 
 		//Constantes do controle de movimento
-		float WHEEL_R;
-		float WHEEL_L;	
 		float MOTION_CONTROL_K_RHO;
 		float MOTION_CONTROL_K_ALPHA;
 		float MOTION_CONTROL_K_BETA;

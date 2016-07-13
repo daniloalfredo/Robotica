@@ -2,7 +2,7 @@
 #define ROBOTAPI_H_INCLUDED
 
 //Escolhe entre usar o VREP ou o robô real  
-#define USING_VREP 0
+#define USING_VREP 1
 
 //Includes e Variáveis gerais
 #include <opencv2/core/core.hpp>
@@ -18,9 +18,12 @@
 #include "KBAsync.h"
 #include "Utils.h"
 
+enum SONAR_ID { LEFT = 0, FRONT = 1, RIGHT = 2 };
+
 extern KBAsync kb;
 extern int kb_key;
 extern bool stopped;
+extern float WHEEL_R, WHEEL_L;
 extern cv::VideoCapture cap;
 extern TimeStamp simulationBeginTime;
 
@@ -55,7 +58,6 @@ extern TimeStamp simulationBeginTime;
 	extern Encoder encoderL, encoderR;
 	extern Motor motorL, motorR;
 	extern Sonar sonarL, sonarR, sonarF;
-	extern MeasureBuffer bufLeft, bufFront, bufRight;
 #endif
 
 bool APIInitConection();
@@ -69,12 +71,12 @@ float APIGetSimulationTimeInSecs();
 void APIGetTrueRobotPosition(Matrix* realpos);
 void APIGetTrueRobotPosition(float* realpos);
 void APIReadOdometers(float* dPhiL, float* dPhiR);
-void APIReadOdometers(float WHEEL_R, float* deltaSl, float* deltaSr); //O quanto andou na roda esquerda e na roda direita
-float APIReadOdometers(float WHEEL_R); //O quanto o robô andou 
+float APIReadOdometers(); //O quanto o robô andou em metros
 void APISetRobotSpeed(float phiL, float phiR);
 void APISetMotorPower(float powL, float powR);
 void APIStopRobot();
 cv::Mat APIReadCamera();
+cv::Mat APIReadCamera(int numPics, int delayMsecs);
 void APISavePicture(cv::Mat picture);
 void APISavePicture(cv::Mat picture, char* filename);
 float APIReadSonarLeft();

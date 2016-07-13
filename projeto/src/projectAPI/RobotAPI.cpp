@@ -3,6 +3,7 @@
 KBAsync kb;
 int kb_key;
 bool stopped;
+float WHEEL_R, WHEEL_L;
 cv::VideoCapture cap(0);
 TimeStamp simulationBeginTime;
 
@@ -19,7 +20,6 @@ TimeStamp simulationBeginTime;
     Encoder encoderL, encoderR;
     Motor motorL, motorR;
     Sonar sonarL, sonarR, sonarF;
-    MeasureBuffer bufLeft, bufFront, bufRight;
 #endif
 
 bool APIInitConection()
@@ -96,14 +96,9 @@ bool APIInitConection()
             fscanf(f, "%*[^:] %*c %f", &spdSampRateR);
             fscanf(f, "%*[^:] %*c %f", &minPowerR);
 
-            //Tamanho do buffer de medições dos sonares
-            int buf_size;
-            fscanf(f, "%*[^:] %*c %d", &buf_size);
-            bufLeft.SetBufferSize(buf_size);
-            fscanf(f, "%*[^:] %*c %d", &buf_size);
-            bufFront.SetBufferSize(buf_size);
-            fscanf(f, "%*[^:] %*c %d", &buf_size);
-            bufRight.SetBufferSize(buf_size);
+            //Tamanhos
+            fscanf(f, "%*[^:] %*c %f", &WHEEL_R);
+            fscanf(f, "%*[^:] %*c %f", &WHEEL_L);
         }
         else
             printf("Erro ao ler arquivo `hardware.ini`\n");
@@ -279,19 +274,13 @@ void APIReadOdometers(float* dPhiL, float* dPhiR)
     #endif
 }
 
-void APIReadOdometers(float WHEEL_R, float* deltaSl, float* deltaSr)
+float APIReadOdometers()
 {
     float dPhiL, dPhiR;
     APIReadOdometers(&dPhiL, &dPhiR);
 
-    *deltaSl = WHEEL_R * dPhiL;
-    *deltaSr = WHEEL_R * dPhiR;
-}
-
-float APIReadOdometers(float WHEEL_R)
-{
-    float deltaSl, deltaSr;
-    APIReadOdometers(WHEEL_R, &deltaSl, &deltaSr);
+    float deltaSl = WHEEL_R * dPhiL;
+    float deltaSr = WHEEL_R * dPhiR;
 
     return fabs((deltaSl + deltaSr) / 2.0);
 }
@@ -345,6 +334,18 @@ cv::Mat APIReadCamera()
 	return image;
 }
 
+cv::Mat APIReadCamera(int numPics, int delayMsecs)
+{
+	cv::Mat frame;
+	for(int i = 0; i < numPics; i++)
+	{
+		frame = APIReadCamera();
+	    APIWaitMsecs(delayMsecs);
+	}
+
+	return frame;
+}
+
 void APISavePicture(cv::Mat picture)
 {
 	static int pic_counter = 0;
@@ -374,9 +375,7 @@ float APIReadSonarLeft()
             return -1;
 
     #elif USING_VREP == 0
-        bufLeft.PushMeasure(sonarL.measureDistance());
-        return bufLeft.GetMean();
-
+        return sonarL.measureDistance();
     #endif
 }
 
@@ -395,9 +394,7 @@ float APIReadSonarFront()
             return -1;
 
     #elif USING_VREP == 0
-        bufFront.PushMeasure(sonarF.measureDistance());
-        return bufFront.GetMean();
-
+        breturn sonarF.measureDistance();
     #endif
 }
 
@@ -416,8 +413,6 @@ float APIReadSonarRight()
             return -1;
 
     #elif USING_VREP == 0
-         bufRight.PushMeasure(sonarR.measureDistance());
-        return bufRight.GetMean();
-
+		return sonarR.measureDistance();
     #endif
 }

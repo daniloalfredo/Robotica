@@ -44,12 +44,6 @@ void Robot::Init(const char* INIT_FILENAME)
 
 		printf("\rLoading Robot Params...\n");
 
-		//WHEEL_R e WHEEL_L
-		fscanf(file_init, "%*[^:] %*c %f", &WHEEL_R);
-		fscanf(file_init, "%*[^:] %*c %f", &WHEEL_L);
-		printf("\r\tWHEEL_R: %fm\n", WHEEL_R);
-		printf("\r\tWHEEL_L: %fm\n", WHEEL_L);
-
 		//Sonar params
 		fscanf(file_init, "%*[^:] %*c %f %f %f", &sensorLeftPos[0], &sensorLeftPos[1], &sensorLeftPos[2]);
 		sensorLeftPos[2] = sensorLeftPos[2]*PI_DIV_180;

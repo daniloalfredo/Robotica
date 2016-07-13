@@ -38,18 +38,12 @@ int main(int argc, char* argv[])
 
 		    	if(startTest)
 		    	{
-		    		float deltaSl = 0.0, deltaSr = 0.0, deltaS = 0.0;
-		    		float WHEEL_R = 0.0375;
+		    		float deltaS = 0.0;
 		    		float beginTime = APIGetSimulationTimeInSecs();
 
 		    		while(APISimulationIsRunning() && (APIGetSimulationTimeInSecs() - beginTime < 2.0))
 		    		{
-		    			deltaS += APIReadOdometers(WHEEL_R);
-		    			float dl, dr;
-		    			APIReadOdometers(WHEEL_R, &dl, &dr);
-		    			deltaSl += dl;
-		    			deltaSr += dr;
-
+		    			deltaS += APIReadOdometers();
 		    			APISetRobotSpeed(leftSpeed, rightSpeed);
 		    			APIWait();
 		    		}
@@ -57,7 +51,7 @@ int main(int argc, char* argv[])
 		    		APIStopRobot();
 		    		startTest = false;
 
-		    		printf("\n\rΔSl: %f ΔSr: %f ΔS: %f\n\n", deltaSl, deltaSr, deltaS);
+		    		printf("\n\rΔS: %f\n\n", deltaS);
 		    		APIWaitMsecs(3000);
 		    	}
 

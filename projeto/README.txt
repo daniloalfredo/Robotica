@@ -26,10 +26,21 @@ Para executar:
 
 Para compilar o robô para V-REP basta utilizar o comando ´make sim´
 e para compilar o robô para o dispositivo real basta utilizar 
-´make real´. O executável resultante estará na pasta bin/
+´make real´. Os arquivos fontes da pasta src serão compilados e 
+terão um arquivo executável equivalente na pasta bin.
+
+Para executar um programa pasta estando na pasta raiz do projeto
+utilizar o comando: ./bin/<nome do programa>.bin
+
+Exemplo: ./bin/remoteControl.bin
+
+No caso do robô real é necessário utilizar sudo antes do comando
+para rodar com permissões de administrador.
 
 //***************************************************************
 
 Inicialização:
 
-...
+Há vários arquivos de inicialização na pasta ini o arquivo
+hardware.ini controla alguns parâmetros do robô como o seu
+PID.
