@@ -7,14 +7,14 @@
 #include <termios.h>
 #include <sys/select.h>
 
-class KBAsync {
-public:
-
-	KBAsync();
-	~KBAsync();
-	int kbhit();
-	int getch();
-	int getKey();
+class KBAsync
+{
+	public:
+		KBAsync();
+		~KBAsync();
+		int kbhit();
+		int getch();
+		int getKey();
 };
 
 #endif

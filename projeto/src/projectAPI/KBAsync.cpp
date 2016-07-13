@@ -36,17 +36,18 @@ int KBAsync::kbhit()
 
 int KBAsync::getch()
 {
-	 int r;
-	 unsigned char c;
-	 if ((r = read(0, &c, sizeof(c))) < 0) {
-	     return r;
-	 } else {
-	     return c;
-	 }
+	int r;
+	unsigned char c;
+	
+	if ((r = read(0, &c, sizeof(c))) < 0)
+		return r;
+	else
+		return c;
 }
 
-int KBAsync::getKey() {
+int KBAsync::getKey()
+{
 	if (kbhit()) return getch();
-	return -1;
+		return -1;
 }
 

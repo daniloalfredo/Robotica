@@ -30,6 +30,36 @@ bool APIInitConection()
         return false;
 	}
 
+	//Lê os valores do pid a partir de um arquivo
+	float kpL = 0.05, kiL = 0.00, kdL = 0.0;
+	float minPowerL = 5.0, spdSampRateL = 0.0;
+	float kpR = 0.05, kiR = 0.00, kdR = 0.0;
+	float minPowerR = 5.0, spdSampRateR = 0.0;
+
+	FILE* f = fopen("ini/hardware.ini", "r");
+	if(f != NULL)
+	{
+		//Constantes do PID do motor esquerdo
+		fscanf(f, "%*[^:] %*c %f", &kpL);
+		fscanf(f, "%*[^:] %*c %f", &kiL);
+		fscanf(f, "%*[^:] %*c %f", &kdL);
+		fscanf(f, "%*[^:] %*c %f", &spdSampRateL);
+		fscanf(f, "%*[^:] %*c %f", &minPowerL);
+
+		//Constantes do PID do motor direito
+		fscanf(f, "%*[^:] %*c %f", &kpR);
+		fscanf(f, "%*[^:] %*c %f", &kiR);
+		fscanf(f, "%*[^:] %*c %f", &kdR);
+		fscanf(f, "%*[^:] %*c %f", &spdSampRateR);
+		fscanf(f, "%*[^:] %*c %f", &minPowerR);
+
+		//Tamanhos
+		fscanf(f, "%*[^:] %*c %f", &WHEEL_R);
+		fscanf(f, "%*[^:] %*c %f", &WHEEL_L);
+	}
+	else
+		printf("Erro ao ler arquivo `hardware.ini`\n");
+
     #if USING_VREP == 1
     	printf("\rIniciando conexão com: %s...\n", V_REP_IP_ADDRESS);
     	clientID = simxStart(V_REP_IP_ADDRESS, V_REP_PORT, true, true, 2000, 5);
@@ -72,36 +102,6 @@ bool APIInitConection()
         sonarF.setup(SONAR_FRONT_TRIGGER, SONAR_FRONT_ECHO);
         motorL.setup(MOTOR_LEFT_A, MOTOR_LEFT_B, MOTOR_LEFT_E, &encoderL);
         motorR.setup(MOTOR_RIGHT_A, MOTOR_RIGHT_B, MOTOR_RIGHT_E, &encoderR);
-
-        //Lê os valores do pid a partir de um arquivo
-        float kpL = 0.05, kiL = 0.00, kdL = 0.0;
-        float minPowerL = 5.0, spdSampRateL = 0.0;
-        float kpR = 0.05, kiR = 0.00, kdR = 0.0;
-        float minPowerR = 5.0, spdSampRateR = 0.0;
-
-        FILE* f = fopen("ini/hardware.ini", "r");
-        if(f != NULL)
-        {
-            //Constantes do PID do motor esquerdo
-            fscanf(f, "%*[^:] %*c %f", &kpL);
-            fscanf(f, "%*[^:] %*c %f", &kiL);
-            fscanf(f, "%*[^:] %*c %f", &kdL);
-            fscanf(f, "%*[^:] %*c %f", &spdSampRateL);
-            fscanf(f, "%*[^:] %*c %f", &minPowerL);
-
-            //Constantes do PID do motor direito
-            fscanf(f, "%*[^:] %*c %f", &kpR);
-            fscanf(f, "%*[^:] %*c %f", &kiR);
-            fscanf(f, "%*[^:] %*c %f", &kdR);
-            fscanf(f, "%*[^:] %*c %f", &spdSampRateR);
-            fscanf(f, "%*[^:] %*c %f", &minPowerR);
-
-            //Tamanhos
-            fscanf(f, "%*[^:] %*c %f", &WHEEL_R);
-            fscanf(f, "%*[^:] %*c %f", &WHEEL_L);
-        }
-        else
-            printf("Erro ao ler arquivo `hardware.ini`\n");
 
         motorL.pid.setParam(kpL, kiL, kdL);
         motorL.setSpdSamplingRate(spdSampRateL);
