@@ -28,7 +28,7 @@ std::string ColorDetector::Detect(cv::Mat image)
     inRange(img, cv::Scalar(40, 0, 148), cv::Scalar(105, 62, 248), white);
     inRange(img, cv::Scalar(14, 103, 85), cv::Scalar(26, 255, 239), yellow);
     inRange(img, cv::Scalar(6, 19, 119), cv::Scalar(22, 100, 214), skin);
-    inRange(img, cv::Scalar(30, 31, 52), cv::Scalar(95, 255, 193), green);
+    inRange(img, cv::Scalar(26, 80, 60), cv::Scalar(73, 250, 175), green);
     inRange(img, cv::Scalar(0,51,41), cv::Scalar(18,255,164), brown);
     inRange(img, cv::Scalar(0, 0, 56), cv::Scalar(104, 102, 173), background);
  
@@ -41,7 +41,7 @@ std::string ColorDetector::Detect(cv::Mat image)
     qtdBrown = cv::countNonZero(brown);
     qtdBackground = cv::countNonZero(background);
 
-    if(qtdYellow >= 350 && qtdYellow <= 45000)
+    if(qtdYellow >= 350 && (qtdYellow <= 15000 || qtdGreen <= 3000))
     {
         if(qtdRed <= 50)
             return std::string("Charlie Brown");
@@ -50,7 +50,8 @@ std::string ColorDetector::Detect(cv::Mat image)
     }
     else if (qtdRed >= 4000)
         return std::string("Snoopie");
-    else if (qtdBackground >= 209000 && qtdRed <= 10 && qtdYellow <= 5)
+    else if ((qtdBackground >= 209000 && qtdRed <= 10 && qtdYellow <= 5
+        && qtdGreen <= 10 ) || qtdBackground >= 230000)
         return std::string("Não detectado");
     else
         return std::string("Yoshi");

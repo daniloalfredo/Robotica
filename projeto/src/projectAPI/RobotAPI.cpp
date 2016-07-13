@@ -354,13 +354,9 @@ void APISavePicture(cv::Mat picture)
 	pic_counter++;
 }
 
-void APISavePicture(cv::Mat picture, std::string name)
-{
-    static int pic_counter = 0;
-    char pic_path[50];
-    sprintf(pic_path, "img/pics/%d_%s.jpg", pic_counter, name.c_str()); 
-    cv::imwrite(pic_path, picture);
-    pic_counter++;
+void APISavePicture(cv::Mat picture, char* filename)
+{ 
+    cv::imwrite(filename, picture);
 }
 
 float APIReadSonarLeft()

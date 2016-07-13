@@ -36,7 +36,6 @@ int main(int argc, char* argv[])
         	//Inicializa detector de objetos
         	ColorDetector objectDetector;
 
-            cv::Mat frame(1, 1, CV_32FC1);
             std::string objectName;
 
         	int state = WALKING;
@@ -52,7 +51,8 @@ int main(int argc, char* argv[])
         	float WHEEL_R = 0.0375;
         	float PROXIMITY_THRESHOLD = 0.15;
         	float DELTA_S_THRESHOLD = 0.12;
-        	
+        	int pic_counter = 0;
+
         	//---------------------------------------------------------
         	//LOOP DA SIMULAÇÃO
         	//---------------------------------------------------------
@@ -113,10 +113,20 @@ int main(int argc, char* argv[])
 		    	else if(state == DETECTING)
 		    	{
 		    		printf("\n\rDetecting object...\n");
-                	frame = APIReadCamera();
-					objectName = objectDetector.Detect(frame);
+	                
+	                cv::Mat frame;
+	                for(int i = 0; i < 15; i++)
+	                {
+	                 	frame = APIReadCamera();
+	                 	APIWaitMsecs(10);
+	                }
+
+	                objectName = objectDetector.Detect(frame);
+   					char pic_path[50];
+    				sprintf(pic_path, "img/pics/%d_%s.jpg", pic_counter, objectName.c_str());
+    				pic_counter++;
 					printf("\rObject: %s\n\n", objectName.c_str());
-					APISavePicture(frame, objectName);
+					APISavePicture(frame, pic_path);
 					APIWaitMsecs(800);
 
 					turningDuration = RandomValue(0.4, 1.2);

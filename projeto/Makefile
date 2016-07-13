@@ -26,7 +26,7 @@ real: clean
 	cd src/projectAPI; \
 	g++ -c *.cpp $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(ROBOTFLAGS) $(OPENCVFLAGS);\
 	mv *.o ../../obj/; \
-	cd ../..; \
+	qcd ../..; \
 	
 	#Generate Binaries
 	echo 'Generating binaries...'
@@ -44,8 +44,6 @@ real: clean
 	g++ src/wallRider.cpp obj/*.o -o bin/wallRider.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	g++ src/kalman.cpp obj/*.o -o bin/kalman.bin $(INCLUDEPATHS) $(CFLAGS) $(WARNINGFLAGS) $(OPENCVFLAGS) $(ROBOTFLAGS)
 	echo 'Done.'
-
-	#rm -f img/pics/*.jpg
 
 #Compile to run in V-REP simulation
 sim: clean

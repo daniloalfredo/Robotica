@@ -76,7 +76,7 @@ void APISetMotorPower(float powL, float powR);
 void APIStopRobot();
 cv::Mat APIReadCamera();
 void APISavePicture(cv::Mat picture);
-void APISavePicture(cv::Mat picture, std::string name);
+void APISavePicture(cv::Mat picture, char* filename);
 float APIReadSonarLeft();
 float APIReadSonarFront();
 float APIReadSonarRight();

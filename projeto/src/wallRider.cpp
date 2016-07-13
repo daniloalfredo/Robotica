@@ -35,7 +35,6 @@ int main(int argc, char* argv[])
 
         	//Inicializa detector de objetos
         	ColorDetector objectDetector;
-            cv::Mat frame(1, 1, CV_32FC1);
             std::string objectName;
 
         	int state = WALKING;
@@ -48,12 +47,13 @@ int main(int argc, char* argv[])
         	float baseSpeed = 35.0;  
 
         	float WHEEL_R = 0.0375;
-        	float WALL_THRESHOLD_FAR = 0.07;
+        	float WALL_THRESHOLD_FAR = 0.06;
         	float WALL_THRESHOLD_CLOSE = 0.05;
         	float WALL_THRESHOLD_FRONT = 0.08;
         	float DELTA_S_THRESHOLD = 0.025;
 
         	int substate = 0;
+        	int pic_counter = 0;
         	float timeStamp = APIGetSimulationTimeInSecs();
         	
         	//---------------------------------------------------------
@@ -130,34 +130,69 @@ int main(int argc, char* argv[])
 
 		    	else if(state == DETECTING)
 		    	{
-		    		//STOPPING
+		    		//Virar para o objeto
 		    		if(substate == 0)
+		    		{
+			    		leftSpeed = 35.0;
+			    		rightSpeed = -35.0;
+
+			    		if(APIGetSimulationTimeInSecs() - timeStamp >= 0.5)
+			    		{
+			    			substate = 1;
+			    			timeStamp = APIGetSimulationTimeInSecs();
+			    		}
+					}
+
+		    		//Parar
+		    		else if(substate == 1)
 		    		{
 			    		leftSpeed = 0.0;
 			    		rightSpeed = 0.0;
 
-			    		if(APIGetSimulationTimeInSecs() - timeStamp >= 0.5)
+			    		if(APIGetSimulationTimeInSecs() - timeStamp >= 0.4)
 			    		{
-			    			state = DETECTING;
-			    			substate = 1;
+			    			substate = 2;
+			    			timeStamp = APIGetSimulationTimeInSecs();
 			    		}
 					}
 
-					//DETECTING
-					else if(substate == 1)
+					//Detectar objeto
+					else if(substate == 2)
 					{
 						printf("\n\rDetecting object...\n");
-	                	frame = APIReadCamera();
-						objectName = objectDetector.Detect(frame);
+	                	cv::Mat frame;
+	                	for(int i = 0; i < 15; i++)
+	                	{
+	                	 	frame = APIReadCamera();
+	                	 	APIWaitMsecs(10);
+	                	}
+
+	                	objectName = objectDetector.Detect(frame);
+   						char pic_path[50];
+    					sprintf(pic_path, "img/pics/%d_%s.jpg", pic_counter, objectName.c_str());
+    					pic_counter++;
 						printf("\rObject: %s\n\n", objectName.c_str());
-						APISavePicture(frame, objectName);
+						APISavePicture(frame, pic_path);
 						APIWaitMsecs(1000);
 						timeStamp = APIGetSimulationTimeInSecs();
-						substate = 2;
+						substate = 3;
 					}
 
-					//GO FOWARD
-					else if(substate == 2)
+					//Virar de volta
+					else if(substate == 3)
+		    		{
+			    		leftSpeed = -35.0;
+			    		rightSpeed = 35.0;
+
+			    		if(APIGetSimulationTimeInSecs() - timeStamp >= 0.4)
+			    		{
+			    			substate = 4;
+			    			timeStamp = APIGetSimulationTimeInSecs();
+			    		}
+					}
+
+					//Ir um pouco para a frente
+					else if(substate == 4)
 		    		{
 			    		leftSpeed = baseSpeed;
 			    		rightSpeed = baseSpeed;
@@ -172,14 +207,13 @@ int main(int argc, char* argv[])
 					}
 		    	}
 
+		    	//Curva para a esquerda após detectar objeto
 		    	else if(state == TURNING_A)
 		    	{
 		    		leftSpeed = -baseSpeed*0.60;
 		    		rightSpeed = baseSpeed;
 
-		    		if(APIGetSimulationTimeInSecs() - timeStamp > 2.0
-		    		/*&& sonarReadings[FRONT] >= 0.20
-		    		&& sonarReadings[RIGHT] <= 0.10*/)
+		    		if(APIGetSimulationTimeInSecs() - timeStamp > 2.0)
 		    		{
 		    			state = WALKING;
 		    			stampDeltaSRear = deltaS;
@@ -187,6 +221,7 @@ int main(int argc, char* argv[])
 		    		}
 		    	}
 
+		    	//Curva para a direita
 		    	else if(state == TURNING_B)
 		    	{
 		    		leftSpeed = 70.0;
